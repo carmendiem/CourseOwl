@@ -1,6 +1,6 @@
 import { Route, Routes } from "react-router-dom";
-import { Calendar } from "../pages/Calendar";
 import { HomePage } from "../pages/HomePage";
+import Calendar from "../pages/Calendar";
 
 export function Rout(){
     return (
