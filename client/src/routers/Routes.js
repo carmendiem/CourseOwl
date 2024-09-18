@@ -5,7 +5,7 @@ import { HomePage } from "../pages/HomePage";
 export function Rout(){
     return (
         <Routes>
-          <Route path="/example" element={<Calendar />} />
+          <Route path="/calendar" element={<Calendar />} />
           <Route path="" element={<HomePage />} />
         </Routes>
       );
