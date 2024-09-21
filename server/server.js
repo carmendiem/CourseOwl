@@ -3,7 +3,7 @@ import cors from "cors";
 import courses from "./routes/course.js";
 import "dotenv/config";
 
-const PORT = 5000;
+const PORT = 5001; // carmens is 5000
 const app = express();
 
 app.use(cors());

@@ -1,13 +1,11 @@
 import { CalendarView } from "../components/ScheduleCal";
+import { SearchBar } from "../components/SearchBar.js"
 
-export default function Calendar () {
+export default function Calendar() {
     return(
         <div style={{padding: '10px' }}>
-            <h1>calendar page test</h1>
-            
+            <SearchBar />
             <CalendarView/>
         </div>
     );
 }
-
-
