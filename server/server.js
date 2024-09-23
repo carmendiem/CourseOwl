@@ -7,7 +7,7 @@ import "dotenv/config";
 import userRoutes from "./routes/user.js";
 import courses from "./routes/course.js";
 
-const PORT = process.env.PORT || 5005;
+const PORT = process.env.PORT || 5000;
 const app = express();
 
 // Middleware

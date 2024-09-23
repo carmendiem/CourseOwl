@@ -11,7 +11,7 @@ function Home() {
 
     useEffect(() => {
         if (!user) {
-            axios.get('http://localhost:5001/user/', { withCredentials: true })
+            axios.get('http://localhost:3001/user/', { withCredentials: true })
                 .then(response => {
                     if (response.data.user) {
                         setUser(response.data.user);
