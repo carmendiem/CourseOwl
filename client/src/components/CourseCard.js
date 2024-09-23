@@ -4,7 +4,7 @@ import { Typography } from '@mui/material'
 
 export function CourseCard({course}) {
     return(
-        <Card sx={{ width: 400 }}>
+        <Card>
         <CardContent>
           <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 2}}>
            {course.course_name}
