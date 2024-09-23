@@ -1,16 +1,37 @@
+// server.js
 import express from "express";
 import cors from "cors";
-import courses from "./routes/course.js";
+import session from "express-session";
+import MongoStore from "connect-mongo";
 import "dotenv/config";
+import userRoutes from "./routes/user.js";
+import courses from "./routes/course.js";
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5005;
 const app = express();
 
-app.use(cors());
+// Middleware
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
 app.use(express.json());
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI,
+    }),
+    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 day
+}));
+
+// Routes
+app.use("/user", userRoutes); // Use the user routes
 app.use("/course", courses);
 
-// start the Express server
+// Start the server
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+    console.log(`Server listening on port ${PORT}`);
 });

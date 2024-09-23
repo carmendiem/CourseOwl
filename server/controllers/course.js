@@ -1,9 +1,9 @@
-import connect from "../connection.js"
+import connectMongo from "../connection.js"
 import Course from "../models/Course.js";
 import mongoose from 'mongoose';
 
 mongoose.set('strictQuery', false);
-connect();
+connectMongo();
 
 export default async function getCoursesByName(req,res){
     try {

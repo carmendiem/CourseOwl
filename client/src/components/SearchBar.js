@@ -15,7 +15,7 @@ import { CourseCard } from "./CourseCard";
 
 async function fetchCourses(searchTerm) {
     try {
-        const res = await fetch(`http://localhost:5000/course?name=${searchTerm}`, {
+        const res = await fetch(`http://localhost:5005/course?name=${searchTerm}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
