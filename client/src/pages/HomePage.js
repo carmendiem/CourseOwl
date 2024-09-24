@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { SearchBar } from "../components/SearchBar.js"
+import config from '../config';
 
 function Home() {
     const location = useLocation();
@@ -11,7 +12,7 @@ function Home() {
 
     useEffect(() => {
         if (!user) {
-            axios.get('http://localhost:3001/user/', { withCredentials: true })
+            axios.get(`${config.API_BASE_URL}/user/`, { withCredentials: true })
                 .then(response => {
                     if (response.data.user) {
                         setUser(response.data.user);
@@ -31,7 +32,11 @@ function Home() {
     }
 
     return (
-        <SearchBar />
+        <><SearchBar />
+        {/* <center>
+            <h1 style={{ color: "white", fontSize: "5rem" }}>Welcome Home {user && user.name} !!!</h1>
+        </center> */}
+        </>
     );
 }
 

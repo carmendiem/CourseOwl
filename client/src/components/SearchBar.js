@@ -8,6 +8,7 @@ import DayPicker from "./DayPicker.js"
 
 import  { SwiperComponent } from "./Swiper/Swiper";
 import { CourseCard } from "./CourseCard";
+import config from '../config';
 
 // Initialize Swiper modules
 // SwiperCore.use([Navigation, Pagination, Grid]);
@@ -15,7 +16,7 @@ import { CourseCard } from "./CourseCard";
 
 async function fetchCourses(searchTerm) {
     try {
-        const res = await fetch(`http://localhost:5005/course?name=${searchTerm}`, {
+        const res = await fetch(`${config.API_BASE_URL}/course?name=${searchTerm}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
