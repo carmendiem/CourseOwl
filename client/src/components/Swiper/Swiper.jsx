@@ -7,7 +7,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import "swiper/css/grid"
-//import "../SwiperStyles.css"
+import "./SwiperStyles.css"
 
 
 export const SwiperComponent = ({slides}) => {
@@ -22,6 +22,7 @@ export const SwiperComponent = ({slides}) => {
                                       }}
                                       className='mySwiper'
                                      navigation
+                                     slidesPerGroup={3}
           onSwiper={(swiper) => console.log(swiper)}
           onSlideChange={() => console.log('slide change')}
         >
@@ -32,8 +33,10 @@ export const SwiperComponent = ({slides}) => {
             }
             {slides.map((slide, index)=> (<SwiperSlide key={index }>{slide}</SwiperSlide>))
             }
-            
-            
+            {slides.map((slide, index)=> (<SwiperSlide key={index }>{slide}</SwiperSlide>))
+            }
+            {slides.map((slide, index)=> (<SwiperSlide key={index }>{slide}</SwiperSlide>))
+            }
         </Swiper>
       );
 }

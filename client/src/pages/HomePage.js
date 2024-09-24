@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { SearchBar } from "../components/SearchBar.js"
 
 function Home() {
     const location = useLocation();
@@ -30,9 +31,7 @@ function Home() {
     }
 
     return (
-        <center>
-            <h1 style={{color:"white", fontSize:"5rem"}}>Welcome Home {user && user.name} !!!</h1>
-        </center>
+        <SearchBar />
     );
 }
 

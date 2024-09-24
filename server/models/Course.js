@@ -10,7 +10,7 @@ const courseSchema = new Schema({
         type: String
     },
     professor: {
-        type: String
+        type: [String]
     },
     time: {
         type: Date

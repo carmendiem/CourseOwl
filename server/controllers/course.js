@@ -1,9 +1,9 @@
-import connect from "../connection.js"
+import connectMongo from "../connection.js"
 import Course from "../models/Course.js";
 import mongoose from 'mongoose';
 
 mongoose.set('strictQuery', false);
-connect();
+connectMongo();
 
 export default async function getCoursesByName(req,res){
     try {
@@ -11,7 +11,10 @@ export default async function getCoursesByName(req,res){
         const {name} = req.query;
         console.log(name)
         const courses = await Course.find({
-            course_name: { $regex: new RegExp(`^${name}`, 'i') }  // find classes w/ name that start with given searchterm
+            $or: [
+            { course_name: { $regex: new RegExp(`^${name}`, 'i') } },  // find classes w/ name that start with given searchterm
+            { professor: { $regex: new RegExp(name, 'i') }}
+            ]
         });
 
         if (!courses || courses.length === 0) {
