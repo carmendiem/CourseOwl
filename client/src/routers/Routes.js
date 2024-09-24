@@ -8,7 +8,8 @@ export function Rout({ setIsLoggedIn, isLoggedIn }){
         <Routes>
           <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />} />
           <Route path="/home" element={<HomePage />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/signup" element={<Signup setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />} />
+          <Route path="/" element={<HomePage />} />
         </Routes>
       );
 }

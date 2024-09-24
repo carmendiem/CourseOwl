@@ -1,4 +1,4 @@
-.App {
+/* .App {
   text-align: center;
 }
 
@@ -35,4 +35,51 @@
   to {
     transform: rotate(360deg);
   }
+} */
+
+.app-container {
+  display: flex;
+  height: 100vh;
+}
+
+.content-container {
+  flex-grow: 1;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #0073e6;
+}
+
+h1 {
+  color: white;
+  font-size: 5rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.Logout {
+  margin-right: 20px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 0.3rem 1.4rem;
+}
+
+.MuiListItem-root {
+  justify-content: center;
+}
+
+.MuiTypography-root {
+  font-weight: bold;
+  text-align: center;
+}
+
+.main-content {
+  margin-left: 80px;  /* Match this to the width of your sidebar */
+  padding: 20px;
+  height: 100vh;
+  background-color: #0073e6;  /* Blue background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
