@@ -12,9 +12,6 @@ export function CourseCard({course}) {
           <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 2 }}>
            {course.credit} Credits | 
           </Typography>
-          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14 }}>
-           {course.credit} Credits | 
-          </Typography>
         </CardContent>
       </Card>
     );
