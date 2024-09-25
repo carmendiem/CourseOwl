@@ -4,6 +4,7 @@ import { styled } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
+import { CourseCard } from "./CourseCard";
 
 const Item = styled(Paper)(({ theme }) => ({
     borderRadius: 0,
@@ -22,7 +23,7 @@ textAlign: 'center',
 height: "50%", //set height 50% of parent
 }));
 const Course = styled(Paper)(({ theme }) => ({
-textAlign: 'center',
+textAlign: 'left',
 borderRadius: 10,
 position: 'absolute',
 backgroundColor: 'grey',
@@ -30,16 +31,20 @@ backgroundColor: 'grey',
 width: '15%'
 }));
 
+const hourSize = "50px" //hour size is 50 not 100, math must be divided by 2
+const hourSizePx = 50;
+const firstCalTime = (hourSizePx * 5) + (hourSizePx/2) - hourSizePx; //  start of cal is 5:30 am
 
-export function CalendarView({change}) {
+
+export function CalendarView() {
     const daysOfWeek = ["Time","Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
     const timesOfDay = ["6:00 am", "7:00 am", "8:00 am", "9:00 am", "10:00 am", "11:00 am",
-        "12:00 pm", "1:00 pm","2:00 pm", "3:00pm", "4:00 pm", "5:00 pm", "6:00 pm"];
-    const daysInAWeek = 5;
+        "12:00 pm", "1:00 pm","2:00 pm", "3:00 pm", "4:00 pm", "5:00 pm", "6:00 pm"];
     const topCoord = "450px"
-    const hourSize = "50px" //hour size is 50 not 100, math must be divided by 2
-    // const firstCalTime = 550; // 550 meaning 5:30 am
-    // const lastCalTime = 1850; // 1850 meaning 6:30 pm
+    const colWidth = 100/6; // 100% / 6 days
+    // const hourSize = "50px" //hour size is 50 not 100, math must be divided by 2
+    // const firstCalTime = (hourSize * 5) + (hourSize/2); //  start of cal is 5:30 am
+    // const lastCalTime = 1300; // 1850 meaning 6:30 pm
 
     var calGrid = [];
     for (let i = 0; i < timesOfDay.length; i++) {
@@ -53,7 +58,7 @@ export function CalendarView({change}) {
                 <Item>{timesOfDay[i]}</Item>
             </Grid>
         );
-        for (let j = 0; j < daysInAWeek; j++) {
+        for (let j = 0; j < daysOfWeek.length-1; j++) {
             calGrid.push(
                 <Grid size={2} style={{height: hourSize}}>
                     {/* x:30 to y:00 */}
@@ -66,8 +71,8 @@ export function CalendarView({change}) {
     }
 
     const gridRef = useRef(null);
-    const [gridDistFromTop, setGridDistFromTop] = useState(0);
-    const [gridDistanceFromBottom, setGridDistanceFromBottom] = useState(0);
+    // const [gridDistFromTop, setGridDistFromTop] = useState(0);
+    // const [gridDistanceFromBottom, setGridDistanceFromBottom] = useState(0);
     // const [coursePos, setCoursePos] = useState({top: '200px', left: '10px'});
     const [courseDisp, setCourseDisp] = useState(0);
     
@@ -95,75 +100,70 @@ export function CalendarView({change}) {
     DayCode.set("M", 1);
     DayCode.set("T", 2);
     DayCode.set("W", 3); 
-    DayCode.set("R", 4);    // Thursday code change
+    DayCode.set("R", 4);
     DayCode.set("F", 5);
 
-    const getRandomColor = () => {
-        const letters = '0123456789ABCDEF';
-        let color = '#';
-        for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
-    };
+    function getColor(){ 
+        return "hsl(" + 360 * Math.random() + ',' +
+                   (25 + 70 * Math.random()) + '%,' + 
+                   (85 + 10 * Math.random()) + '%)'
+    }
 
     const makeCourses = () => {
         setCourseDisp([]);
         var courseDisplay = [];
 
-        const retrivedCourses = ["CS251","CS250", ]; //api call to get courses
+        const retrivedCourses = ["CS251","CS250"]; // TODO: from api
 
         const TakenTimes = setTimeTakenMaps(timesOfDay, retrivedCourses);
 
         for (let i = 0; i < retrivedCourses.length; i++) {
-            const color = getRandomColor();
+            const color = getColor();
 
             // get hour and minute from course start time
-            const time = "8:00 am";
-            const timePx = 75;
-            // get day from course day(s)
-            const day = "MWF"; // change
+            const startTime = "8:00 am"; // TODO: from api
+            const sTimePx = getTimePos(startTime); // calculate the top position of the course
+            console.log(sTimePx);
 
-            // get duration of course
-            const heightPx = 150;
             // calculate the height of the course: (duration in hrs * 50) round to nearest half hour
-            // calculate the top position of the course
+            const endTime = "9:45 am"; // TODO: from api
+            const eTimePx = getTimePos(endTime); 
+            const heightPx = eTimePx - sTimePx;
+
             // calculate the left position of the course: based on the day
-            var leftPc = '16.66%'; // 100% / 6 days
+            var leftPc = `${colWidth}%`; // 100% / 6 days
+
+            // get day from course day(s)
+            const day = "MWF"; // TODO: from api
 
             // split days into individual days
             const days = day.split("");
-            console.log(days);
             for (let j = 0; j < days.length; j++) {
                 const timeMap = TakenTimes[DayCode.get(days[j])-1]; 
                 const dayVal = DayCode.get(days[j]);   
-                leftPc = `${dayVal * 16.66}%`;
+                leftPc = `${dayVal * colWidth}%`;   
 
-                console.log("day:", days[j]);      
-
-                console.log("timeMap:", timeMap);
-                const prev = timeMap.get(time);
+                const prev = timeMap.get(startTime);
                 if (prev === undefined) {
                     console.log("time not found");
-                    timeMap.set(time, 0);
+                    timeMap.set(startTime, 0);
                 }
-                console.log("prev:", prev);
-                timeMap.set(time, prev+1);
+                timeMap.set(startTime, prev+1);
 
                 // shift to the left based on how many courses are already there
-                var width = 100 / 6;
+                var width = colWidth;
                 var zIndex = 1;
                 if (prev > 0) {
-                    leftPc = `${(prev)*4 + dayVal*16.66}%`; // messes up the day shift
+                    leftPc = `${(prev)*colWidth/2 + dayVal*colWidth}%`; // messes up the day shift
                     console.log(leftPc);
-                    width = width - (prev)*4;
+                    width = width - (prev)*colWidth/2;
                     zIndex = prev+1;
                 }
                 
                 courseDisplay.push(
                     <Course size={2} 
                         sx={{
-                            top: `${timePx}px`,
+                            top: `${sTimePx}px`,
                             left: leftPc,
                             zIndex: `${zIndex}`,
                             backgroundColor: color
@@ -177,7 +177,6 @@ export function CalendarView({change}) {
                         {retrivedCourses[i]}
                     </Course>
                 );
-
             }
         }
 
@@ -255,35 +254,61 @@ export function CalendarView({change}) {
             </div>
                 
         </div>
-        
     );
 
 }
 
 function setTimeTakenMaps(timesOfDay, retrivedCourses) {
-    var TakenTimesMonday = setTimeTakenSingle(timesOfDay);
-    var TakenTimesTuesday = setTimeTakenSingle(timesOfDay);
-    var TakenTimesWednesday = setTimeTakenSingle(timesOfDay);
-    var TakenTimesThursday = setTimeTakenSingle(timesOfDay);
-    var TakenTimesFriday = setTimeTakenSingle(timesOfDay);
+    var TakenTimesMonday = initTimeTakenSingle(timesOfDay);
+    var TakenTimesTuesday = initTimeTakenSingle(timesOfDay);
+    var TakenTimesWednesday = initTimeTakenSingle(timesOfDay);
+    var TakenTimesThursday = initTimeTakenSingle(timesOfDay);
+    var TakenTimesFriday = initTimeTakenSingle(timesOfDay);
 
     // loop through all courses and count how many are in each slot
-
+    for (let i = 0; i < retrivedCourses.length; i++) {
+        // TODO
+    }
 
     const TakenTimes = [TakenTimesMonday, TakenTimesTuesday, TakenTimesWednesday, TakenTimesThursday, TakenTimesFriday];
     return TakenTimes;
 }
 
-function setTimeTakenSingle(timesOfDay) {
+function initTimeTakenSingle(timesOfDay) {
     var timesTaken = new Map();
-    // insert all times into map with 15 min
-    timesTaken.set("5:30 am", 0);
+    // insert all times into map with 30 min intervals
     for (let i = 0; i < timesOfDay.length; i++) {
-        // insert all times into map with 15 min intervals
+        const time = timesOfDay[i];
+        const amOrPm = time.substring(time.length-2);
+        const hour = time.substring(0, time.indexOf(":"));
+        var toInsertHalfHour = `${hour-1}:30 ${amOrPm}`;
+        if (hour === "1") {
+            toInsertHalfHour = `12:30 ${amOrPm}`; // special case because of change from 12 to 1
+        } 
+        timesTaken.set(toInsertHalfHour, 0);
         timesTaken.set(timesOfDay[i], 0);
     }
-
-    // loop through all courses and count how many are in each slot
-
     return timesTaken;
+}
+
+function getTimePos(time) {
+    const minInHour = 60;
+
+    // get hour and minute from course start time
+    const hour = parseInt(time.substring(0, time.indexOf(":")), 10);
+    console.log("hour:", hour);
+    const minute = parseInt(time.substring(time.indexOf(":")+1, time.indexOf(" ")), 10);
+    console.log("minute:", minute);
+    const amOrPm = time.substring(time.length-2);
+
+    if (amOrPm === "pm") {
+        hour += 12;
+    }
+
+    var timePx = (hour * hourSizePx) + (minute/minInHour * hourSizePx);
+    console.log("getTime: ", timePx);
+    timePx = timePx - firstCalTime;
+    console.log("getTime: ", timePx);
+    return timePx;
+
 }

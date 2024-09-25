@@ -26,7 +26,7 @@ async function fetchCourses(searchTerm) {
     }
 }
 
-export function SearchBar({toggleState}) {
+export function SearchBar() {
     const [courseResults, setCourseResults] = useState([])
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
@@ -44,7 +44,6 @@ export function SearchBar({toggleState}) {
     // Fetch courses based on debounced search term
     useEffect(() => {
         const searchCourses = async () => {
-            toggleState();
             if (debouncedTerm && debouncedTerm.trim() !== "") {
                 const results = await fetchCourses(debouncedTerm);
                 if (results) {
