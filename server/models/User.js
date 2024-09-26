@@ -1,5 +1,6 @@
 // /models/User.js
 import mongoose from 'mongoose';
+import { ObjectId} from "bson";
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -14,6 +15,9 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true
+    },
+    courses: {
+        type: [ObjectId]
     }
 });
 
