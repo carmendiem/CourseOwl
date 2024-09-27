@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Tabs, Tab, Box } from "@mui/material";
 import axios from "axios";
 import { SearchBar } from "../components/SearchBar.js"
+import { CalendarView } from "../components/ScheduleCal";
 import config from '../config';
 import { TableView } from "../components/TableView.js"
 import { CalendarView } from "../components/CalendarView.js"
@@ -71,6 +72,10 @@ function Home() {
                     {selectedTab === 1 && <TableView />}
                 </Box>
             </Box>
+        {/* <center>
+            <h1 style={{ color: "white", fontSize: "5rem" }}>Welcome Home {user && user.name} !!!</h1>
+        </center> */}
+        <CalendarView user={user}/>
         </>
     );
 }
