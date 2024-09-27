@@ -10,13 +10,19 @@ const courseSchema = new Schema({
         type: String
     },
     professor: {
-        type: [String]
+        type: String
+    },
+    date: {
+        type: String
+    },
+    daysOfWeek: {
+        type: String
     },
     time: {
-        type: Date
+        type: String
     },
     credit: {
-        type: Number
+        type: String
     },
     class_size: {
         type: Number

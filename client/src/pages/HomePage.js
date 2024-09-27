@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { SearchBar } from "../components/SearchBar.js"
+import { CalendarView } from "../components/ScheduleCal";
 import config from '../config';
 
 function Home() {
@@ -36,6 +37,7 @@ function Home() {
         {/* <center>
             <h1 style={{ color: "white", fontSize: "5rem" }}>Welcome Home {user && user.name} !!!</h1>
         </center> */}
+        <CalendarView user={user}/>
         </>
     );
 }

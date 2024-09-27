@@ -6,6 +6,7 @@ import MongoStore from "connect-mongo";
 import "dotenv/config";
 import userRoutes from "./routes/user.js";
 import courses from "./routes/course.js";
+import calendarRoutes from "./routes/calendar.js";
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -30,6 +31,7 @@ app.use(session({
 // Routes
 app.use("/user", userRoutes); // Use the user routes
 app.use("/course", courses);
+app.use("/calendar", calendarRoutes);
 
 // Start the server
 app.listen(PORT, () => {
