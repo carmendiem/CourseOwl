@@ -23,18 +23,7 @@ export const SwiperComponent = ({slides}) => {
                                       className='mySwiper'
                                      navigation
                                      slidesPerGroup={3}
-          onSwiper={(swiper) => console.log(swiper)}
-          onSlideChange={() => console.log('slide change')}
         >
-
-            {slides.map((slide, index)=> (<SwiperSlide key={index }>{slide}</SwiperSlide>))
-            }
-            {slides.map((slide, index)=> (<SwiperSlide key={index }>{slide}</SwiperSlide>))
-            }
-            {slides.map((slide, index)=> (<SwiperSlide key={index }>{slide}</SwiperSlide>))
-            }
-            {slides.map((slide, index)=> (<SwiperSlide key={index }>{slide}</SwiperSlide>))
-            }
             {slides.map((slide, index)=> (<SwiperSlide key={index }>{slide}</SwiperSlide>))
             }
         </Swiper>
