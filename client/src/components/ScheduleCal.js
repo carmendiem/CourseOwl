@@ -3,7 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { styled } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
-import { CourseCard } from "./CourseCard";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import { CalCourseCard } from "./CalCourseCard";
 import config from '../config';
 import axios from "axios";
 
@@ -22,14 +23,6 @@ backgroundColor: '#fff',
 ...theme.typography.body2,
 textAlign: 'center',
 height: "50%", //set height 50% of parent
-}));
-const Course = styled(Paper)(({ theme }) => ({
-textAlign: 'left',
-borderRadius: 10,
-position: 'absolute',
-backgroundColor: 'grey',
-// zIndex: 1, // Ensure it appears above the graph
-width: '15%'
 }));
 
 const hourSize = "50px" //hour size is 50 not 100, math must be divided by 2
@@ -77,7 +70,7 @@ export function CalendarView({user}) {
         }
     }
 
-    const [courseDisp, setCourseDisp] = useState(0);
+    const [courseDisp, setCourseDisp] = useState([]);
 
     function getColor(){ 
         return "hsl(" + 360 * Math.random() + ',' +
@@ -107,7 +100,7 @@ export function CalendarView({user}) {
                 const data = await res.data;
                 // console.log("data: ", data);
                 setCourseObjs(courseObjs => [...courseObjs, data]);
-                console.log("courseobj+: ", courseObjs);
+                // console.log("courseobj+: ", courseObjs);
             }catch(error){
                 console.log("error fetching course: ", error);
             }
@@ -119,12 +112,8 @@ export function CalendarView({user}) {
         setCourseDisp([]);
         var courseDisplay = [];
 
-        // if (courseObjs.length > 0) {
-        //     const TakenTimes = setTimeTakenMaps(timesOfDay, courseObjs);
-        //     console.log(TakenTimes);
-        // }
         const TakenTimes = setTimeTakenMaps(timesOfDay, courseObjs);
-        console.log(TakenTimes);
+        // console.log(TakenTimes);
 
         for (let i = 0; i < courseObjs.length; i++) {
             const color = getColor();
@@ -133,7 +122,6 @@ export function CalendarView({user}) {
             const times = courseObjs[i].time.split(" - ");
             const startTime = times[0].trim();
             const sTimePx = getTimePos(startTime); // calculate the top position of the course
-            //console.log(sTimePx);
 
             // calculate the height of the course: (duration in hrs * 50) round to nearest half hour
             const endTime = times[1].trim(); 
@@ -151,22 +139,24 @@ export function CalendarView({user}) {
                 leftPc = `${dayVal * colWidth}%`;   
 
                 const numCourses = timeMap.get(startTime);
-                console.log("numCourses: ", numCourses);
+                // console.log("numCourses: ", numCourses);
                 timeMap.set(startTime, numCourses-1);
 
                 // shift to the left based on how many courses are already there
                 var width = colWidth;
                 var zIndex = 1;
-                if (numCourses > 0) {
+                if (numCourses < 3) {
                     leftPc = `${(numCourses-1)*colWidth/2 + dayVal*colWidth}%`; // messes up the day shift
-                    //console.log(leftPc);
+
                     width = width - (numCourses-1)*colWidth/2;
                     zIndex = numCourses;
                 }
                 
                 courseDisplay.push(
-                    <Course size={2} 
+                    <CalCourseCard 
+                        size={2} 
                         sx={{
+                            position: "absolute",
                             top: `${sTimePx}px`,
                             left: leftPc,
                             zIndex: `${zIndex}`,
@@ -177,9 +167,9 @@ export function CalendarView({user}) {
                             height: `${heightPx}px`,
                             lineHeight: `${heightPx}px`
                         }}
-                    >
-                        {courseObjs[i].course_name}
-                    </Course>
+                        course={courseObjs[i]}
+                        onClick={() => handleCardClick(courseObjs[i])}
+                    />
                 );
             }
         }
@@ -220,11 +210,24 @@ export function CalendarView({user}) {
 
     useEffect(() => {
         getCourseInfo();
+        makeCourses();
     },[userCourses]);
+
+    const [open, setOpen] = useState(false);
+    const [selectedCourse, setSelectedCourse] = useState(null);
+
+    const handleCardClick = (course) => {
+        setSelectedCourse(course);
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+        setSelectedCourse(null);
+    };
 
     return (
         <div > 
-            {/* {console.log(calWidth)} */}
             <Grid container sx={{ 
                 width: `${calWidth-140}px`,
                 position: "absolute", top: topCoord }} >
@@ -235,8 +238,30 @@ export function CalendarView({user}) {
                 )) }
                 {calGrid}
                 {courseDisp}
-                {/* {console.log("courses changed")} */}
+                {console.log("courseDisp: ",courseDisp)}
             </Grid>
+            <Dialog open={open} onClose={handleClose}>
+                {selectedCourse ? (
+                    <>
+                    <DialogTitle>{`${selectedCourse.course_name || 'not found'}`}</DialogTitle>
+                    <DialogContent>
+                            <div>
+                                {console.log("selectedCourse: ", selectedCourse)}
+                                <Typography variant="h6">{`Professor: ${selectedCourse.professor}`}</Typography>
+                                <Typography variant="h6">{`${selectedCourse.daysOfWeek || 'Days not Available'} ${selectedCourse.date || 'Date not available'}`}</Typography>
+                                <Typography variant="h6">{selectedCourse.time}</Typography>
+                                <Typography variant="h6">{`Location: ${selectedCourse.location}`}</Typography>
+                                <Typography variant="h6">{`Type: ${selectedCourse.type} | Credit Hours: ${selectedCourse.credit}`}</Typography>
+                            </div>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleClose} color="primary">
+                            Close
+                        </Button>
+                    </DialogActions>
+                    </>
+                ) : null}
+            </Dialog>
         </div>
     );
 

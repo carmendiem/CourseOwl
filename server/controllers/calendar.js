@@ -9,7 +9,7 @@ connectMongo();
 export const getUserCourses = async (req, res) => {
     try {
         const {userId} = req.query;
-        console.log("userid: ",userId)
+        // console.log("userid: ",userId)
         const user = await UserModel.findById(userId);
         const courses = user.courses;
         if (courses != null) {
@@ -26,7 +26,7 @@ export const getUserCourses = async (req, res) => {
 export const getCourseInfo = async (req, res) => {
     try {
         const {courseId} = req.query;
-        console.log("courseid",courseId)
+        // console.log("courseid",courseId)
         const course = await Course.findById(courseId);
         if (course != null) {
             return res.json(course);
