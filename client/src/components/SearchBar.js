@@ -12,6 +12,7 @@ import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 
 async function fetchCourses(searchTerm, selectedDays, startTime, endTime) {
     const daysParam = selectedDays && selectedDays.length > 0 ? selectedDays.join(',') : '';
+
     try {
         const res = await fetch(`${config.API_BASE_URL}/course?name=${searchTerm}&days=${daysParam}&startTime=${startTime}&endTime=${endTime}`, {
             method: 'GET',
@@ -30,6 +31,7 @@ async function fetchCourses(searchTerm, selectedDays, startTime, endTime) {
 export function SearchBar() {
     const [courseResults, setCourseResults] = useState([])
     const [searchTerm, setSearchTerm] = useState("");
+    const [searchAlert, setSearchAlert] = useState("");
     const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
     const [selectedDays, setSelectedDays] = useState([]);
     const [selectedStartsAfterTime, setSelectedStartsAfterTime] = useState(null);
@@ -52,11 +54,14 @@ export function SearchBar() {
                 const results = await fetchCourses(debouncedTerm, selectedDays, selectedStartsAfterTime, selectedEndsBeforeTime);
                 if (results) {
                     setCourseResults(results);
+                    setSearchAlert("No courses found that match your search, please try again!")
                 } else {
                     setCourseResults([]);
+                    setSearchAlert("")
                 }
             } else {
                 setCourseResults([]);
+                setSearchAlert("")
             }
         };
 
@@ -119,6 +124,7 @@ export function SearchBar() {
                             />
                             <TimePicker
                                 label="Ends before"
+                                timezone="America/New_York"
                                 value={selectedEndsBeforeTime}
                                 onChange={(newValue) => setSelectedEndsBeforeTime(newValue)}
                                 sx={{
@@ -155,7 +161,6 @@ export function SearchBar() {
             </Box>
             <div >
                 {courseResults && courseResults.length > 0 ? (
-
                     <SwiperComponent
                         slides={courseResults.map((course) =>
                         (
@@ -165,8 +170,8 @@ export function SearchBar() {
                         )
                         )}>
                     </SwiperComponent>
-                ) : (
-                    <p>No courses found</p>
+                ) :  (
+                    <p>{searchAlert}</p>
                 )}
             </div>
         </>

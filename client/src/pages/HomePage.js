@@ -6,7 +6,6 @@ import { SearchBar } from "../components/SearchBar.js"
 import { CalendarView } from "../components/ScheduleCal";
 import config from '../config';
 import { TableView } from "../components/TableView.js"
-import { CalendarView } from "../components/CalendarView.js"
 
 function Home() {
     const location = useLocation();
@@ -68,14 +67,10 @@ function Home() {
 
                 {/* Render the selected component based on the selected tab */}
                 <Box sx={{ padding: 3 }}>
-                    {selectedTab === 0 && <CalendarView />}
-                    {selectedTab === 1 && <TableView />}
+                    {selectedTab === 0 && <CalendarView user={user}/>}
+                    {selectedTab === 1 && <TableView user={user}/>}
                 </Box>
             </Box>
-        {/* <center>
-            <h1 style={{ color: "white", fontSize: "5rem" }}>Welcome Home {user && user.name} !!!</h1>
-        </center> */}
-        <CalendarView user={user}/>
         </>
     );
 }
