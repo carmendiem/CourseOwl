@@ -85,28 +85,56 @@ export function CalendarView({user}) {
             const res = await axios.get(`${config.API_BASE_URL}/calendar/user?userId=${userId}`);
             const data = await res.data;
             setUserCourses(data);
+            return data;
         }catch(error){
             console.log("error fetching courses: ", error);
+            return null;
         }
     };
 
-    const getCourseInfo = async () => {
-        console.log("userCourses: ", userCourses);
-        setCourseObjs([]);
-        for (let i = 0; i < userCourses.length; i++) {
+    const getCourseInfo = async (courses) => {
+        //console.log("userCourses: ", userCourses);
+        const courseData = [];
+        //setCourseObjs([]);
+        for (let i = 0; i < courses.length; i++) {
             // console.log("coursenum: ", i);
             try{
-                const res = await axios.get(`${config.API_BASE_URL}/calendar/info?courseId=${userCourses[i]}`)
+                const res = await axios.get(`${config.API_BASE_URL}/calendar/info?courseId=${courses[i]}`)
                 const data = await res.data;
-                // console.log("data: ", data);
-                setCourseObjs(courseObjs => [...courseObjs, data]);
+                courseData.push(data);
+                //setCourseObjs(courseObjs => [...courseObjs, data]);
                 // console.log("courseobj+: ", courseObjs);
             }catch(error){
                 console.log("error fetching course: ", error);
             }
         }
-        console.log("courseobj: ", courseObjs);
+        setCourseObjs(courseData);
     };
+
+    const refreshCourses = async () => {
+        const courses = await getCourses();
+        if (courses && courses.length > 0) {
+            await getCourseInfo(courses);
+        }
+    }
+
+    const addCourse = async (newCourseId) => {
+        try {
+            //post request here using newCourseId
+            await refreshCourses();
+        } catch (error) {
+            console.log("Error adding course: ", error)
+        }
+    }
+
+    const deleteCourse = async (newCourseId) => {
+        try {
+            //post request here using newCourseId
+            await refreshCourses();
+        } catch (error) {
+            console.log("Error deleting course: ", error)
+        }
+    }
 
     const makeCourses = () => {
         setCourseDisp([]);
@@ -179,25 +207,39 @@ export function CalendarView({user}) {
     }
 
     useEffect(() => {
+        const fetchCoursesAndInfo = async () => {
+            const courses = await getCourses();
+            if (courses && courses.length > 0) 
+                await getCourseInfo(courses);  
+        }
+        
+        fetchCoursesAndInfo();
+    }, [])
+
+    useEffect(() => {
+        if (courseObjs.length > 0) {
+            makeCourses(); 
+        }
+    }, [courseObjs])
+
+
+
+    useEffect(() => {
         // Get position after the component mounts
         setCalWidth(window.innerWidth);
-        getCourses();
-        // getCourseInfo();
-        if (userCourses.length > 0){
-            console.log("userCourses: ", userCourses);
-            makeCourses();
-        }
+        
         // makeCourses();
 
         // Update position on window resize
         const handleResize = () => {
             setCalWidth(window.innerWidth);
-            getCourses();
+            //getCourses();
             // getCourseInfo();
             if (userCourses.length > 0){
-                makeCourses();
+                //smakeCourses();
             }
             // makeCourses();
+            console.log("resize here");
         };
         window.addEventListener('resize', handleResize);
 
@@ -207,11 +249,6 @@ export function CalendarView({user}) {
         };
         
     }, []);
-
-    useEffect(() => {
-        getCourseInfo();
-        makeCourses();
-    },[userCourses]);
 
     const [open, setOpen] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState(null);
@@ -238,7 +275,7 @@ export function CalendarView({user}) {
                 )) }
                 {calGrid}
                 {courseDisp}
-                {console.log("courseDisp: ",courseDisp)}
+    
             </Grid>
             <Dialog open={open} onClose={handleClose}>
                 {selectedCourse ? (
