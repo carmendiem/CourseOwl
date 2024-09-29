@@ -124,7 +124,6 @@ export function SearchBar() {
                             />
                             <TimePicker
                                 label="Ends before"
-                                timezone="America/New_York"
                                 value={selectedEndsBeforeTime}
                                 onChange={(newValue) => setSelectedEndsBeforeTime(newValue)}
                                 sx={{
