@@ -34,7 +34,7 @@ const sidebarStyle = {
 const iconStyle = (isActive) => ({
     color: isActive ? '#FFD700' : 'white', // Highlight color if active
     fontSize: '1.8rem',
-    marginBottom: '20px',
+    marginBottom: '5px',
 });
 
 const textStyle = (isActive) => ({
@@ -66,38 +66,42 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                 <List>
                     {isLoggedIn ? (
                         <>
-                            <ListItem button component={Link} to="/home">
+                            <ListItem button component={Link} to="/home" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <IconButton sx={iconStyle(location.pathname === '/home')}>
                                     <HomeIcon />
                                 </IconButton>
+                                <Typography sx={textStyle(location.pathname === '/home')}>Home</Typography>
                             </ListItem>
-                            <ListItem button component={Link} to="/alerts">
+
+                            <ListItem button component={Link} to="/alerts" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <IconButton sx={iconStyle(location.pathname === '/alerts')}>
                                     <NotificationsIcon />
                                 </IconButton>
+                                <Typography sx={textStyle(location.pathname === '/alerts')}>Alerts</Typography>
                             </ListItem>
-                            <ListItem button component={Link} to="/forums">
+
+                            <ListItem button component={Link} to="/forums" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <IconButton sx={iconStyle(location.pathname === '/forums')}>
                                     <ForumIcon />
                                 </IconButton>
+                                <Typography sx={textStyle(location.pathname === '/forums')}>Forums</Typography>
                             </ListItem>
-                            <ListItem button component={Link} to="/courses">
+
+                            <ListItem button component={Link} to="/courses" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <IconButton sx={iconStyle(location.pathname === '/courses')}>
                                     <ClassIcon />
                                 </IconButton>
+                                <Typography sx={textStyle(location.pathname === '/courses')}>Courses</Typography>
                             </ListItem>
                         </>
                     ) : (
                         <>
-                            <ListItem button component={Link} to="/login">
-                                <Typography sx={textStyle(location.pathname === '/login')}>
-                                    Login
-                                </Typography>
+                            <ListItem button component={Link} to="/login" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <Typography sx={textStyle(location.pathname === '/login')}>Login</Typography>
                             </ListItem>
-                            <ListItem button component={Link} to="/signup">
-                                <Typography sx={textStyle(location.pathname === '/signup')}>
-                                    Signup
-                                </Typography>
+
+                            <ListItem button component={Link} to="/signup" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <Typography sx={textStyle(location.pathname === '/signup')}>Signup</Typography>
                             </ListItem>
                         </>
                     )}
@@ -105,7 +109,7 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
             </Box>
 
             {isLoggedIn && (
-                <Box sx={{ marginBottom: '20px' }}>
+                <Box sx={{ marginBottom: '25px' }}>
                     <IconButton
                         aria-controls="settings-menu"
                         aria-haspopup="true"
@@ -115,6 +119,7 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                     >
                         <SettingsIcon />
                     </IconButton>
+                    {/* <Typography sx={textStyle(false)}>Settings</Typography> */}
                     <Menu
                         id="settings-menu"
                         anchorEl={anchorEl}
