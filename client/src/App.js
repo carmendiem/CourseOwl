@@ -6,6 +6,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import config from './config.js';
 
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -22,14 +26,14 @@ function App() {
   }, []);
 
   return (
-    <div>
-      {/* Add the navbar component */}
-      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-      {/* Main content wrapper */}
-      <div style={{ marginLeft: '100px', padding: '20px' }}>
-        <Rout setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <div>
+        <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+        <div style={{ marginLeft: '100px', padding: '20px' }}>
+          <Rout setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
+        </div>
       </div>
-    </div>
+    </LocalizationProvider>
   );
 }
 
