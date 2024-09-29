@@ -10,7 +10,7 @@ export const signupUser = async (req, res) => {
             return res.status(400).json({ error: "Email already exists" });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new UserModel({ name, email, password: hashedPassword });
+        const newUser = new UserModel({ name, email, password: hashedPassword, courses: [] });
         const savedUser = await newUser.save();
         res.status(201).json(savedUser);
     } catch (error) {
@@ -26,7 +26,7 @@ export const loginUser = async (req, res) => {
         if (user) {
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (passwordMatch) {
-                req.session.user = { id: user._id, name: user.name, email: user.email };
+                req.session.user = { id: user._id, name: user.name, email: user.email, courses: user.courses};
                 res.json("Success");
             } else {
                 res.status(401).json("Password doesn't match");
