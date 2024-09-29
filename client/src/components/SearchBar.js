@@ -28,7 +28,7 @@ async function fetchCourses(searchTerm, selectedDays, startTime, endTime) {
     }
 }
 
-export function SearchBar() {
+export function SearchBar({user}) {
     const [courseResults, setCourseResults] = useState([])
     const [searchTerm, setSearchTerm] = useState("");
     const [searchAlert, setSearchAlert] = useState("");
@@ -124,7 +124,7 @@ export function SearchBar() {
                             />
                             <TimePicker
                                 label="Ends before"
-                                timezone="America/New_York"
+                                // timezone="America/New_York"
                                 value={selectedEndsBeforeTime}
                                 onChange={(newValue) => setSelectedEndsBeforeTime(newValue)}
                                 sx={{
@@ -165,7 +165,7 @@ export function SearchBar() {
                         slides={courseResults.map((course) =>
                         (
                             //Children 
-                            <CourseCard course={course}> </CourseCard>
+                            <CourseCard user={user} course={course}> </CourseCard>
                             //Children 
                         )
                         )}>

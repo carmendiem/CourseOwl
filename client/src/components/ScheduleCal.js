@@ -3,7 +3,9 @@ import { useState, useRef, useEffect } from "react";
 import { styled } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Icon } from '@mui/material';
+import { IconButton } from '@mui/material';
+import { Close, Delete } from '@mui/icons-material';
 import { CalCourseCard } from "./CalCourseCard";
 import config from '../config';
 import axios from "axios";
@@ -43,7 +45,7 @@ export function CalendarView({user}) {
     const topCoord = "450px"
     const colWidth = 100/6; // 100% / 6 days
     const [calWidth, setCalWidth] = useState(0);
-    const [userCourses, setUserCourses] = useState([]);
+    // const [userCourses, setUserCourses] = useState([]);
     const [courseObjs, setCourseObjs] = useState([]);
 
     var calGrid = [];
@@ -84,7 +86,7 @@ export function CalendarView({user}) {
         try{
             const res = await axios.get(`${config.API_BASE_URL}/calendar/user?userId=${userId}`);
             const data = await res.data;
-            setUserCourses(data);
+            // setUserCourses(data);
             return data;
         }catch(error){
             console.log("error fetching courses: ", error);
@@ -109,27 +111,20 @@ export function CalendarView({user}) {
             }
         }
         setCourseObjs(courseData);
+        console.log("courseData: ", courseData);
     };
 
     const refreshCourses = async () => {
         const courses = await getCourses();
-        if (courses && courses.length > 0) {
+        if (courses && courses.length >= 0) {
             await getCourseInfo(courses);
         }
     }
 
-    const addCourse = async (newCourseId) => {
+    const deleteCourse = async (courseId) => {
+        const email = user.email;
         try {
-            //post request here using newCourseId
-            await refreshCourses();
-        } catch (error) {
-            console.log("Error adding course: ", error)
-        }
-    }
-
-    const deleteCourse = async (newCourseId) => {
-        try {
-            //post request here using newCourseId
+            await axios.post(`${config.API_BASE_URL}/calendar/deleteCourse`, {email, courseId}, {withCredentials: true});
             await refreshCourses();
         } catch (error) {
             console.log("Error deleting course: ", error)
@@ -217,7 +212,7 @@ export function CalendarView({user}) {
     }, [])
 
     useEffect(() => {
-        if (courseObjs.length > 0) {
+        if (courseObjs.length >= 0) {
             makeCourses(); 
         }
     }, [courseObjs])
@@ -235,11 +230,11 @@ export function CalendarView({user}) {
             setCalWidth(window.innerWidth);
             //getCourses();
             // getCourseInfo();
-            if (userCourses.length > 0){
-                //smakeCourses();
-            }
-            // makeCourses();
-            console.log("resize here");
+            // if (userCourses.length > 0){
+            //     //smakeCourses();
+            // }
+            // // makeCourses();
+            // console.log("resize here");
         };
         window.addEventListener('resize', handleResize);
 
@@ -251,6 +246,7 @@ export function CalendarView({user}) {
     }, []);
 
     const [open, setOpen] = useState(false);
+    const [openDeleteConfPopup, setOpenDeleteConfPopup] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState(null);
 
     const handleCardClick = (course) => {
@@ -261,6 +257,21 @@ export function CalendarView({user}) {
     const handleClose = () => {
         setOpen(false);
         setSelectedCourse(null);
+    };
+
+    const handleDeleteConfirmationPopup = () => {
+        setOpenDeleteConfPopup(true);
+    };
+
+    const handleDeleteConfPopupClose = () => {
+        setOpenDeleteConfPopup(false);
+        setSelectedCourse(null);
+    };
+
+    const handleDelete = (course) => {
+        deleteCourse(course._id);
+        handleDeleteConfPopupClose();
+        handleClose();
     };
 
     return (
@@ -281,6 +292,16 @@ export function CalendarView({user}) {
                 {selectedCourse ? (
                     <>
                     <DialogTitle>{`${selectedCourse.course_name || 'not found'}`}</DialogTitle>
+                    <IconButton onClick={handleClose}
+                        sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: 8,
+                            color: (theme) => theme.palette.grey[500],
+                        }}
+                    >
+                        <Close />
+                    </IconButton>    
                     <DialogContent>
                             <div>
                                 {console.log("selectedCourse: ", selectedCourse)}
@@ -291,12 +312,24 @@ export function CalendarView({user}) {
                                 <Typography variant="h6">{`Type: ${selectedCourse.type} | Credit Hours: ${selectedCourse.credit}`}</Typography>
                             </div>
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleClose} color="primary">
-                            Close
-                        </Button>
-                    </DialogActions>
+                    <IconButton onClick={handleDeleteConfirmationPopup} color="secondary"
+                        sx={{paddingBottom: 2, paddingLeft: 2, paddingRight: 2}}
+                    >
+                            Remove Course
+                            <Delete />
+                        </IconButton>
                     </>
+                ) : null}
+            </Dialog>
+            <Dialog open={openDeleteConfPopup} onClose={handleDeleteConfPopupClose}>
+                {selectedCourse ? (
+                <>
+                    <DialogTitle>{`Confirm Removal of ${selectedCourse.course_name || 'not found'}`}</DialogTitle>
+                    <DialogActions>
+                        <Button onClick={() => handleDelete(selectedCourse)} color="secondary">Remove</Button>
+                        <Button onClick={handleDeleteConfPopupClose}>Cancel</Button>
+                    </DialogActions>
+                </>
                 ) : null}
             </Dialog>
         </div>
