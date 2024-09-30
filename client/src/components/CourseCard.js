@@ -44,10 +44,10 @@ export function CourseCard({user, course}) {
           </IconButton>  
         <CardContent>
           <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 18, mb: 2, textAlign:"left"}}>
-           {course.course_name}
+           {course.course_code}
           </Typography>
           <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 2, textAlign:"left" }}>
-           {course.credit} Credits | {course.professor}
+            {course.Schedule_Type} | {course.Instructors[0].name}
           </Typography>
         </CardContent>
       </Card>
