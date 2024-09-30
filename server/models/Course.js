@@ -6,40 +6,41 @@ const courseSchema = new Schema({
     course_name: {
         type: String
     },
-    department: {
+    course_code: {
         type: String
     },
-    professor: {
+    Type: {
         type: String
     },
-    date: {
+    Time: {
         type: String
     },
-    daysOfWeek: {
+    Days: {
         type: String
     },
-    time: {
+    Where: {
         type: String
     },
-    credit: {
-        type: String
+    'Date Range': {
+        type: String // Use exact name as it appears in MongoDB
     },
-    class_size: {
+    'Schedule Type': {
+        type: String // Use exact name as it appears in MongoDB
+    },
+    Instructors: [{
+        name: String,
+        email: String,
+        //alias: String,
+        grade_distribution: {
+            type: Schema.Types.Mixed, 
+            default: {}
+        }
+    }],
+    credit_hours: {
         type: Number
-    },
-    location: {
-        type: String
-    },
-    prerequisites: {
-        type: [String]
-    },
-    grade_distribution: {
-        type: Number
-    },
-    description: {
-        type: String
     }
-}, { collection: 'course' });
+    
+}, { collection: 'course_info' });
 
 const Course = mongoose.models.Course || mongoose.model('Course', courseSchema);
 export default Course;

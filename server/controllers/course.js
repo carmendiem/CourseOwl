@@ -19,10 +19,11 @@ export default async function getCoursesByName(req,res){
         console.log(newEndString)
 
         const courses = await Course.find({
-            $or: [
+           /* $or: [
             { course_name: { $regex: new RegExp(name, 'i') } },  // find classes w/ name that start with given searchterm
-            { professor: { $regex: new RegExp(name, 'i') }}
-            ]
+           // { Instructors.name: { $regex: new RegExp(name, 'i') }}
+            ]*/
+           course_code: { $regex: new RegExp(name, 'i') }
         });
         
         if (!courses || courses.length === 0) {
