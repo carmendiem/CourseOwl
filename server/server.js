@@ -8,12 +8,14 @@ import userRoutes from "./routes/user.js";
 import courses from "./routes/course.js";
 import calendarRoutes from "./routes/calendar.js";
 
-const PORT = process.env.PORT || 5000;
+import courseRoutes from './routes/courseRoutes.js';
+
+const PORT = process.env.PORT || 5001;
 const app = express();
 
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'http://localhost:3001',
     credentials: true
 }));
 app.use(express.json());
@@ -32,6 +34,9 @@ app.use(session({
 app.use("/user", userRoutes); // Use the user routes
 app.use("/course", courses);
 app.use("/calendar", calendarRoutes);
+
+
+app.use('/api/course', courseRoutes);
 
 // Start the server
 app.listen(PORT, () => {
