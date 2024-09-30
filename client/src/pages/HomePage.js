@@ -40,7 +40,7 @@ function Home() {
     }
 
     return (
-        <><SearchBar />
+        <><SearchBar user={user}/>
             <Box sx={{ width: '100%' }}>
                 {/* Tabs for selecting different components */}
                 <Tabs

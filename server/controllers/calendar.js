@@ -39,4 +39,44 @@ export const getCourseInfo = async (req, res) => {
     }
 }
 
+export const removeUserCourse = async (req, res) => {
+    try {
+        const {email, courseId} = req.body;
+        // console.log("email", email, "courseId", courseId);
+
+        const user = await UserModel.findOneAndUpdate({email: email}, {$pull: {courses: courseId}}, {new: true});
+        if (user != null) {
+            return res.json({ status: 'Course removed' });
+        } else {
+            return res.status(404).json({ status: 'User not found' });
+        }
+    } catch (error) {
+        console.log("Error in removeUserCourse:", error);
+        res.status(400).json({ status: 'Error removing course' });
+    }
+}
+
+export const addUserCourse = async (req, res) => {
+    try {
+        const {email, courseId} = req.body;
+        // console.log("email", email, "courseId", courseId);
+        const user1 = await UserModel.findOne({email: email});
+        const courses = user1.courses;
+        const user = await UserModel.findOneAndUpdate({email: email}, {$addToSet: {courses: courseId}}, {upsert: true, new: true});
+        if (user != null) {
+            console.log("og", courses.length, "new", user.courses.length);
+            if (courses.length == user.courses.length) {
+                return res.json({ status: 'Course already added' });
+            } else {
+                return res.json({ status: 'Course added'});
+            }
+        } else {
+            return res.status(404).json({ status: 'User not found' });
+        }
+    } catch (error) {
+        console.log("Error in addUserCourse:", error);
+        res.status(400).json({ status: 'Error removing course' });
+    }
+}
+
 

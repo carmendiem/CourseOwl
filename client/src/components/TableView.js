@@ -6,6 +6,8 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import { Close, Delete } from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton } from '@mui/material';
 import axios from "axios";
 import { useState, useEffect } from "react";
 import config from '../config';
@@ -41,17 +43,43 @@ export function TableView({user}) {
         setCourseObjs(courseData);
     };
 
+    const fetchCoursesAndInfo = async () => {
+      const courses = await getCourses();
+      if (courses && courses.length >= 0) 
+          await getCourseInfo(courses);  
+    } 
+
     useEffect(() => {
-        const fetchCoursesAndInfo = async () => {
-            const courses = await getCourses();
-            if (courses && courses.length > 0) 
-                await getCourseInfo(courses);  
-        }
-        
         fetchCoursesAndInfo();
     }, [])
 
+    const [openDeleteConfPopup, setOpenDeleteConfPopup] = useState(false);
+    const [selectedCourse, setSelectedCourse] = useState(null);
+    const handleDeleteConfirmationPopup = (course) => {
+      setSelectedCourse(course);
+      setOpenDeleteConfPopup(true);
+    };
+    const handleDeleteConfPopupClose = () => {
+      setOpenDeleteConfPopup(false);
+      setSelectedCourse(null);
+    };
+    const handleDelete = (course) => {
+      deleteCourse(course._id);
+      handleDeleteConfPopupClose();
+  };
+  const deleteCourse = async (courseId) => {
+    const email = user.email;
+    try {
+        await axios.post(`${config.API_BASE_URL}/calendar/deleteCourse`, {email, courseId}, {withCredentials: true});
+        await fetchCoursesAndInfo();
+    } catch (error) {
+        console.log("Error deleting course: ", error)
+    }
+}
+
+
     return (
+      <>
         <TableContainer component={Paper}>
       {courseObjs.length === 0 ? (
         <p>Loading courses...</p> // Optional: show a loading message
@@ -79,11 +107,28 @@ export function TableView({user}) {
                 <TableCell align="right">{course.time || 'N/A'}</TableCell>
                 <TableCell align="right">{course.location || 'N/A'}</TableCell>
                 <TableCell align="right">{course.professor || 'N/A'}</TableCell>
+                <TableCell align="right">
+                  <IconButton onClick={() => handleDeleteConfirmationPopup(course)}>
+                    <Delete />
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
       </TableContainer>
+      <Dialog open={openDeleteConfPopup} onClose={handleDeleteConfPopupClose}>
+          {selectedCourse ? (
+          <>
+              <DialogTitle>{`Confirm Removal of ${selectedCourse.course_name || 'not found'}`}</DialogTitle>
+              <DialogActions>
+                  <Button onClick={() => handleDelete(selectedCourse)} color="secondary">Remove</Button>
+                  <Button onClick={handleDeleteConfPopupClose}>Cancel</Button>
+              </DialogActions>
+          </>
+          ) : null}
+      </Dialog>
+      </>
     );
 }
