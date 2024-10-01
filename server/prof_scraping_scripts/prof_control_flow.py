@@ -1,6 +1,6 @@
-from alias_professors import get_aliases 
-from prof_scraping import search_all_professors
-from rate_my_prof_scraping import RMPProfessor
+from server.prof_scraping_scripts.alias_professors import get_aliases 
+from server.prof_scraping_scripts.prof_scraping import search_all_professors
+from server.prof_scraping_scripts.rate_my_prof_scraping import RMPProfessor
 from pymongo import MongoClient
 import os
 
