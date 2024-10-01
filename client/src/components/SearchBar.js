@@ -159,7 +159,7 @@ export function SearchBar({user}) {
                     </Grid></Box>
                 </Grid>
             </Box>
-            <div >
+            <div style={{marginInline: "auto", maxWidth: "95%"}} >
                 {courseResults && courseResults.length > 0 ? (
                     <SwiperComponent
                         slides={courseResults.map((course) =>
