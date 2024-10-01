@@ -47,7 +47,7 @@ export function CourseCard({user, course}) {
            {course.course_code}
           </Typography>
           <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 2, textAlign:"left" }}>
-            {course.Schedule_Type} | {course.Instructors[0].name}
+            {/* {course.Schedule_Type} | {course.Instructors[0].name} */}
           </Typography>
         </CardContent>
       </Card>
