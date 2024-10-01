@@ -7,8 +7,9 @@ import "dotenv/config";
 import userRoutes from "./routes/user.js";
 import courses from "./routes/course.js";
 import calendarRoutes from "./routes/calendar.js";
+import professorRoutes from './routes/professor.js';
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const app = express();
 
 // Middleware
@@ -32,6 +33,7 @@ app.use(session({
 app.use("/user", userRoutes); // Use the user routes
 app.use("/course", courses);
 app.use("/calendar", calendarRoutes);
+app.use("/professor", professorRoutes);
 
 // Start the server
 app.listen(PORT, () => {
