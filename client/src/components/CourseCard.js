@@ -30,8 +30,8 @@ export function CourseCard({user, course}) {
 }
 
     return(
-      <>
-        <Card>
+      <div style={{minWidth: "300px"}}>
+        <Card sx={{ position: 'relative'}}>
           <IconButton 
             onClick={()=>{addCourse()}}
               sx={{
@@ -43,17 +43,23 @@ export function CourseCard({user, course}) {
               <Add />
           </IconButton>  
         <CardContent>
-          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 18, mb: 2, textAlign:"left"}}>
+          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 18, mb: 1, textAlign:"left"}}>
            {course.course_code}
           </Typography>
-          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 2, textAlign:"left" }}>
-            {/* {course.Schedule_Type} | {course.Instructors[0].name} */}
+          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign:"left" }}>
+             {course.credit_hours} Credits | {course.Instructors.map(instructor => instructor.name).join(', ')}
+          </Typography>
+          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign:"left" }}>
+           {course['Schedule Type']} | {course.Days} | {course.Time}
+          </Typography>
+          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign:"left" }}>
+           {course.Where}
           </Typography>
         </CardContent>
       </Card>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Course already added!</DialogTitle>
       </Dialog>
-      </>
+      </div>
     );
 }
