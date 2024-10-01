@@ -104,8 +104,8 @@ export function TableView({user}) {
                   {course.course_name}
                 </TableCell>
                 <TableCell align="right">{course.availability || 'N/A'}</TableCell>
-                <TableCell align="right">{course.time || 'N/A'}</TableCell>
-                <TableCell align="right">{course.location || 'N/A'}</TableCell>
+                <TableCell align="right">{course.Time || 'N/A'}</TableCell>
+                <TableCell align="right">{course.Where || 'N/A'}</TableCell>
                 <TableCell align="right">{course.professor || 'N/A'}</TableCell>
                 <TableCell align="right">
                   <IconButton onClick={() => handleDeleteConfirmationPopup(course)}>

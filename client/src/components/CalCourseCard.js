@@ -4,9 +4,10 @@ import { Typography } from '@mui/material'
 
 export function CalCourseCard({course, style, sx, size, onClick}) {
 
-    const courseString = course.course_name.split("-");
-    const courseName = courseString[0].trim();
-    const courseNum = courseString[1].trim();
+    // const courseString = course.course_name.split("-");
+    // const courseName = courseString[0].trim();
+    // const courseNum = courseString[1].trim();
+    const courseCode = course.course_code;
     return(
         <Card
             size={size}
@@ -16,6 +17,8 @@ export function CalCourseCard({course, style, sx, size, onClick}) {
                 left: sx.left,
                 zIndex: sx.zIndex,
                 backgroundColor: sx.backgroundColor,
+                borderRadius: 2,
+                border: '1px solid gray',
             }} 
             style={{
                 width: style.width,
@@ -23,9 +26,9 @@ export function CalCourseCard({course, style, sx, size, onClick}) {
             }}
         >
             <CardActionArea onClick={onClick}>
-                <CardContent sx={{height: style.height ,width: '100%', padding: 1, alignContent: 'center'}}>
+                <CardContent sx={{height: style.height, width: '100%', padding: 1, alignContent: 'center'}}>
                     <Typography sx={{ color: 'text.primary', fontSize: 14, mb: 2, textAlign: 'left', paddingleft: '10%'}}>
-                        {courseNum}
+                        {courseCode}
                     </Typography>
                 </CardContent>
             </CardActionArea>
