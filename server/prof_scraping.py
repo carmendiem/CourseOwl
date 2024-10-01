@@ -102,15 +102,17 @@ class ProfScraper:
 
 def search_all_professors(prof_aliases):
     prof_info = {}
-    
     # Set up MongoDB connection
-    client = MongoClient('mongodb+srv://kgovil1234:mSLNfQXEPFLKOmTw@gaanducluster.wtpdb.mongodb.net/')  # Adjust the URI as needed
+    client = MongoClient('mongodb+srv://carmendiem2003:L0w7i3EeU1rlrx4v@courseowl.sne0b.mongodb.net/')  # Adjust the URI as needed
     db = client['course_data']
     collection = db['professors3']
     collection.create_index('ALIAS', unique=True)
 
     scraper = ProfScraper()
     for alias in prof_aliases:
+        if alias is None or collection.find_one({'ALIAS': alias}):
+            print(f"Alias already processed or is None; skipping.")
+            continue  # Skip to the next alias if already processed
         details = scraper.search_professor(alias)
         if details:
             prof_info[alias] = details

@@ -29,78 +29,6 @@ def insert_prof_info():
     aliases = get_aliases()
     search_all_professors(aliases)
 
-
-# def get_all_info():
-#     aliases = get_aliases()
-#     all_req_info = {}
-
-#     # Connect to MongoDB
-#     client = MongoClient('mongodb+srv://kgovil1234:mSLNfQXEPFLKOmTw@gaanducluster.wtpdb.mongodb.net/')  # Replace with your MongoDB URI if different
-#     db = client['course_data']
-#     professors_collection = db['professors3']
-    
-#     for alias in aliases:
-#         # Fetch the professor document
-#         professor_doc = professors_collection.find_one({'ALIAS': alias})
-#         if not professor_doc:
-#             print(f"No document found for alias '{alias}'. Skipping.")
-#             continue
-
-#         # Check if 'rating' field already exists
-#         if 'rating' in professor_doc and professor_doc['rating'] is not None:
-#             print(f"Professor '{professor_doc.get('NAME', '')}' already has a rating. Skipping.")
-#             continue
-
-#         name = professor_doc.get("NAME", "")
-#         if not name:
-#             print(f"Professor record with alias '{alias}' has no 'NAME' field.")
-#             continue
-
-#         # Split the name into first and last names
-#         parts = name.strip().split()
-#         first_name = parts[0]
-#         last_name = parts[-1] if len(parts) > 1 else ''
-
-#         try:
-#             # Instantiate the RMPProfessor class to scrape data
-#             professor = RMPProfessor(first_name, last_name)
-#             # Collect the required information
-#             all_req_info[alias] = {
-#                 'tags': dict(professor.tag_frequency),
-#                 'rating': professor.professor_rating,
-#                 'positive_percentage': professor.positive_percentage,
-#                 'negative_percentage': professor.negative_percentage,
-#                 'total_reviews': professor.total_reviews
-#             }
-#         except Exception as e:
-#             print(f"Error processing professor {first_name} {last_name}: {e}")
-#             # Store None for tags and ratings if an error occurs
-#             all_req_info[alias] = {
-#                 'tags': None,
-#                 'rating': None,
-#                 'positive_percentage': None,
-#                 'negative_percentage': None,
-#                 'total_reviews': None
-#             }
-
-#         # Prepare the document to update in MongoDB
-#         update_fields = all_req_info[alias]
-#         # update_fields['alias'] = alias  # Ensure the alias is included
-
-#         # Insert or update the professor document in MongoDB
-#         try:
-#             professors_collection.update_one(
-#                 {'ALIAS': alias},
-#                 {'$set': update_fields}
-#             )
-#             print(f"Updated professor '{name}' with new data.")
-#         except Exception as e:
-#             print(f"Error updating professor '{name}' in MongoDB: {e}")
-
-#     # Close the MongoDB connection
-#     client.close()
-
-
 def get_all_info():
     aliases = get_aliases()
     all_req_info = {}
@@ -111,9 +39,9 @@ def get_all_info():
     total_updated = 0  # Counter for the current run
 
     # Connect to MongoDB
-    client = MongoClient('mongodb+srv://kgovil1234:mSLNfQXEPFLKOmTw@gaanducluster.wtpdb.mongodb.net/')  # Replace with your MongoDB URI if different
+    client = MongoClient('mongodb+srv://carmendiem2003:L0w7i3EeU1rlrx4v@courseowl.sne0b.mongodb.net/')  # Replace with your MongoDB URI if different
     db = client['course_data']
-    professors_collection = db['professors3']
+    professors_collection = db['professors5']
     
     for alias in aliases:
         # Fetch the professor document
@@ -140,14 +68,26 @@ def get_all_info():
         try:
             # Instantiate the RMPProfessor class to scrape data
             professor = RMPProfessor(first_name, last_name)
-            # Collect the required information
-            all_req_info[alias] = {
-                'tags': dict(professor.tag_frequency),
-                'rating': professor.professor_rating,
-                'positive_percentage': professor.positive_percentage,
-                'negative_percentage': professor.negative_percentage,
-                'total_reviews': professor.total_reviews
-            }
+            # Check if the professor was not found and assign values accordingly
+            if professor.professor_rating == "Professor not found":
+                all_req_info[alias] = {
+                    'tags': None,
+                    'rating': "Professor not found",
+                    'positive_percentage': None,
+                    'negative_percentage': None,
+                    'total_reviews': None,
+                    'href': None
+                }
+            else:
+                # Collect the required information if professor is found
+                all_req_info[alias] = {
+                    'tags': dict(professor.tag_frequency),
+                    'rating': professor.professor_rating,
+                    'positive_percentage': professor.positive_percentage,
+                    'negative_percentage': professor.negative_percentage,
+                    'total_reviews': professor.total_reviews,
+                    'href': professor.professor_href
+                }
         except Exception as e:
             print(f"Error processing professor {first_name} {last_name}: {e}")
             # Store None for tags and ratings if an error occurs
@@ -156,13 +96,12 @@ def get_all_info():
                 'rating': None,
                 'positive_percentage': None,
                 'negative_percentage': None,
-                'total_reviews': None
+                'total_reviews': None,
+                'href': None
             }
 
         # Prepare the document to update in MongoDB
         update_fields = all_req_info[alias]
-        # Optionally, ensure the alias is included if needed
-        # update_fields['alias'] = alias
 
         # Insert or update the professor document in MongoDB
         try:
@@ -191,5 +130,5 @@ def get_all_info():
 
 # Call the function
 if __name__ == "__main__":
+    # insert_prof_info()
     get_all_info()
-
