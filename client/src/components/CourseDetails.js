@@ -100,9 +100,9 @@ function CourseDetails() {
                   }}
                 >
                   <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                      {/* Left Side: Course Information */}
-                      <Box flex="1">
+                    <Box display="block">
+                      {/* Course Information */}
+                      <Box>
                         <Typography variant="h5" component="div">
                           {cleanCourseName(course.course_name)} {/* Cleaned course name */}
                         </Typography>
@@ -131,9 +131,9 @@ function CourseDetails() {
                         </Typography>
                       </Box>
 
-                      {/* Right Side: Grade Distribution */}
+                      {/* Grade Distribution - Moved Below Course Info */}
                       {course.Instructors.some(instructor => instructor.grade_distribution) && (
-                        <Box flex="1" maxWidth="500px" minWidth="300px" ml={3}>
+                        <Box width="100%" mt={3}>
                           {course.Instructors.map((instructor, idx) =>
                             instructor.grade_distribution && Object.keys(instructor.grade_distribution).length > 0 ? (
                               <ResponsiveContainer key={idx} width="100%" height={300}>
@@ -221,8 +221,8 @@ function CourseDetails() {
             ))}
           </Grid>
 
-          {/* Show "View More" button if there are more labs/recitations to show */}
-          {visibleLabsRecitations < labsRecitations.length && (
+            {/* Show "View More" button if there are more labs/recitations to show */}
+            {visibleLabsRecitations < labsRecitations.length && (
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <Button variant="contained" color="primary" onClick={loadMore}>
                 View More
@@ -238,3 +238,4 @@ function CourseDetails() {
 }
 
 export default CourseDetails;
+
