@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom'; // Link is imported to navigate to the professor's page
+import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import config from '../config';
 import { Card, CardContent, Typography, Grid, Box, Button } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label } from 'recharts';
 
 function CourseDetails() {
-  const { course_code } = useParams();  // Get the course_code from the URL
-  const [courses, setCourses] = useState([]);  // Store all courses with the same course_code
-  const [loading, setLoading] = useState(true);  // Loading state
-  const [error, setError] = useState(null);  // Error state
-  const [visibleLabsRecitations, setVisibleLabsRecitations] = useState(6);  // Controls how many non-lecture classes are shown
+  const { course_code } = useParams();
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [visibleLabsRecitations, setVisibleLabsRecitations] = useState(6);
 
-  // Fetch courses with the same course_code when the component loads
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -30,41 +29,34 @@ function CourseDetails() {
     fetchCourses();
   }, [course_code]);
 
-  // Organize courses into "Lectures" and "Labs, Recitations, PSOs"
   const lectures = courses.filter(course => course['Schedule Type'] === 'Lecture');
   const labsRecitations = courses.filter(course => course['Schedule Type'] !== 'Lecture');
 
-  // Sort lectures so that those with grade distribution come first
   const sortedLectures = [...lectures].sort((a, b) => {
     const aHasGrades = a.Instructors.some(instructor => instructor.grade_distribution && Object.keys(instructor.grade_distribution).length > 0);
     const bHasGrades = b.Instructors.some(instructor => instructor.grade_distribution && Object.keys(instructor.grade_distribution).length > 0);
-    return bHasGrades - aHasGrades;  // Sort by whether they have grade distribution
+    return bHasGrades - aHasGrades;
   });
 
-  // Handle loading state
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  // Handle error state
   if (error) {
     return <div>{error}</div>;
   }
 
-  // Handle case where no courses are found
   if (courses.length === 0) {
     return <div>No courses found for this course code</div>;
   }
 
-  // Function to format grade data for recharts (multiplying values by 100 to represent percentages)
   const formatGradeData = (gradeDistribution) => {
     return Object.keys(gradeDistribution).map(grade => ({
       name: grade,
-      value: gradeDistribution[grade] * 100  // Convert to percentage
+      value: gradeDistribution[grade] * 100
     }));
   };
 
-  // Function to remove everything after "Link" in the course name
   const cleanCourseName = (name) => {
     const linkIndex = name.indexOf('Link');
     if (linkIndex !== -1) {
@@ -73,7 +65,6 @@ function CourseDetails() {
     return name;
   };
 
-  // Function to load more labs/recitations/PSOs
   const loadMore = () => {
     setVisibleLabsRecitations(prev => prev + 6);
   };
@@ -82,7 +73,6 @@ function CourseDetails() {
     <div style={{ backgroundColor: '#f0f0f0', padding: '2rem' }}>
       <h1 style={{ color: '#333333' }}>Courses for {course_code}</h1>
 
-      {/* Conditionally render the Lectures section */}
       {sortedLectures.length > 0 ? (
         <>
           <Typography variant="h4" gutterBottom>Lectures</Typography>
@@ -91,20 +81,19 @@ function CourseDetails() {
               <Grid item xs={12} key={index}>
                 <Card
                   sx={{
-                    boxShadow: 2,  // Default shadow
+                    boxShadow: 2,
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     '&:hover': {
-                      transform: 'scale(1.02)',  // Slight scale up on hover
-                      boxShadow: 6,  // Deeper shadow on hover
+                      transform: 'scale(1.02)',
+                      boxShadow: 6,
                     },
                   }}
                 >
                   <CardContent>
                     <Box display="block">
-                      {/* Course Information */}
                       <Box>
                         <Typography variant="h5" component="div">
-                          {cleanCourseName(course.course_name)} {/* Cleaned course name */}
+                          {cleanCourseName(course.course_name)}
                         </Typography>
                         <Typography color="textSecondary">
                           {course.Type} | {course.credit_hours} Credit Hours
@@ -117,7 +106,6 @@ function CourseDetails() {
                           Schedule Type: {course['Schedule Type']}
                         </Typography>
 
-                        {/* Display professor names without the list */}
                         <Typography variant="body2" sx={{ mt: 2 }}>
                           Instructors:{' '}
                           {course.Instructors.map((instructor, idx) => (
@@ -131,7 +119,6 @@ function CourseDetails() {
                         </Typography>
                       </Box>
 
-                      {/* Grade Distribution - Moved Below Course Info */}
                       {course.Instructors.some(instructor => instructor.grade_distribution) && (
                         <Box width="100%" mt={3}>
                           {course.Instructors.map((instructor, idx) =>
@@ -171,7 +158,6 @@ function CourseDetails() {
         <Typography variant="h6" sx={{ mt: 2 }}>No Lectures available for this course code</Typography>
       )}
 
-      {/* Conditionally render the Labs, Recitations, and PSOs section */}
       {labsRecitations.length > 0 ? (
         <>
           <Typography variant="h4" gutterBottom sx={{ mt: 4 }}>Labs, Recitations, and PSOs</Typography>
@@ -180,17 +166,17 @@ function CourseDetails() {
               <Grid item xs={12} sm={6} key={index}>
                 <Card
                   sx={{
-                    boxShadow: 2,  // Default shadow
+                    boxShadow: 2,
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     '&:hover': {
-                      transform: 'scale(1.02)',  // Slight scale up on hover
-                      boxShadow: 6,  // Deeper shadow on hover
+                      transform: 'scale(1.02)',
+                      boxShadow: 6,
                     },
                   }}
                 >
                   <CardContent>
                     <Typography variant="h5" component="div">
-                      {cleanCourseName(course.course_name)} {/* Cleaned course name */}
+                      {cleanCourseName(course.course_name)}
                     </Typography>
                     <Typography color="textSecondary">
                       {course.Type} | {course.credit_hours} Credit Hours
@@ -203,7 +189,6 @@ function CourseDetails() {
                       Schedule Type: {course['Schedule Type']}
                     </Typography>
 
-                    {/* Display professor names without the list */}
                     <Typography variant="body2" sx={{ mt: 2 }}>
                       Instructors:{' '}
                       {course.Instructors.map((instructor, idx) => (
@@ -221,7 +206,6 @@ function CourseDetails() {
             ))}
           </Grid>
 
-            {/* Show "View More" button if there are more labs/recitations to show */}
             {visibleLabsRecitations < labsRecitations.length && (
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <Button variant="contained" color="primary" onClick={loadMore}>
