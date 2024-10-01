@@ -11,7 +11,7 @@ export function Rout({ setIsLoggedIn, isLoggedIn }){
           <Route path="/home" element={<HomePage />} />
           <Route path="/signup" element={<Signup setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />} />
           <Route path="/" element={<HomePage />} />
-          <Route path="/course/:courseId" element={<CourseDetails />} />
+          <Route path="/course/:course_code" element={<CourseDetails />} />
         </Routes>
       );
 }

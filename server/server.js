@@ -36,7 +36,7 @@ app.use("/course", courses);
 app.use("/calendar", calendarRoutes);
 
 
-app.use('/api/course', courseRoutes);
+app.use('/course', courseRoutes);
 
 // Start the server
 app.listen(PORT, () => {
