@@ -66,7 +66,7 @@ export function SearchBar({user}) {
         };
 
         searchCourses();
-    }, [debouncedTerm]);
+    }, [debouncedTerm, selectedDays, selectedStartsAfterTime, selectedEndsBeforeTime]);
 
     return (
         <>
@@ -93,7 +93,7 @@ export function SearchBar({user}) {
                             <TimePicker
                                 label="Starts after"
                                 value={selectedStartsAfterTime}
-                                onChange={(newValue) => setSelectedStartsAfterTime(newValue)}
+                                onAccept={(newValue) => setSelectedStartsAfterTime(newValue)}
                                 sx={{
                                     svg: { color: '#daaa00' },
                                     input: { color: '#daaa00' },
@@ -126,7 +126,7 @@ export function SearchBar({user}) {
                                 label="Ends before"
                                 // timezone="America/New_York"
                                 value={selectedEndsBeforeTime}
-                                onChange={(newValue) => setSelectedEndsBeforeTime(newValue)}
+                                onAccept={(newValue) => setSelectedEndsBeforeTime(newValue)}
                                 sx={{
                                     svg: { color: '#daaa00' },
                                     input: { color: '#daaa00' },

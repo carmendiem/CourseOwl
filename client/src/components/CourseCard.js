@@ -6,6 +6,7 @@ import { Add } from '@mui/icons-material';
 import { Typography } from '@mui/material'
 import config from '../config';
 import axios from "axios";
+import { Link } from 'react-router-dom'
 
 export function CourseCard({user, course}) {
   const [open, setOpen] = useState(false);
@@ -32,6 +33,7 @@ export function CourseCard({user, course}) {
     return(
       <div style={{minWidth: "300px"}}>
         <Card sx={{ position: 'relative'}}>
+          <CardActionArea component={Link} to={`/course/${course.course_code}`}>
           <IconButton 
             onClick={()=>{addCourse()}}
               sx={{
@@ -42,24 +44,30 @@ export function CourseCard({user, course}) {
           >
               <Add />
           </IconButton>  
-        <CardContent>
-          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 18, mb: 1, textAlign:"left"}}>
-           {course.course_code}
-          </Typography>
-          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign:"left" }}>
-             {course.credit_hours} Credits | {course.Instructors.map(instructor => instructor.name).join(', ')}
-          </Typography>
-          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign:"left" }}>
-           {course['Schedule Type']} | {course.Days} | {course.Time}
-          </Typography>
-          <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign:"left" }}>
-           {course.Where}
-          </Typography>
-        </CardContent>
-      </Card>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Course already added!</DialogTitle>
-      </Dialog>
+          <CardContent>
+            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 18, mb: 1, textAlign: "left" }}>
+              {course.course_code}
+            </Typography>
+            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign: "left" }}>
+              {course.credit_hours} Credits | {course.Instructors.map((instructor, index) => (
+                <span key={index}>
+                  <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
+                  {index < course.Instructors.length - 1 ? ', ' : ''}
+                </span>
+              ))}
+            </Typography>
+            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign: "left" }}>
+              {course['Schedule Type']} | {course.Days ? course.Days : "N/A"} | {course.Time ? course.Time : "N/A"}
+            </Typography>
+            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign: "left" }}>
+              {course.Where}
+            </Typography>
+          </CardContent>
+          </CardActionArea>
+        </Card>
+        <Dialog open={open} onClose={handleClose}>
+          <DialogTitle>Course already added!</DialogTitle>
+        </Dialog>
       </div>
     );
 }
