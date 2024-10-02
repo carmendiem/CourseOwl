@@ -9,6 +9,8 @@ import courses from "./routes/course.js";
 import calendarRoutes from "./routes/calendar.js";
 import professorRoutes from './routes/professor.js';
 
+import courseRoutes from './routes/courseRoutes.js';
+
 const PORT = process.env.PORT || 5000;
 const app = express();
 
@@ -34,6 +36,9 @@ app.use("/user", userRoutes); // Use the user routes
 app.use("/course", courses);
 app.use("/calendar", calendarRoutes);
 app.use("/professor", professorRoutes);
+
+
+app.use('/course', courseRoutes);
 
 // Start the server
 app.listen(PORT, () => {

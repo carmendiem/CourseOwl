@@ -16,12 +16,15 @@ export const SwiperComponent = ({slides}) => {
           // install Swiper modules
           modules={[Navigation, A11y, Grid]}
                                      slidesPerView={3} // Number of courses to show per page
+                                     
                                       grid={{
                                         rows: 2, // 2 rows per slide
                                         fill: "row"
                                       }}
+                                      spaceBetween={20}
                                       className='mySwiper'
                                      navigation
+                                    
                                      slidesPerGroup={3}
         >
             {slides.map((slide, index)=> (<SwiperSlide key={index }>{slide}</SwiperSlide>))

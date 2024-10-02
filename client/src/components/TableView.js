@@ -15,6 +15,7 @@ import config from '../config';
 export function TableView({user}) {
     const [userCourses, setUserCourses] = useState([]);
     const [courseObjs, setCourseObjs] = useState([]);
+    const [searchAlert, setSearchAlert] = useState("");
 
     const getCourses = async () => {
         const userId = user.id;
@@ -44,9 +45,11 @@ export function TableView({user}) {
     };
 
     const fetchCoursesAndInfo = async () => {
+      setSearchAlert("Loading courses..")
       const courses = await getCourses();
       if (courses && courses.length >= 0) 
           await getCourseInfo(courses);  
+      setSearchAlert("Add a course to begin scheduling!")
     } 
 
     useEffect(() => {
@@ -77,12 +80,11 @@ export function TableView({user}) {
     }
 }
 
-
     return (
       <>
         <TableContainer component={Paper}>
       {courseObjs.length === 0 ? (
-        <p>Loading courses...</p> // Optional: show a loading message
+        <p>{searchAlert}</p> 
       ) : (
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <TableHead>
@@ -104,8 +106,8 @@ export function TableView({user}) {
                   {course.course_name}
                 </TableCell>
                 <TableCell align="right">{course.availability || 'N/A'}</TableCell>
-                <TableCell align="right">{course.time || 'N/A'}</TableCell>
-                <TableCell align="right">{course.location || 'N/A'}</TableCell>
+                <TableCell align="right">{course.Time || 'N/A'}</TableCell>
+                <TableCell align="right">{course.Where || 'N/A'}</TableCell>
                 <TableCell align="right">{course.professor || 'N/A'}</TableCell>
                 <TableCell align="right">
                   <IconButton onClick={() => handleDeleteConfirmationPopup(course)}>

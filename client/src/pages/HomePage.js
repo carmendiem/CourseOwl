@@ -41,7 +41,7 @@ function Home() {
 
     return (
         <><SearchBar user={user}/>
-            <Box sx={{ width: '100%' }}>
+            <Box sx={{ width: '100%'}}>
                 {/* Tabs for selecting different components */}
                 <Tabs
                     value={selectedTab}
@@ -66,7 +66,7 @@ function Home() {
                 </Tabs>
 
                 {/* Render the selected component based on the selected tab */}
-                <Box sx={{ padding: 3 }}>
+                <Box sx={{ padding: 1}}>
                     {selectedTab === 0 && <CalendarView user={user}/>}
                     {selectedTab === 1 && <TableView user={user}/>}
                 </Box>
