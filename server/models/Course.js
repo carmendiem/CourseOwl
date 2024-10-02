@@ -30,7 +30,7 @@ const courseSchema = new Schema({
     Instructors: [{
         name: String,
         email: String,
-        //alias: String,
+        alias: String,
         grade_distribution: {
             type: Schema.Types.Mixed, 
             default: {}

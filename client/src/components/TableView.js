@@ -49,7 +49,7 @@ export function TableView({user, change}) {
       const courses = await getCourses();
       if (courses && courses.length >= 0) 
           await getCourseInfo(courses);  
-      setSearchAlert("Add a course!")
+      setSearchAlert("Add a course to begin scheduling!")
     } 
 
     useEffect(() => {
