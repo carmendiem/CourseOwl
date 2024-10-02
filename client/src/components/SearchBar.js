@@ -28,7 +28,7 @@ async function fetchCourses(searchTerm, selectedDays, startTime, endTime) {
     }
 }
 
-export function SearchBar({user}) {
+export function SearchBar({user, detectChange}) {
     const [courseResults, setCourseResults] = useState([])
     const [searchTerm, setSearchTerm] = useState("");
     const [searchAlert, setSearchAlert] = useState("");
@@ -165,7 +165,7 @@ export function SearchBar({user}) {
                         slides={courseResults.map((course) =>
                         (
                             //Children 
-                            <CourseCard user={user} course={course}> </CourseCard>
+                            <CourseCard user={user} course={course} onChange={detectChange}> </CourseCard>
                             //Children 
                         )
                         )}>

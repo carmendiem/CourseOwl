@@ -12,7 +12,7 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import config from '../config';
 
-export function TableView({user}) {
+export function TableView({user, change}) {
     const [userCourses, setUserCourses] = useState([]);
     const [courseObjs, setCourseObjs] = useState([]);
     const [searchAlert, setSearchAlert] = useState("");
@@ -55,6 +55,11 @@ export function TableView({user}) {
     useEffect(() => {
         fetchCoursesAndInfo();
     }, [])
+
+    useEffect(() => {
+      fetchCoursesAndInfo();
+      fetchCoursesAndInfo();
+  }, [change])
 
     const [openDeleteConfPopup, setOpenDeleteConfPopup] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState(null);

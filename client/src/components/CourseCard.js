@@ -7,16 +7,17 @@ import { Typography } from '@mui/material'
 import config from '../config';
 import axios from "axios";
 
-export function CourseCard({user, course}) {
+export function CourseCard({user, course, onChange}) {
   const [open, setOpen] = useState(false);
   const handleClose = () => {
     setOpen(false);
   };
 
   const addCourse = async () => {
+    onChange(!onChange);
     const courseId = course._id;
     const email = user.email;
-    console.log("courseId", courseId, "email", email);
+    // console.log("courseId", courseId, "email", email);
     try {
       const res = await axios.post(`${config.API_BASE_URL}/calendar/addCourse`, {email, courseId}, {withCredentials: true});
       console.log("Course added: ", res.data);

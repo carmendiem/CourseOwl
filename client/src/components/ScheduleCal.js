@@ -45,7 +45,7 @@ DayCode.set("W", 3);
 DayCode.set("R", 4);
 DayCode.set("F", 5);
 
-export function CalendarView({user}) {
+export function CalendarView({user, change}) {
     const daysOfWeek = [" ","Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
     const timesOfDay = ["6:00 am", "7:00 am", "8:00 am", "9:00 am", "10:00 am", "11:00 am",
         "12:00 pm", "1:00 pm","2:00 pm", "3:00 pm", "4:00 pm", "5:00 pm", "6:00 pm", "7:00 pm", "8:00pm", "9:00 pm"];
@@ -231,6 +231,15 @@ export function CalendarView({user}) {
             makeCourses(); 
         }
     }, [courseObjs])
+
+    useEffect(() => {
+        const fetchCoursesAndInfo = async () => {
+           await refreshCourses(); //idk why it needs to be called twice
+           await refreshCourses();
+        }
+        console.log("Changed: ", change);
+        fetchCoursesAndInfo();
+    }, [change]);
 
 
 
