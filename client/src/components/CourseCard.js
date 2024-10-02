@@ -14,7 +14,8 @@ export function CourseCard({user, course}) {
     setOpen(false);
   };
 
-  const addCourse = async () => {
+  const addCourse = async (event) => {
+    event.preventDefault(); 
     const courseId = course._id;
     const email = user.email;
     console.log("courseId", courseId, "email", email);
@@ -35,7 +36,7 @@ export function CourseCard({user, course}) {
         <Card sx={{ position: 'relative'}}>
           <CardActionArea component={Link} to={`/course/${course.course_code}`}>
           <IconButton 
-            onClick={()=>{addCourse()}}
+            onClick={(event) => addCourse(event)} 
               sx={{
                   position: 'absolute',
                   right: 16,
