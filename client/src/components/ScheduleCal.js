@@ -25,6 +25,8 @@ const Item = styled(Paper)(({ theme }) => ({
     height: "100%",
     lineHeight: '50px',
     boxShadow: 'none',
+    fontWeight: 'bold',
+    fontSize: '1rem',
 }));
 const Cell = styled(Paper)(({ theme }) => ({
     borderRadius: 0,
@@ -216,16 +218,6 @@ export function CalendarView({user, change}) {
         setCourseDisp(courseDisplay);
         
     }
-
-    useEffect(() => {
-        const fetchCoursesAndInfo = async () => {
-            const courses = await getCourses();
-            if (courses && courses.length > 0) 
-                await getCourseInfo(courses);  
-        }
-        
-        fetchCoursesAndInfo();
-    }, [])
 
     useEffect(() => {
         if (courseObjs.length >= 0) {
