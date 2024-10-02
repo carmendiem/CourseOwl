@@ -1,11 +1,12 @@
 import React from "react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { Link } from 'react-router-dom'
 import { styled } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Icon } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Icon, sliderClasses } from '@mui/material';
 import { IconButton } from '@mui/material';
-import { BorderRight, Close, Delete } from '@mui/icons-material';
+import { Delete } from '@mui/icons-material';
 import { CalCourseCard } from "./CalCourseCard";
 import config from '../config';
 import axios from "axios";
@@ -24,6 +25,8 @@ const Item = styled(Paper)(({ theme }) => ({
     height: "100%",
     lineHeight: '50px',
     boxShadow: 'none',
+    fontWeight: 'bold',
+    fontSize: '1rem',
 }));
 const Cell = styled(Paper)(({ theme }) => ({
     borderRadius: 0,
@@ -45,7 +48,7 @@ DayCode.set("W", 3);
 DayCode.set("R", 4);
 DayCode.set("F", 5);
 
-export function CalendarView({user}) {
+export function CalendarView({user, change}) {
     const daysOfWeek = [" ","Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
     const timesOfDay = ["6:00 am", "7:00 am", "8:00 am", "9:00 am", "10:00 am", "11:00 am",
         "12:00 pm", "1:00 pm","2:00 pm", "3:00 pm", "4:00 pm", "5:00 pm", "6:00 pm", "7:00 pm", "8:00pm", "9:00 pm"];
@@ -217,20 +220,19 @@ export function CalendarView({user}) {
     }
 
     useEffect(() => {
-        const fetchCoursesAndInfo = async () => {
-            const courses = await getCourses();
-            if (courses && courses.length > 0) 
-                await getCourseInfo(courses);  
-        }
-        
-        fetchCoursesAndInfo();
-    }, [])
-
-    useEffect(() => {
         if (courseObjs.length >= 0) {
             makeCourses(); 
         }
     }, [courseObjs])
+
+    useEffect(() => {
+        const fetchCoursesAndInfo = async () => {
+           await refreshCourses(); //idk why it needs to be called twice
+           await refreshCourses();
+        }
+        console.log("Changed: ", change);
+        fetchCoursesAndInfo();
+    }, [change]);
 
 
 
@@ -302,8 +304,8 @@ export function CalendarView({user}) {
             <Dialog open={open} onClose={handleClose}>
                 {selectedCourse ? (
                     <>
-                    <DialogTitle>{`${selectedCourse.course_name || 'not found'}`}</DialogTitle>
-                    <IconButton onClick={handleClose}
+                    {/* <DialogTitle>{`${selectedCourse.course_name || 'not found'}`}</DialogTitle> */}
+                    {/* <IconButton onClick={handleClose}
                         sx={{
                             position: 'absolute',
                             right: 8,
@@ -312,19 +314,29 @@ export function CalendarView({user}) {
                         }}
                     >
                         <Close />
-                    </IconButton>    
-                    <DialogContent>
-                            <div>
-                                {console.log("selectedCourse: ", selectedCourse)}
-                                <Typography variant="h6">{`Professor: ${selectedCourse.professor}`}</Typography>
-                                <Typography variant="h6">{`${selectedCourse.Days || 'Days not Available'} ${selectedCourse.Date_Range || 'Date not available'}`}</Typography>
-                                <Typography variant="h6">{selectedCourse.Time}</Typography>
-                                <Typography variant="h6">{`Location: ${selectedCourse.Where}`}</Typography>
-                                <Typography variant="h6">{`Type: ${selectedCourse.Schedule_Type} | Credit Hours: ${selectedCourse.credit_hours}`}</Typography>
-                            </div>
+                    </IconButton>     */}
+                    <DialogContent>   
+                        {/* {console.log("selectedCourse: ", selectedCourse)} */}
+                        <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 20, mb: 1, textAlign:"left" }}>
+                            <Link to={`/course/${selectedCourse.course_code}`}>{selectedCourse.course_name}</Link>
+                        </Typography>
+                        <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign: "left" }}>
+                            {selectedCourse.credit_hours} Credits | {selectedCourse.Instructors.map((instructor, index) => (
+                                <span key={index}>
+                                    <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
+                                    {(index < selectedCourse.Instructors.length - 1)? ', ' : ''}
+                                </span>
+                            ))}
+                        </Typography>
+                        <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 16, mb: 1, textAlign:"left" }}>
+                            {selectedCourse['Schedule Type']} | {selectedCourse.Days} | {selectedCourse.Time}
+                        </Typography>
+                        <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 16, mb: 1, textAlign:"left" }}>
+                            {selectedCourse.Where}
+                        </Typography>
                     </DialogContent>
                     <IconButton onClick={handleDeleteConfirmationPopup} color="secondary"
-                        sx={{paddingBottom: 2, paddingLeft: 2, paddingRight: 2}}
+                        sx={{paddingBottom: 2, paddingLeft: 2, paddingRight: 2, fontSize: '0.9rem',}}
                     >
                             Remove Course
                             <Delete />

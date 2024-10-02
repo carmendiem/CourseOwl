@@ -17,6 +17,11 @@ function Home() {
     const handleTabChange = (event, newValue) => {
         setSelectedTab(newValue);
     };
+    const [changes, setChanges] = useState(false);
+    const handleCourseAdd = () => {
+        setChanges(!changes);
+        // console.log("Changes: ", changes);
+    };
 
     useEffect(() => {
         if (!user) {
@@ -40,7 +45,7 @@ function Home() {
     }
 
     return (
-        <><SearchBar user={user}/>
+        <><SearchBar user={user} detectChange={handleCourseAdd}/>
             <Box sx={{ width: '100%'}}>
                 {/* Tabs for selecting different components */}
                 <Tabs
@@ -67,8 +72,8 @@ function Home() {
 
                 {/* Render the selected component based on the selected tab */}
                 <Box sx={{ padding: 1}}>
-                    {selectedTab === 0 && <CalendarView user={user}/>}
-                    {selectedTab === 1 && <TableView user={user}/>}
+                    {selectedTab === 0 && <CalendarView user={user} change={changes}/>}
+                    {selectedTab === 1 && <TableView user={user} change={changes}/>}
                 </Box>
             </Box>
         </>
