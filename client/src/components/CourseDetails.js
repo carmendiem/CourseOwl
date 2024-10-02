@@ -6,11 +6,11 @@ import { Card, CardContent, Typography, Grid, Box, Button } from '@mui/material'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label } from 'recharts';
 
 function CourseDetails() {
-  const { course_code } = useParams();
-  const [courses, setCourses] = useState([]);
+  const { course_code } = useParams(); 
+  const [courses, setCourses] = useState([]); 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [visibleLabsRecitations, setVisibleLabsRecitations] = useState(6);
+  const [error, setError] = useState(null); 
+  const [visibleLabsRecitations, setVisibleLabsRecitations] = useState(6); 
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -38,9 +38,11 @@ function CourseDetails() {
     return bHasGrades - aHasGrades;
   });
 
+
   if (loading) {
     return <div>Loading...</div>;
   }
+
 
   if (error) {
     return <div>{error}</div>;
@@ -53,7 +55,7 @@ function CourseDetails() {
   const formatGradeData = (gradeDistribution) => {
     return Object.keys(gradeDistribution).map(grade => ({
       name: grade,
-      value: gradeDistribution[grade] * 100
+      value: gradeDistribution[grade] * 100 
     }));
   };
 
@@ -72,7 +74,6 @@ function CourseDetails() {
   return (
     <div style={{ backgroundColor: '#f0f0f0', padding: '2rem' }}>
       <h1 style={{ color: '#333333' }}>Courses for {course_code}</h1>
-
       {sortedLectures.length > 0 ? (
         <>
           <Typography variant="h4" gutterBottom>Lectures</Typography>
@@ -105,7 +106,6 @@ function CourseDetails() {
                           Date Range: {course['Date Range']} <br />
                           Schedule Type: {course['Schedule Type']}
                         </Typography>
-
                         <Typography variant="body2" sx={{ mt: 2 }}>
                           Instructors:{' '}
                           {course.Instructors.map((instructor, idx) => (
@@ -119,7 +119,7 @@ function CourseDetails() {
                         </Typography>
                       </Box>
 
-                      {course.Instructors.some(instructor => instructor.grade_distribution) && (
+                      {course.Instructors.some(instructor => instructor.grade_distribution) ? (
                         <Box width="100%" mt={3}>
                           {course.Instructors.map((instructor, idx) =>
                             instructor.grade_distribution && Object.keys(instructor.grade_distribution).length > 0 ? (
@@ -146,6 +146,10 @@ function CourseDetails() {
                             ) : null
                           )}
                         </Box>
+                      ) : (
+                        <Typography variant="body2" sx={{ mt: 2 }}>
+                          No Grade Distribution Data Available
+                        </Typography>
                       )}
                     </Box>
                   </CardContent>
@@ -188,7 +192,6 @@ function CourseDetails() {
                       Date Range: {course['Date Range']} <br />
                       Schedule Type: {course['Schedule Type']}
                     </Typography>
-
                     <Typography variant="body2" sx={{ mt: 2 }}>
                       Instructors:{' '}
                       {course.Instructors.map((instructor, idx) => (
@@ -201,12 +204,11 @@ function CourseDetails() {
                       ))}
                     </Typography>
                   </CardContent>
-                </Card>
+                  </Card>
               </Grid>
             ))}
           </Grid>
-
-            {visibleLabsRecitations < labsRecitations.length && (
+          {visibleLabsRecitations < labsRecitations.length && (
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <Button variant="contained" color="primary" onClick={loadMore}>
                 View More
@@ -222,4 +224,3 @@ function CourseDetails() {
 }
 
 export default CourseDetails;
-
