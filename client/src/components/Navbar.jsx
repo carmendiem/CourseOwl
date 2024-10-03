@@ -14,6 +14,7 @@ import ForumIcon from '@mui/icons-material/Forum';
 import ClassIcon from '@mui/icons-material/Class';
 import HomeIcon from '@mui/icons-material/Home';
 import Logout from './Logout';
+import logo from '../assets/navlogo.png';
 
 const sidebarStyle = {
     height: '100vh',
@@ -58,11 +59,11 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
 
     return (
         <Box sx={sidebarStyle}>
-            <Box>
-                <Typography variant="h5" sx={{ marginBottom: '30px', fontWeight: 'bold' }}>
-                    OWL
-                </Typography>
-                <Divider sx={{ backgroundColor: 'white', marginBottom: '30px', width: '60%' }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {/* Centered logo */}
+                <img src={logo} alt="App Logo" style={{ width: '80px', marginBottom: '15px' }} />
+                {/* Centered line under the logo */}
+                <Divider sx={{ backgroundColor: 'white', width: '60%', marginBottom: '30px' }} />
                 <List>
                     {isLoggedIn ? (
                         <>
@@ -119,7 +120,6 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                     >
                         <SettingsIcon />
                     </IconButton>
-                    {/* <Typography sx={textStyle(false)}>Settings</Typography> */}
                     <Menu
                         id="settings-menu"
                         anchorEl={anchorEl}
