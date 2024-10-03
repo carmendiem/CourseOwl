@@ -130,6 +130,7 @@ export function CalendarView({user, change}) {
         try {
             await axios.post(`${config.API_BASE_URL}/calendar/deleteCourse`, {email, courseId}, {withCredentials: true});
             await refreshCourses();
+            window.alert("Successfully Removed Course.");
         } catch (error) {
             console.log("Error deleting course: ", error)
         }

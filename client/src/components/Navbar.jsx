@@ -89,10 +89,10 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                             </ListItem>
 
                             <ListItem button component={Link} to="/courses" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <IconButton sx={iconStyle(location.pathname === '/courses')}>
+                                <IconButton sx={iconStyle(location.pathname.startsWith('/courses') || location.pathname.startsWith('/course/'))}>
                                     <ClassIcon />
                                 </IconButton>
-                                <Typography sx={textStyle(location.pathname === '/courses')}>Courses</Typography>
+                                <Typography sx={textStyle(location.pathname.startsWith('/courses') || location.pathname.startsWith('/course/'))}>Courses</Typography>
                             </ListItem>
                         </>
                     ) : (
