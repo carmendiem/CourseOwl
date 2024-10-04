@@ -10,6 +10,7 @@ import { Close, Delete } from '@mui/icons-material';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton } from '@mui/material';
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { Link } from 'react-router-dom';
 import config from '../config';
 
 export function TableView({user, change}) {
@@ -113,7 +114,20 @@ export function TableView({user, change}) {
                 <TableCell align="right">{course.availability || 'N/A'}</TableCell>
                 <TableCell align="right">{course.Time || 'N/A'}</TableCell>
                 <TableCell align="right">{course.Where || 'N/A'}</TableCell>
-                <TableCell align="right">{course.professor || 'N/A'}</TableCell>
+                <TableCell align="right">
+                  {course.Instructors.map((instructor, index) => (
+                      <span key={index}>
+                          {instructor.name === "TBA" ? (
+                              "TBA"
+                          ) : (
+                              <>
+                                  <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
+                                  {index < course.Instructors.length - 1 ? ', ' : ''}
+                              </>
+                          )}
+                      </span>
+                  ))}
+                  </TableCell>
                 <TableCell align="right">
                   <IconButton onClick={() => handleDeleteConfirmationPopup(course)}>
                     <Delete />

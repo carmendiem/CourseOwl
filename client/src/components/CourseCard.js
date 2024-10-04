@@ -57,8 +57,14 @@ export function CourseCard({ user, course, onChange }) {
                         <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign: "left" }}>
                             {course.credit_hours} Credits | {course.Instructors.map((instructor, index) => (
                                 <span key={index}>
-                                    <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
-                                    {index < course.Instructors.length - 1 ? ', ' : ''}
+                                    {instructor.name === "TBA" ? (
+                                        "TBA"
+                                    ) : (
+                                        <>
+                                            <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
+                                            {index < course.Instructors.length - 1 ? ', ' : ''}
+                                        </>
+                                    )}
                                 </span>
                             ))}
                         </Typography>
