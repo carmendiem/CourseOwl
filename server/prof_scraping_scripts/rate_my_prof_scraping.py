@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from collections import defaultdict
 import time
 import re
+from pymongo import MongoClient
 
 class RMPProfessor:
     def __init__(self, first_name, last_name):
@@ -161,6 +162,21 @@ class RMPProfessor:
         # for tag, count in self.tag_frequency.items():
         #     print(f"{tag}: {count}")
 
-# first_name = "siyaun"
-# last_name = "le"
-# professor = RMPProfessor(first_name, last_name)
+first_name = "george"
+last_name = "adams"
+professor = RMPProfessor(first_name, last_name)
+#client = MongoClient('mongodb+srv://carmendiem2003:L0w7i3EeU1rlrx4v@courseowl.sne0b.mongodb.net/')  # Replace with your MongoDB URI if different
+client = MongoClient('mongodb+srv://carmendiem2003:L0w7i3EeU1rlrx4v@courseowl.sne0b.mongodb.net/?tls=true&tlsAllowInvalidCertificates=true')
+print(client)
+db = client['course_data']
+professors_collection = db['professors5']
+update_fields = {'tags': dict(professor.tag_frequency),
+                    'rating': professor.professor_rating,
+                    'positive_percentage': professor.positive_percentage,
+                    'negative_percentage': professor.negative_percentage,
+                    'total_reviews': professor.total_reviews,
+                    'href': professor.professor_href}
+result = professors_collection.update_one(
+                {'ALIAS': "gba"},
+                {'$set': update_fields}
+            )
