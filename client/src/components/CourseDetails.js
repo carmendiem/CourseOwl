@@ -29,8 +29,14 @@ function CourseDetails() {
     fetchCourses();
   }, [course_code]);
 
-  const lectures = courses.filter(course => course['Schedule Type'] === 'Lecture');
-  const labsRecitations = courses.filter(course => course['Schedule Type'] !== 'Lecture');
+  const lectures = courses.filter(course => 
+    course['Schedule Type'] === 'Lecture' || course['Schedule Type'] === 'Individual Study'
+  );
+  
+  const labsRecitations = courses.filter(course => 
+    course['Schedule Type'] !== 'Lecture' && course['Schedule Type'] !== 'Individual Study'
+  );
+  
 
   const sortedLectures = [...lectures].sort((a, b) => {
     const aHasGrades = a.Instructors.some(instructor => instructor.grade_distribution && Object.keys(instructor.grade_distribution).length > 0);
