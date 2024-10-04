@@ -129,34 +129,46 @@ function CourseDetails() {
 
                       </Box>
 
-                      {course.Instructors.some(instructor => instructor.grade_distribution) && (
-                        <Box width="100%" mt={3}>
-                          {course.Instructors.map((instructor, idx) =>
-                            instructor.grade_distribution && Object.keys(instructor.grade_distribution).length > 0 ? (
-                              <ResponsiveContainer key={idx} width="100%" height={300}>
-                                <BarChart data={formatGradeData(instructor.grade_distribution)}>
-                                  <CartesianGrid strokeDasharray="3 3" />
-                                  <XAxis dataKey="name">
-                                    <Label value="Grade" position="insideBottom" offset={-5} />
-                                  </XAxis>
-                                  <YAxis>
-                                    <Label value="Percentage (%)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
-                                  </YAxis>
-                                  <Tooltip formatter={(value) => `${value}%`} />
-                                  <Bar dataKey="value" fill="#8884d8" />
-                                  <Label
-                                    value="Grade Distribution"
-                                    position="left"
-                                    angle={-90}
-                                    offset={15}
-                                    style={{ textAnchor: 'middle', fontWeight: 'bold' }}
-                                  />
-                                </BarChart>
-                              </ResponsiveContainer>
-                            ) : null
-                          )}
-                        </Box>
-                      )}
+                      {course.Instructors.some(instructor => instructor.grade_distribution) ? (
+  <Box width="100%" mt={3}>
+    {course.Instructors.map((instructor, idx) =>
+      instructor.grade_distribution && Object.keys(instructor.grade_distribution).length > 0 ? (
+        <ResponsiveContainer key={idx} width="100%" height={300}>
+          <BarChart data={formatGradeData(instructor.grade_distribution)}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name">
+              <Label value="Grade" position="insideBottom" offset={-5} />
+            </XAxis>
+            <YAxis>
+              <Label value="Percentage (%)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
+            </YAxis>
+            <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+            <Bar dataKey="value" fill="#8884d8" />
+            <Label
+              value="Grade Distribution"
+              position="left"
+              angle={-90}
+              offset={15}
+              style={{ textAnchor: 'middle', fontWeight: 'bold' }}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <Typography variant="body2" sx={{ mt: 2 }} key={idx}>
+          Grade Distribution Not Available
+        </Typography>
+      )
+    )}
+  </Box>
+) : (
+  course['Schedule Type'] === 'Lecture' && (
+    <Typography variant="body2" sx={{ mt: 2 }}>
+      Grade Distribution Not Available
+    </Typography>
+  )
+)}
+
+
                     </Box>
                   </CardContent>
                 </Card>

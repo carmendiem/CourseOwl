@@ -6,7 +6,7 @@ export const getCoursesByCode = async (req, res) => {
     try {
 
         course_code = course_code.trim();
-        console.log(`Trimmed course_code: "${course_code}"`);
+        //console.log(`Trimmed course_code: "${course_code}"`);
 
         const courses = await Course.find({ course_code: course_code });
         if (!courses || courses.length === 0) {
