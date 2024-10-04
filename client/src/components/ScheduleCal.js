@@ -324,8 +324,14 @@ export function CalendarView({user, change}) {
                         <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign: "left" }}>
                             {selectedCourse.credit_hours} Credits | {selectedCourse.Instructors.map((instructor, index) => (
                                 <span key={index}>
-                                    <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
-                                    {(index < selectedCourse.Instructors.length - 1)? ', ' : ''}
+                                    {instructor.name === "TBA" ? (
+                                        "TBA"
+                                    ) : (
+                                        <>
+                                            <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
+                                            {index < selectedCourse.Instructors.length - 1 ? ', ' : ''}
+                                        </>
+                                    )}
                                 </span>
                             ))}
                         </Typography>
