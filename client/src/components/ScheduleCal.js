@@ -192,7 +192,11 @@ export function CalendarView({user, change}) {
 
                     width = width - (numCourses-1)*colWidth/2;
                     zIndex = numCourses;
-                }
+                } 
+                // else { 
+                //     console.log("Course Overlap: ", courseObjs[i].course_name);
+                //     continue;
+                // }
                 
                 courseDisplay.push(
                     <CalCourseCard 
@@ -228,7 +232,6 @@ export function CalendarView({user, change}) {
 
     useEffect(() => {
         const fetchCoursesAndInfo = async () => {
-           await refreshCourses(); //idk why it needs to be called twice
            await refreshCourses();
         }
         console.log("Changed: ", change);
