@@ -1,9 +1,12 @@
+// routes/Rout.js
+import React from 'react';
 import { Route, Routes } from "react-router-dom";
 import HomePage from "../pages/HomePage";
 import Login from "../components/Login";
 import Signup from "../components/Signup";
 import ProfessorDetails from '../components/ProfessorDetails';
 import CourseDetails from '../components/CourseDetails';
+import AccountDetails from '../components/AccountDetails'; // Import AccountDetails
 import Alerts from '../pages/Alerts'; 
 import Forums from '../pages/Forums'; 
 import Courses from '../pages/Courses'; 
@@ -20,6 +23,16 @@ export function Rout({ setIsLoggedIn, isLoggedIn }) {
             <Route path="/home" element={<HomePage />} />
             <Route path="/professor/:alias" element={<ProfessorDetails />} />
             <Route path="/course/:course_code" element={<CourseDetails />} />
+            
+            {/* Add route for AccountDetails */}
+            <Route 
+                path="/account" 
+                element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn}>
+                        <AccountDetails />  {/* The AccountDetails component */}
+                    </ProtectedRoute>
+                } 
+            />
 
             <Route 
                 path="/alerts" 
