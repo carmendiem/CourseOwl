@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import UserModel from "../models/User.js";
 
-// Handle user signup
 export const signupUser = async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -18,7 +17,6 @@ export const signupUser = async (req, res) => {
     }
 };
 
-// Handle user login
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -26,7 +24,7 @@ export const loginUser = async (req, res) => {
         if (user) {
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (passwordMatch) {
-                req.session.user = { id: user._id, name: user.name, email: user.email, courses: user.courses};
+                req.session.user = { id: user._id, name: user.name, email: user.email, courses: user.courses, isVerified: user.isVerified, upvotedReviews: user.upvotedReviews};
                 res.json("Success");
             } else {
                 res.status(401).json("Password doesn't match");
@@ -39,7 +37,6 @@ export const loginUser = async (req, res) => {
     }
 };
 
-// Handle user logout
 export const logoutUser = (req, res) => {
     if (req.session) {
         req.session.destroy(err => {
@@ -54,11 +51,39 @@ export const logoutUser = (req, res) => {
     }
 };
 
-// Get the authenticated user
 export const getUser = (req, res) => {
     if (req.session.user) {
         res.json({ user: req.session.user });
     } else {
         res.status(401).json("Not authenticated");
+    }
+};
+
+
+export const getUserFromDB = async (req, res) => {
+    try {
+        if (!req.session.user) {
+            return res.status(401).json("Not authenticated");
+        }
+        
+        const user = await UserModel.findById(req.session.user.id);
+
+        if (!user) {
+            return res.status(404).json("User not found");
+        }
+
+        req.session.user = {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            courses: user.courses,
+            isVerified: user.isVerified,
+            upvotedReviews: user.upvotedReviews
+        };
+
+        res.json({ user: req.session.user });
+    } catch (error) {
+        console.error('Error fetching user from DB:', error);
+        res.status(500).json({ error: 'Error fetching user from the database' });
     }
 };

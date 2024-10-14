@@ -18,6 +18,12 @@ const userSchema = new mongoose.Schema({
     },
     courses: {
         type: [ObjectId]
+    },
+    isVerified: {
+        type: Boolean
+    },
+    upvotedReviews: {
+        type: [ObjectId]
     }
 });
 

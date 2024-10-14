@@ -1,34 +1,119 @@
-
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import config from '../config';
 import Grid from '@mui/material/Grid';
-import { Typography, Card, CardContent, Button, Chip, Rating, Box } from '@mui/material';
+import { Typography, Card, CardContent, Button, Chip, Rating, Box, TextField, IconButton } from '@mui/material';
 import { Pie } from 'react-chartjs-2';
 import { Chart, ArcElement, Tooltip, Legend } from 'chart.js'; 
 import StarIcon from '@mui/icons-material/Star';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import DeleteIcon from '@mui/icons-material/Delete'; 
+import VerifiedIcon from '@mui/icons-material/Verified';
 
 Chart.register(ArcElement, Tooltip, Legend);
+
 function ProfessorDetails() {
   const { alias } = useParams();
   const [professor, setProfessor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [newReview, setNewReview] = useState('');
+  const [user, setUser] = useState(null); 
+  const [upvotedReviews, setUpvotedReviews] = useState(null); 
+  const navigate = useNavigate(); 
+
   useEffect(() => {
-    const fetchProfessor = async () => {
+    const fetchProfessorAndUser = async () => {
       try {
-        const res = await axios.get(`${config.API_BASE_URL}/professor/${alias}`);
-        setProfessor(res.data);
+        const professorRes = await axios.get(`${config.API_BASE_URL}/professor/${alias}`);
+        setProfessor(professorRes.data);
+
+        const reviewsRes = await axios.get(`${config.API_BASE_URL}/professor/${alias}/reviews`);
+        setReviews(reviewsRes.data);
+
+        const userRes = await axios.get(`${config.API_BASE_URL}/user/full`, { withCredentials: true });
+        if (userRes.data.user) {
+          setUser(userRes.data.user);
+          setUpvotedReviews(userRes.data.user.upvotedReviews); 
+
+        } else {
+          navigate('/login'); 
+        }
+
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching professor:", error);
+        console.error('Error fetching data:', error);
         setError('Error fetching professor');
         setLoading(false);
+        
       }
     };
-    fetchProfessor();
-  }, [alias]);
+    fetchProfessorAndUser();
+  }, [alias, navigate]);
+
+  const handleUpvote = async (reviewId) => {
+    try {
+      const isUpvoted = upvotedReviews.includes(reviewId);
+      const newUpvoteData = {
+        user: user
+      };
+      if (!isUpvoted) {
+        await axios.post(`${config.API_BASE_URL}/professor/reviews/${reviewId}/upvote`, newUpvoteData);
+      } else {
+        await axios.post(`${config.API_BASE_URL}/professor/reviews/${reviewId}/remove-upvote`, newUpvoteData);
+      }
+
+      setReviews((prevReviews) => 
+        prevReviews.map((review) =>
+          review._id === reviewId
+            ? { ...review, upvotes: isUpvoted ? review.upvotes - 1 : review.upvotes + 1 }
+            : review
+        )
+      );
+
+      if (isUpvoted) {
+        setUpvotedReviews(upvotedReviews.filter(id => id !== reviewId)); 
+      } else {
+        setUpvotedReviews([...upvotedReviews, reviewId]); 
+      }
+    } catch (error) {
+      console.error('Error upvoting review:', error);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      await axios.delete(`${config.API_BASE_URL}/professor/reviews/${reviewId}`);
+      setReviews((prevReviews) => prevReviews.filter((review) => review._id !== reviewId));
+      setUpvotedReviews(upvotedReviews.filter(id => id !== reviewId));
+
+    } catch (error) {
+      console.error('Error deleting review:', error);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!newReview.trim()) return;
+    if (!user) {
+      navigate('/login'); 
+      return;
+    }
+    try {
+      const newReviewData = {
+        userName: user.name,
+        content: newReview,
+        isVerified: user.isVerified,
+      };
+      const reviewRes = await axios.post(`${config.API_BASE_URL}/professor/${alias}/reviews`, newReviewData);
+      setReviews([...reviews, reviewRes.data]);
+      setNewReview('');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -38,6 +123,7 @@ function ProfessorDetails() {
   if (!professor) {
     return <div>No professor found for this alias</div>;
   }
+
 
   const pieData = {
     labels: ['Positive', 'Negative'],
@@ -62,7 +148,6 @@ function ProfessorDetails() {
   const sortedTags = Object.entries(professor.tags || {}).sort((a, b) => b[1] - a[1]);
   const topTags = sortedTags.slice(0, 3);
   const otherTags = sortedTags.slice(3);
-
   const knownAttributes = ['NAME', 'ALIAS', 'EMAIL', 'total_reviews', 'rating', 'tags', 'href', 'positive_percentage', 'negative_percentage'];
 
   const dynamicAttributes = Object.keys(professor).filter(
@@ -102,8 +187,6 @@ function ProfessorDetails() {
               </Grid>
             </Box>
           </Grid>
-          
-
           <Grid item xs={12} md={4} sx={{ textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
           {professor.rating !== "Professor not found" ? 
             <Box>
@@ -149,7 +232,6 @@ function ProfessorDetails() {
             <Typography variant="body1" align="center" sx={{ fontWeight: 'bold', marginTop: 2 }}>
                Total Reviews: {professor.total_reviews}
              </Typography>
-            
           </Grid>
           <Grid item xs={12} md={4} sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', flexDirection: 'column', marginLeft: '-20px' }}>
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -178,11 +260,68 @@ function ProfessorDetails() {
         </Grid> :
         <Typography variant="body2">Not enough data for review distributions and tags</Typography> )
         } 
-      
-        
+
+        <Grid container spacing={4} sx={{ mt: 4 }}>
+          <Grid item xs={12}>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+              Reviews
+            </Typography>
+            {reviews.length > 0 ? (
+              reviews.map((review) => (
+                <Card key={review._id} sx={{ marginBottom: 2 }}>
+                  <CardContent>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h6">{review.userName}</Typography>
+                      {user && user.name === review.userName && (
+                        <IconButton onClick={() => handleDeleteReview(review._id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </Box>
+                    <Typography variant="body2" color="textSecondary">
+                      {new Date(review.date).toLocaleDateString()}
+                      {review.isVerified && <VerifiedIcon sx={{ color: 'green', ml: 1 }} />}
+                    </Typography>
+                    <Typography variant="body1">{review.content}</Typography>
+                    
+                    <Box display="flex" alignItems="center" sx={{ mt: 1 }}>
+                      <IconButton
+                        color={upvotedReviews.includes(review._id) ? 'primary' : 'default'}
+                        onClick={() => handleUpvote(review._id)}
+                      >
+                        <ThumbUpIcon />
+                      </IconButton>
+                      <Typography>{review.upvotes}</Typography>
+                    </Box>
+                    
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <Typography variant="body2">No reviews available for this professor yet. Be the first to leave a review!</Typography>
+            )}
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="h6">Leave a Review</Typography>
+            <TextField
+              fullWidth
+              label="Your Review"
+              value={newReview}
+              onChange={(e) => setNewReview(e.target.value)}
+              multiline
+              rows={4}
+              variant="outlined"
+              sx={{ mt: 2 }}
+            />
+            <Button onClick={handleSubmitReview} variant="contained" sx={{ mt: 2 }}>
+              Submit Review
+            </Button>
+          </Grid>
+        </Grid>
       </CardContent>
-      
     </Card>
   );
 }
+
 export default ProfessorDetails;
