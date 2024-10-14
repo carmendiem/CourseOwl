@@ -22,7 +22,7 @@ export const getReviewsByAlias = async (req, res) => {
 export const addReview = async (req, res) => {
     const alias = req.params.alias;    
 
-    const { userName, content, isVerified } = req.body;
+    const { userEmail, userName, content, isVerified } = req.body;
     try {
         const professor = await Professor.findOne({ ALIAS: alias });
         if (!professor) {
@@ -32,6 +32,7 @@ export const addReview = async (req, res) => {
         const newReview = new Review({
             professorAlias: alias,
             userName,
+            userEmail,
             content,
             date: new Date(),
             isVerified: isVerified,
