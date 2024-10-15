@@ -745,7 +745,7 @@ function ProfessorDetails() {
 
 
       <Grid item xs={12}>
-        <Typography variant="h6">Leave a Review</Typography>
+        <Typography sx={{ fontWeight: 'bold'}} variant="h6">Leave a Review</Typography>
         <TextField
           fullWidth
           label="Your Review"
@@ -754,7 +754,17 @@ function ProfessorDetails() {
           multiline
           rows={4}
           variant="outlined"
-          sx={{ mt: 2 }}
+          sx={{ mt: 2 , '& .MuiOutlinedInput-root': {
+            '&.Mui-focused fieldset': {
+            borderColor: '#2E3B55', // Border color on focus
+            borderWidth: '5px',
+            },
+          }
+          ,'& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#2E3B55',        // Label color on focus
+      },
+    },}}
         />
         <Button onClick={handleSubmitReview} variant="contained" sx={{ mt: 2 }}>
           Submit Review
