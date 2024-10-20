@@ -8,6 +8,7 @@ import userRoutes from "./routes/user.js";
 import courses from "./routes/course.js";
 import calendarRoutes from "./routes/calendar.js";
 import professorRoutes from './routes/professor.js';
+import forumRoutes from './routes/forum.js';
 
 import courseRoutes from './routes/courseRoutes.js';
 
@@ -36,7 +37,7 @@ app.use("/user", userRoutes); // Use the user routes
 app.use("/course", courses);
 app.use("/calendar", calendarRoutes);
 app.use("/professor", professorRoutes);
-
+app.use("/forum", forumRoutes);
 
 app.use('/course', courseRoutes);
 
