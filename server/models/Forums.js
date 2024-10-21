@@ -3,14 +3,17 @@ import { ObjectId} from "bson";
 const Schema = mongoose.Schema;
 
 const forumSchema = new Schema({
-    courseId:Schema.ObjectId,
+    forumId:Schema.ObjectId,
     course_name: {
         type: String
     },
     course_code: {
         type: String
     },
-    instructor: {
+    name: { //professor name
+        type: String
+    },
+    alias: {
         type: String
     },
     tags: {
@@ -42,7 +45,7 @@ const forumSchema = new Schema({
         }],
     }],
     
-}, { collection: 'forum_test' });
+}, { collection: 'forums' });
 
-const Forum = mongoose.models.Forum || mongoose.model('Forum', forumSchema);
+const Forum = mongoose.models.Forum || mongoose.model('forums', forumSchema);
 export default Forum;

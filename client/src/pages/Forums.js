@@ -1,10 +1,10 @@
 import React from 'react';
+import { ForumSearch } from '../components/ForumSearch/ForumSearch.js';
 
 function Forums() {
     return (
         <div>
-            <h1>Forums Page</h1>
-            <p>Welcome to the Forums.</p>
+            <ForumSearch/>
         </div>
     );
 }

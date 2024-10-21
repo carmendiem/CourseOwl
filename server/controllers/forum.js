@@ -19,3 +19,23 @@ export const getForumInfo = async (req, res) => {
         res.status(400).json({ status: 'Error fetching forum' });
     }
 }
+
+export const getForumSearch = async (req, res) => {
+    try {
+        const {searchTerm} = req.query;
+        const forums = await Forum.find({
+            $or: [
+                { course_code: { $regex: new RegExp(`^${searchTerm}`, 'i') } },
+                //{ course_name: { $regex: new RegExp(`^${searchTerm}`, 'i') } },
+                { name: { $regex: new RegExp(searchTerm, 'i') } } //professor name
+            ],
+        }).limit(250)
+        if (!forums || forums.length === 0) {
+            return res.status(404).json({ status: 'Forum not found' });
+        }
+        return res.json(forums);
+    } catch (error) {
+        console.log("Error in getForum: ", error)
+        res.status(400).json({status: 'Error searching for forum'})
+    }
+}
