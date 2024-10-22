@@ -3,7 +3,7 @@ import { ObjectId} from "bson";
 const Schema = mongoose.Schema;
 
 const forumSchema = new Schema({
-    courseId:Schema.ObjectId,
+    forumId:Schema.ObjectId,
     course_name: {
         type: String
     },
@@ -23,9 +23,9 @@ const forumSchema = new Schema({
         body: {
             type: String
         },
-        tag: {
+        tag: [{
             type: String
-        },
+        }],
         author: {
             type: ObjectId
         },
@@ -42,7 +42,7 @@ const forumSchema = new Schema({
         }],
     }],
     
-}, { collection: 'forum_test' });
+}, { collection: 'forums' });
 
 const Forum = mongoose.models.Forum || mongoose.model('Forum', forumSchema);
 export default Forum;
