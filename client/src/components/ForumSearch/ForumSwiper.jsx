@@ -13,9 +13,9 @@ import "./ForumSwiperStyles.css"
 export const ForumSwiperComponent = ({slides}) => {
     return (
         <Swiper
-          // install Swiper modules
+
           modules={[Navigation, A11y, Grid]}
-                                     slidesPerView={3} // Number of courses to show per page
+                                     slidesPerView={3} // Number of forums to show per page
                                      
                                       grid={{
                                         rows: 3, // 2 rows per slide

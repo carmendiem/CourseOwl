@@ -41,15 +41,14 @@ export function ForumSearch() {
                 const results = await fetchForums(debouncedTerm);
                 if (results) {
                     setForumResults(results);
-                    console.log(results);
-                    setSearchAlert("No forums found that match your search, please try again!")
+                    setSearchAlert("")
                 } else {
                     setForumResults([]);
-                    setSearchAlert("")
+                    setSearchAlert("No forums found that match your search, please try again!")
                 }
             } else {
                 setForumResults([]);
-                setSearchAlert("")
+                setSearchAlert("Search by professor name or course code")
             }
         };
 
@@ -71,7 +70,8 @@ export function ForumSearch() {
             </Box>
             </Box>
             <div className="results-container" style={{ marginInline: "auto", maxWidth: "95%" }} >
-                {forumResults && forumResults.length > 0 ? (
+                {forumResults && forumResults.length > 0 ? (     
+                    <>
                     <ForumSwiperComponent
                         slides={forumResults.map((forum) =>
                         (
@@ -79,8 +79,10 @@ export function ForumSearch() {
                         )
                         )}>
                     </ForumSwiperComponent>
-                ) : (
                     <p>{searchAlert}</p>
+                    </>
+                ) : (
+                    <Typography align="center" style={{color: "#561d25", fontSize: 18}}>{searchAlert}</Typography>
                 )}
             </div>
         

@@ -2,7 +2,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 20vh; 
+    height: 10vh; 
     margin-bottom: 20px;
 }
 
@@ -35,6 +35,5 @@
   body {
     background: #eee;
   }
-
 
 

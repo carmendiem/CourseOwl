@@ -18,7 +18,7 @@ export function ForumCard({ forum }) {
                 left: "0px",
                 bottom: "0",
                 backgroundColor: randomColor,
-                width: '10px', // Width of the color strip
+                width: '10px', 
                 zIndex: 999 ,
                 height: "100%"
             }} />
