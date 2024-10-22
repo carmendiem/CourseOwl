@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get("/getForum", getForumInfo);
 router.get("/getUserName", getUserName);
-router.post("/creatPost", createPost);
+router.post("/createPost", createPost);
 router.get("/getForumSearch", getForumSearch);
 
 export default router;

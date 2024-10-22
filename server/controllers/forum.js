@@ -23,8 +23,8 @@ export const getForumInfo = async (req, res) => {
 
 export const getUserName = async (req, res) => {
     try {
-        const {userId} = req.query;
-        const user = await User.findById(userId);
+        const {email} = req.query;
+        const user = await User.findOne({email: email});
         if (user != null) {
             return res.json(user.name);
         } else {
@@ -38,8 +38,9 @@ export const getUserName = async (req, res) => {
 
 export const createPost = async (req, res) => {
     try {
-        const { title, body, anon, chosenTag, userId, forumId} = req.query;
-        const post = {title, body, anon, tag: chosenTag, author: userId, comments: []};
+        const { title, body, anon, chosenTag, userEmail, forumId} = req.query;
+        console.log(userEmail);
+        const post = {title, body, anon, tag: chosenTag, author: userEmail, comments:[]};
         const forum = await Forum.findOneAndUpdate({_id: forumId}, {$push: {posts: post}}, {new: true});
         if (forum != null) {
             return res.json(forum);

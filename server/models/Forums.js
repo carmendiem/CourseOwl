@@ -30,7 +30,7 @@ const forumSchema = new Schema({
             type: String
         }],
         author: {
-            type: ObjectId
+            type: String
         },
         anon: {
             type: Boolean

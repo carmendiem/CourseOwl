@@ -52,9 +52,9 @@ function ForumDetails() {
         setForumObjs(forumData);
     };
 
-    const getUserName = async (userId) => {
+    const getUserName = async (userEmail) => {
         try{
-            const res = await axios.get(`${config.API_BASE_URL}/forum/getUserName?userId=${userId}`)
+            const res = await axios.get(`${config.API_BASE_URL}/forum/getUserName?email=${userEmail}`)
             const data = await res.data;
             return data;
         }catch(error){
@@ -201,6 +201,17 @@ function DisplayDraft({forum}) {
     const [body, setBody] = useState("");
     const [anon, setAnon] = useState(false);
     const [chosenTag, setChosenTag] = useState("");
+    const [titleError, setTitleError] = useState("");
+    const [bodyError, setBodyError] = useState("");
+
+    useEffect(() => {
+        getUser();
+        if (forum.tags === null || forum.tags === undefined) {
+            return;
+        } else {
+            setChosenTag(forum.tags[0]);
+        }
+    }, []);
 
     const getUser = async () => {
         try{
@@ -214,7 +225,7 @@ function DisplayDraft({forum}) {
 
     const postPost = async (post) => {
         try{
-            const res = await axios.post(`${config.API_BASE_URL}/forum/creatPost`, null, {params: post});
+            const res = await axios.post(`${config.API_BASE_URL}/forum/createPost`, null, {params: post});
             console.log("post created successfully: ", res.data);
         }catch(error){
             console.log("error posting post: ", error);
@@ -228,10 +239,21 @@ function DisplayDraft({forum}) {
             console.error("User is not loaded yet");
             await getUser();
         }
-        const userId = user._id;
-        const post = { title, body, anon, chosenTag, userId, forumId};
+        if (!title) {
+            setTitleError("Title cannot be empty");
+            return;
+        }
+        if (!body) {
+            setBodyError("Body cannot be empty");
+            return;
+        }
+        const userEmail = user.email;
+        console.log("user", user);
+        console.log("userEmail: ", userEmail);
+        const post = { title, body, anon, chosenTag, userEmail, forumId};
         await postPost(post);
     };
+
     if (!forum) {
         return (
             <div>
@@ -257,6 +279,7 @@ function DisplayDraft({forum}) {
                             variant="outlined"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
+                            helperText={titleError}
                         />
                     </Grid>
                     <Grid item sx={{display: "flex", flexDirection: "row", marginBottom: '10px'}}>
@@ -269,6 +292,7 @@ function DisplayDraft({forum}) {
                             rows={4}
                             value={body}
                             onChange={(e) => setBody(e.target.value)}
+                            helperText={bodyError}
                         />
                     </Grid>
                     <Grid>
