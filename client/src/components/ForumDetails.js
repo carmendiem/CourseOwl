@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid2';
-import { Card, CardContent, Typography, Box, Button, CardActionArea } from '@mui/material';
+import { Card, CardContent, Typography, Box, Button, CardActionArea, Dialog, TextField } from '@mui/material';
+import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 
 import config from '../config';
 import axios from "axios";
@@ -11,7 +12,7 @@ const light_yellow = "#F0DE89";
 
 function ForumDetails() {
 
-    const dummyForumId = '67155957745022ecfcc91a8b'; //object id of 251 in forum_test
+    const dummyForumId = '6715697e75c5d587c3b6a6a3'; //object id of 251 in forums collection
     const [forums, setForums] = useState([dummyForumId]);
     const [forumObjs, setForumObjs] = useState([]);
 
@@ -19,6 +20,7 @@ function ForumDetails() {
     const [currentForum, setCurrentForum] = useState(null);
     const [selectedPostId, setSelectedPostId] = useState(null);
     const [currentPost, setCurrentPost] = useState(null);
+    const [currentPostAuthor, setCurrentPostAuthor] = useState(null);
 
     const selectForum = (forumId) => {
         setSelectedForumId(forumId);
@@ -30,7 +32,9 @@ function ForumDetails() {
     const selectPost = (postId) => {
         setSelectedPostId(postId);
         setCurrentPost(currentForum.posts.find(post => post._id === postId));
+        setCurrentPostAuthor([]);
         console.log("currentPost: ", currentPost);
+        setDrafting(false);
     };
 
     const getForumInfo = async (forums) => {
@@ -45,9 +49,20 @@ function ForumDetails() {
             }
         }
         console.log("forumData: ", forumData);
-        // return forumData;
         setForumObjs(forumData);
     };
+
+    const getUserName = async (userId) => {
+        try{
+            const res = await axios.get(`${config.API_BASE_URL}/forum/getUserName?userId=${userId}`)
+            const data = await res.data;
+            return data;
+        }catch(error){
+            console.log("error fetching forums: ", error);
+        }
+    };
+
+
     useEffect(() => {
         const fetchForumInfo = async () => {
             await getForumInfo(forums);  
@@ -59,11 +74,49 @@ function ForumDetails() {
         selectForum(selectedForumId);
     }, [forumObjs]);
 
+    useEffect(() => {
+        const fetchUserNames = async () => {
+            const names = [];
+            if(currentPost != null){
+                if (currentPost.anon != null && currentPost.anon) {
+                    names.push("Anon");
+                }  
+                else {
+                    const name = await getUserName(currentPost.author);
+                    names.push(name);
+                    console.log("name: ", name);
+                    console.log("names: ", names);
+                }  
+                if (currentPost.comments != null) {
+                    for (let i = 0; i < currentPost.comments.length; i++) {
+                        const name = await getUserName(currentPost.comments[i].author);
+                        names.push(name);
+                        if (currentPost.comments[i].anon != null && currentPost.comments[i].anon) {
+                            names.push("Anon");
+                        }  
+                        else {
+                            const name = await getUserName(currentPost.comments[i].author);
+                            names.push(name);         
+                        }  
+                    }
+                }
+            }
+            setCurrentPostAuthor(names);
+        }
+        fetchUserNames();
+        console.log("currentPostAuthor: ", currentPostAuthor);
+    }, [currentPost]);
+
+    const [drafting, setDrafting] = useState(false);
+    const startDraft = () => {
+        setDrafting(true);
+        setCurrentPost(null);
+        setSelectedPostId(null);
+    }
 
     return (
         <div>
             <Grid container
-                // spacing={2}
                 direction="row"
                 justifyContent="center"
                 alignItems="center"
@@ -76,7 +129,7 @@ function ForumDetails() {
                 <Grid item xs={12}
                     sx={{
                         // backgroundColor: "lightgray", 
-                        height: "100vh", width: "15%"}}
+                        height: "100vh", width: "10%"}}
                 >
                     {forums === null ? (
                         <Typography>no forums...</Typography>
@@ -98,19 +151,24 @@ function ForumDetails() {
                 <Grid item xs={12}
                     sx={{
                         // backgroundColor: "gray", 
-                        height: "100vh", width: "30%",
-                        borderLeft: `2px solid ${gold}`
+                        height: "100vh", width: "35%",
+                        borderLeft: `2px solid ${gold}`,
+                        overflow: "hidden",
+                        overflowY: "auto"
                     }}
                 >
                     {/* Forum Posts */}
-                    <Box sx={{backgroundColor: "lightgray", borderRadius: "10px", height: "3rem", margin: "5px" }}>Insert Search Bar</Box>
+                    <Box sx={{display: 'flex',flexDirection: 'row'}}>
+                        <Box sx={{backgroundColor: "lightgray", borderRadius: "10px", height: "3rem", margin: "5px", width: '70%' }}>Insert Search Bar</Box>
+                        <Button variant="contained" sx={{borderRadius: "10px", margin: "5px", height: "3rem", width : '27%'}} onClick={() => startDraft()}>New Post</Button>
+                    </Box>
                     {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts === undefined) ? (
                         <Typography>no posts yet...</Typography>
                     ) : (
                         currentForum.posts.map((post, index) => (
                             <Card key={index} 
                                 sx={{
-                                    backgroundColor:  post._id === selectedPostId ? light_yellow : 'transparent',
+                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent',
                                     }}>
                                 <CardActionArea onClick={() => {selectPost(post._id)}}>
                                     <CardContent>
@@ -128,23 +186,166 @@ function ForumDetails() {
                         borderLeft: `2px solid ${gold}`
                     }}
                 >
-                   {/* Post Details */}
-                   {(currentPost === null || currentPost === undefined || currentPost.title === null || currentPost.title === undefined) ? (
-                        <Box sx={{height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
-                            <Typography>select a post to read</Typography> 
-                            <Typography>{"<================"}</Typography>
-                        </Box>
-                    ) : (
-                        <Card>
-                            <CardContent sx={{height: "100vh"}}>
-                                <Typography>{currentPost.title}</Typography>
-                                <Typography>{currentPost.body}</Typography>
-                            </CardContent>
-                        </Card>
-                    )}
+                    {(drafting) ? <DisplayDraft forum={currentForum}/> : <DisplayPost post={currentPost} postAuthors={currentPostAuthor}/>}
                 </Grid>
             </Grid>
         </div>
     );
 }
 export default ForumDetails;
+
+function DisplayDraft({forum}) {
+    const [user, setUser] = useState(null);
+    const forumId = forum._id;
+    const [title, setTitle] = useState("");
+    const [body, setBody] = useState("");
+    const [anon, setAnon] = useState(false);
+    const [chosenTag, setChosenTag] = useState("");
+
+    const getUser = async () => {
+        try{
+            const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
+            setUser(res.data.user);
+            console.log("user: ", res.data.user);
+        }catch(error){
+            console.log("error fetching user: ", error);
+        }
+    }
+
+    const postPost = async (post) => {
+        try{
+            const res = await axios.post(`${config.API_BASE_URL}/forum/creatPost`, null, {params: post});
+            console.log("post created successfully: ", res.data);
+        }catch(error){
+            console.log("error posting post: ", error);
+        }
+    }
+
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!user) {
+            console.error("User is not loaded yet");
+            await getUser();
+        }
+        const userId = user._id;
+        const post = { title, body, anon, chosenTag, userId, forumId};
+        await postPost(post);
+    };
+    if (!forum) {
+        return (
+            <div>
+                <Typography>select a forum to post in</Typography>
+            </div>
+        );
+    }
+    return (
+        <div>
+            <Grid container 
+                sx={{
+                    backgroundColor: "white", 
+                    width: "100%",height: "100vh", 
+                    display: "flex", flexDirection: "column", 
+                    paddingTop: "20px",
+                }}>
+                <form onSubmit={handleSubmit} style={{ width: "95%", padding: '10px'}}>  
+                    <Grid item sx={{display: "flex", flexDirection: "row", marginBottom: '10px'}}> 
+                        {/* Title */}
+                        <Typography variant='h6' sx={{width: "10%"}}>Title</Typography>
+                        <TextField
+                            sx={{width: "90%"}}
+                            variant="outlined"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                        />
+                    </Grid>
+                    <Grid item sx={{display: "flex", flexDirection: "row", marginBottom: '10px'}}>
+                        {/* Body */}
+                        <Typography variant='h6' sx={{width: "10%"}}>Body</Typography>
+                        <TextField
+                            sx={{width: "90%"}}
+                            variant="outlined"
+                            multiline
+                            rows={4}
+                            value={body}
+                            onChange={(e) => setBody(e.target.value)}
+                        />
+                    </Grid>
+                    <Grid>
+                        {/* Tags */}
+                        {(forum.tags === null || forum.tags === undefined) ? (
+                            null
+                        ):(
+                            <RadioGroup
+                                value={chosenTag}
+                                onChange={(e) => setChosenTag(e.target.value)}
+                                row
+                            >
+                                {forum.tags.map((tag, index) => (
+                                    <FormControlLabel
+                                        key={index}
+                                        value={tag}
+                                        control={<Radio color="primary" />}
+                                        label={tag}
+                                    />
+                                ))}
+                            </RadioGroup>
+                        )}
+                    </Grid>
+                    <Grid item sx={{display: "flex", flexDirection: "row", marginBottom: '10px'}}>
+                        {/* Anon */}
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={anon}
+                                    onChange={(e) => setAnon(e.target.checked)}
+                                    name="anon"
+                                    color="primary"
+                                />
+                            }
+                            label="Post Anonmyously"
+                        />
+                    </Grid>
+                    <Grid item sx={{alignItems: 'left'}}>
+                        <button type="submit" style={{ padding: "10px 20px" }}>Submit</button>
+                    </Grid>
+                </form>
+            </Grid>
+        </div>
+    ); 
+}
+
+function DisplayPost ({post, postAuthors}) {
+    return (
+        (post === null || post === undefined || postAuthors.length === 0) ? (
+            <Box sx={{backgroundColor: "white", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
+                <Typography>select a post to read</Typography> 
+                <Typography>{"<================"}</Typography>
+            </Box>
+        ) : (
+            <Card sx={{height: "100%", overflow: "hidden"}}>
+                <CardContent sx={{height: "100%", overflowY: "auto"}}>
+                    <Box sx={{display: 'flex', flexDirection: 'row', alignItems: 'flex-end', }}>
+                        <Typography variant='h3'>{post.title}</Typography>
+                        <Typography variant='h6' sx={{marginLeft: '20px'}}>by {postAuthors[0]}</Typography>
+                    </Box>
+                    <Box sx={{padding: '10px'}}>
+                        <Typography variant='body1' sx={{ textAlign: 'left'}}>{post.body}</Typography>
+                    </Box>
+                    <Typography variant='h6'sx={{textAlign: 'left'}}>Comments:</Typography>
+                    {post.comments === null || post.comments.length === 0 ? (
+                        <Typography>no comments yet...</Typography>
+                    ):(
+                        post.comments.map((comment, index) => (
+                            <Box key={index} sx={{padding: "5px"}}>
+                                <Typography sx={{textAlign: 'left'}}>by {postAuthors[index+1]}:</Typography>
+                                <Typography variant='body1' sx={{marginLeft:'10px', textAlign: 'left'}}>{comment.body}</Typography>
+                            </Box>
+                        ))
+                    )}
+                    <Box sx={{height: '25px'}}/>
+                </CardContent>
+            </Card>
+        )
+    );
+}

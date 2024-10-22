@@ -59,6 +59,38 @@ export const getUser = (req, res) => {
     }
 };
 
+export const getFreshUserInfo = async (req, res) => {
+    try {
+        if (!req.session.user) {
+            return res.status(401).json("Not authenticated");
+        }
+       
+        const user = await UserModel.findById(req.session.user.id);
+ 
+ 
+        if (!user) {
+            return res.status(404).json("User not found");
+        }
+ 
+ 
+        req.session.user = {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            courses: user.courses,
+            isVerified: user.isVerified,
+            major: user.major,
+            year_in_school: user.year_in_school
+        };
+ 
+ 
+        res.json({ user: req.session.user });
+    } catch (error) {
+        console.error('Error fetching user from DB:', error);
+        res.status(500).json({ error: 'Error fetching user from the database' });
+    }
+ 
+};
 
 export const getUserFromDB = async (req, res) => {
     try {
