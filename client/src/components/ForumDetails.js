@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid2';
 import { Card, CardContent, Typography, Box, Button, CardActionArea, Dialog, TextField } from '@mui/material';
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
+import { useParams } from 'react-router-dom';
 
 import config from '../config';
 import axios from "axios";
@@ -12,8 +13,9 @@ const light_yellow = "#F0DE89";
 
 function ForumDetails() {
 
-    const dummyForumId = '6715697e75c5d587c3b6a6a3'; //object id of 251 in forums collection
-    const [forums, setForums] = useState([dummyForumId]);
+    const { forumId } = useParams(); //forum id from url
+
+    const [forums, setForums] = useState([forumId]);
     const [forumObjs, setForumObjs] = useState([]);
 
     const [selectedForumId, setSelectedForumId] = useState(forums[0]);
@@ -41,6 +43,7 @@ function ForumDetails() {
         const forumData = [];
         for (let i = 0; i < forums.length; i++) {
             try{
+                console.log("HERE: " + forums[i])
                 const res = await axios.get(`${config.API_BASE_URL}/forum/getForum?forumId=${forums[i]}`)
                 const data = await res.data;
                 forumData.push(data);
@@ -64,12 +67,13 @@ function ForumDetails() {
 
 
     useEffect(() => {
+        console.log("ID??? " + forumId)
         const fetchForumInfo = async () => {
             await getForumInfo(forums);  
         }
         fetchForumInfo();
         selectForum(selectedForumId);
-    }, []);
+    }, [forumId]);
     useEffect(() => {
         selectForum(selectedForumId);
     }, [forumObjs]);
