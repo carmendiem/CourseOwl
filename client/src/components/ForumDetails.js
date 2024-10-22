@@ -24,6 +24,17 @@ function ForumDetails() {
     const [currentPost, setCurrentPost] = useState(null);
     const [currentPostAuthor, setCurrentPostAuthor] = useState(null);
 
+    const [drafting, setDrafting] = useState(false);
+    const startDraft = () => {
+        setDrafting(true);
+        setCurrentPost(null);
+        setSelectedPostId(null);
+    }
+
+    const handleDraftSubmitted = () => {
+        setDrafting(!drafting);
+    };
+
     const selectForum = (forumId) => {
         setSelectedForumId(forumId);
         console.log("selectedid", selectedForumId);
@@ -73,7 +84,7 @@ function ForumDetails() {
         }
         fetchForumInfo();
         selectForum(selectedForumId);
-    }, [forumId]);
+    }, [forumId, drafting]);
     useEffect(() => {
         selectForum(selectedForumId);
     }, [forumObjs]);
@@ -110,13 +121,6 @@ function ForumDetails() {
         fetchUserNames();
         console.log("currentPostAuthor: ", currentPostAuthor);
     }, [currentPost]);
-
-    const [drafting, setDrafting] = useState(false);
-    const startDraft = () => {
-        setDrafting(true);
-        setCurrentPost(null);
-        setSelectedPostId(null);
-    }
 
     return (
         <div>
@@ -190,7 +194,7 @@ function ForumDetails() {
                         borderLeft: `2px solid ${gold}`
                     }}
                 >
-                    {(drafting) ? <DisplayDraft forum={currentForum}/> : <DisplayPost post={currentPost} postAuthors={currentPostAuthor}/>}
+                    {(drafting) ? <DisplayDraft forum={currentForum} handleDraft={handleDraftSubmitted}/> : <DisplayPost post={currentPost} postAuthors={currentPostAuthor}/>}
                 </Grid>
             </Grid>
         </div>
@@ -198,7 +202,7 @@ function ForumDetails() {
 }
 export default ForumDetails;
 
-function DisplayDraft({forum}) {
+function DisplayDraft({forum, handleDraft}) {
     const [user, setUser] = useState(null);
     const forumId = forum._id;
     const [title, setTitle] = useState("");
@@ -231,11 +235,11 @@ function DisplayDraft({forum}) {
         try{
             const res = await axios.post(`${config.API_BASE_URL}/forum/createPost`, null, {params: post});
             console.log("post created successfully: ", res.data);
+            handleDraft();
         }catch(error){
             console.log("error posting post: ", error);
         }
     }
-
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -256,6 +260,7 @@ function DisplayDraft({forum}) {
         console.log("userEmail: ", userEmail);
         const post = { title, body, anon, chosenTag, userEmail, forumId};
         await postPost(post);
+
     };
 
     if (!forum) {
