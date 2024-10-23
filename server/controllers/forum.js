@@ -39,7 +39,6 @@ export const getUserName = async (req, res) => {
 export const createPost = async (req, res) => {
     try {
         const { title, body, anon, chosenTag, userEmail, forumId} = req.query;
-        console.log(userEmail);
         const post = {title, body, anon, tag: chosenTag, author: userEmail, comments:[]};
         const forum = await Forum.findOneAndUpdate({_id: forumId}, {$push: {posts: post}}, {new: true});
         if (forum != null) {
@@ -50,6 +49,25 @@ export const createPost = async (req, res) => {
     } catch (error) {
         console.log("Error in createPost:", error);
         res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
+export const getPost = async (req, res) => {
+    try {
+        const { searchTerm, forumId } = req.query;
+        const forum = await Forum.findOne({ _id: forumId });
+
+        if (!forum) {
+            throw new Error('Forum not found');
+        }
+
+        const matchingPosts = forum.posts.filter(post =>
+            post.title && post.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        return res.json(matchingPosts);
+    } catch (error) {
+        console.log("Error in getPost: ", error);
+        res.status(400).json({ status: 'Error getting post' });
     }
 }
 

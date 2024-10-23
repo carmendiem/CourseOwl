@@ -9,7 +9,7 @@ import Forums from '../pages/Forums';
 import Courses from '../pages/Courses'; 
 import NotFound from "../pages/NotFound"; 
 import { ProtectedRoute } from "./ProtectedRoute";
-import ForumDetails from "../components/ForumDetails";
+import ForumDetails from "../components/Forum/ForumDetails";
 
 export function Rout({ setIsLoggedIn, isLoggedIn }) {
     return (

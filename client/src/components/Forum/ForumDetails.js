@@ -3,8 +3,9 @@ import Grid from '@mui/material/Grid2';
 import { Card, CardContent, Typography, Box, Button, CardActionArea, Dialog, TextField } from '@mui/material';
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
+import { PostSearch } from './PostSearch';
 
-import config from '../config';
+import config from '../../config';
 import axios from "axios";
 
 // colors
@@ -24,6 +25,8 @@ function ForumDetails() {
     const [currentPost, setCurrentPost] = useState(null);
     const [currentPostAuthor, setCurrentPostAuthor] = useState(null);
 
+    const [searchedPosts, setSearchedPosts] = useState(null);
+
     const [drafting, setDrafting] = useState(false);
     const startDraft = () => {
         setDrafting(true);
@@ -37,16 +40,13 @@ function ForumDetails() {
 
     const selectForum = (forumId) => {
         setSelectedForumId(forumId);
-        console.log("selectedid", selectedForumId);
         setCurrentForum(forumObjs.find(forum => forum._id === forumId));
-        console.log("currentforum: ", currentForum);
         
     };
     const selectPost = (postId) => {
         setSelectedPostId(postId);
         setCurrentPost(currentForum.posts.find(post => post._id === postId));
         setCurrentPostAuthor([]);
-        console.log("currentPost: ", currentPost);
         setDrafting(false);
     };
 
@@ -54,7 +54,6 @@ function ForumDetails() {
         const forumData = [];
         for (let i = 0; i < forums.length; i++) {
             try{
-                console.log("HERE: " + forums[i])
                 const res = await axios.get(`${config.API_BASE_URL}/forum/getForum?forumId=${forums[i]}`)
                 const data = await res.data;
                 forumData.push(data);
@@ -62,7 +61,6 @@ function ForumDetails() {
                 console.log("error fetching forums: ", error);
             }
         }
-        console.log("forumData: ", forumData);
         setForumObjs(forumData);
     };
 
@@ -76,9 +74,12 @@ function ForumDetails() {
         }
     };
 
+    const changeSearchedPosts = (searchedPosts) => {
+        setSearchedPosts(searchedPosts);
+    }
+
 
     useEffect(() => {
-        console.log("ID??? " + forumId)
         const fetchForumInfo = async () => {
             await getForumInfo(forums);  
         }
@@ -99,8 +100,6 @@ function ForumDetails() {
                 else {
                     const name = await getUserName(currentPost.author);
                     names.push(name);
-                    console.log("name: ", name);
-                    console.log("names: ", names);
                 }  
                 if (currentPost.comments != null) {
                     for (let i = 0; i < currentPost.comments.length; i++) {
@@ -119,7 +118,6 @@ function ForumDetails() {
             setCurrentPostAuthor(names);
         }
         fetchUserNames();
-        console.log("currentPostAuthor: ", currentPostAuthor);
     }, [currentPost]);
 
     return (
@@ -167,17 +165,19 @@ function ForumDetails() {
                 >
                     {/* Forum Posts */}
                     <Box sx={{display: 'flex',flexDirection: 'row'}}>
-                        <Box sx={{backgroundColor: "lightgray", borderRadius: "10px", height: "3rem", margin: "5px", width: '70%' }}>Insert Search Bar</Box>
+                        <Box sx={{borderRadius: "10px", height: "3rem", margin: "5px", width: '70%' }}>
+                            <PostSearch forumId={forumId} setSearchedPosts={changeSearchedPosts}/>
+                        </Box>
                         <Button variant="contained" sx={{borderRadius: "10px", margin: "5px", height: "3rem", width : '27%'}} onClick={() => startDraft()}>New Post</Button>
                     </Box>
                     {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts === undefined) ? (
                         <Typography>no posts yet...</Typography>
-                    ) : (
-                        currentForum.posts.map((post, index) => (
+                    ) : (searchedPosts && searchedPosts.length > 0) ? (
+                        searchedPosts.map((post, index) => (
                             <Card key={index} 
                                 sx={{
                                     backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent',
-                                    }}>
+                                }}>
                                 <CardActionArea onClick={() => {selectPost(post._id)}}>
                                     <CardContent>
                                         <Typography>{post.title}</Typography>
@@ -185,7 +185,19 @@ function ForumDetails() {
                                 </CardActionArea>
                             </Card>
                         ))
-                    )}
+                    ) : (
+                        currentForum.posts.map((post, index) => (
+                            <Card key={index} 
+                                sx={{
+                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent',
+                                }}>
+                                <CardActionArea onClick={() => {selectPost(post._id)}}>
+                                    <CardContent>
+                                        <Typography>{post.title}</Typography>
+                                    </CardContent>
+                                </CardActionArea>
+                            </Card>
+                        )))}
 
                 </Grid>
                 <Grid item xs={12}
@@ -225,7 +237,6 @@ function DisplayDraft({forum, handleDraft}) {
         try{
             const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
             setUser(res.data.user);
-            console.log("user: ", res.data.user);
         }catch(error){
             console.log("error fetching user: ", error);
         }
@@ -234,7 +245,6 @@ function DisplayDraft({forum, handleDraft}) {
     const postPost = async (post) => {
         try{
             const res = await axios.post(`${config.API_BASE_URL}/forum/createPost`, null, {params: post});
-            console.log("post created successfully: ", res.data);
             handleDraft();
         }catch(error){
             console.log("error posting post: ", error);
@@ -256,8 +266,6 @@ function DisplayDraft({forum, handleDraft}) {
             return;
         }
         const userEmail = user.email;
-        console.log("user", user);
-        console.log("userEmail: ", userEmail);
         const post = { title, body, anon, chosenTag, userEmail, forumId};
         await postPost(post);
 
