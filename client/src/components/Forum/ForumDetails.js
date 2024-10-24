@@ -7,8 +7,9 @@ import { styled } from '@mui/material/styles';
 import { IconButton } from '@mui/material';
 import { Add} from '@mui/icons-material';
 import "./ForumDetails.css";
+import { PostSearch } from './PostSearch';
 
-import config from '../config';
+import config from '../../config';
 import axios from "axios";
 
 // colors
@@ -42,6 +43,8 @@ function ForumDetails() {
     const [currentPost, setCurrentPost] = useState(null);
     const [currentPostAuthor, setCurrentPostAuthor] = useState(null);
 
+    const [searchedPosts, setSearchedPosts] = useState(null);
+
     const [drafting, setDrafting] = useState(false);
     const startDraft = () => {
         setDrafting(true);
@@ -64,6 +67,7 @@ function ForumDetails() {
     const selectForum = (forumId) => {
         setSelectedForumId(forumId);
         setCurrentForum(forumObjs.find(forum => forum._id === forumId));
+        
     };
     const selectPost = (postId) => {
         setSelectedPostId(postId);
@@ -84,6 +88,7 @@ function ForumDetails() {
         }
         setForumObjs(forumData);
     };
+
     const getUser = async () => {
         try{
             const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
@@ -93,6 +98,7 @@ function ForumDetails() {
             console.log("error fetching user: ", error);
         }
     };
+
     const getUserName = async (userEmail) => {
         try{
             const res = await axios.get(`${config.API_BASE_URL}/forum/getUserName?email=${userEmail}`)
@@ -106,6 +112,10 @@ function ForumDetails() {
     useEffect(() => {
         getUser();
     }, []);
+
+    const changeSearchedPosts = (searchedPosts) => {
+        setSearchedPosts(searchedPosts);
+    }
 
     useEffect(() => {
         console.log(forumObjs)
@@ -177,7 +187,9 @@ function ForumDetails() {
                 <Grid item xs={12} className="post-list-grid">
                     {/* Forum Posts */}
                     <Box sx={{display: 'flex',flexDirection: 'row'}}>
-                        <Box sx={{backgroundColor: "lightgray", borderRadius: "10px", height: "3rem", margin: "5px", width: '70%' }}>Insert Search Bar</Box>
+                        <Box sx={{borderRadius: "10px", height: "3rem", margin: "5px", width: '70%' }}>
+                            <PostSearch forumId={forumId} setSearchedPosts={changeSearchedPosts}/>
+                        </Box>
                         <IconButton variant="contained" className='new-post-button' onClick={() => startDraft()}>
                             <Typography>New Post</Typography>
                             <Add/>
@@ -185,8 +197,8 @@ function ForumDetails() {
                     </Box>
                     {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts.length === 0) ? (
                         <Typography>no posts yet...</Typography>
-                    ) : (
-                        currentForum.posts.map((post, index) => (
+                    ) : (searchedPosts && searchedPosts.length > 0) ? (
+                        searchedPosts.map((post, index) => (
                             <Card key={index} 
                                 sx={{
                                     backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent'
@@ -200,7 +212,19 @@ function ForumDetails() {
                                 </CardActionArea>
                             </Card>
                         ))
-                    )}
+                    ) : (
+                        currentForum.posts.map((post, index) => (
+                            <Card key={index} 
+                                sx={{
+                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent',
+                                }}>
+                                <CardActionArea onClick={() => {selectPost(post._id)}}>
+                                    <CardContent>
+                                        <Typography>{post.title}</Typography>
+                                    </CardContent>
+                                </CardActionArea>
+                            </Card>
+                        )))}
 
                 </Grid>
                 <Grid item xs={12} className="post-display-grid">
@@ -240,7 +264,6 @@ function DisplayDraft({user, forum, handleDraft}) {
     const postPost = async (post) => {
         try{
             const res = await axios.post(`${config.API_BASE_URL}/forum/createPost`, null, {params: post});
-            console.log("post created successfully: ", res.data);
             handleDraft();
         }catch(error){
             console.log("error posting post: ", error);
