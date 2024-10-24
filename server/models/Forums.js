@@ -37,10 +37,13 @@ const forumSchema = new Schema({
         },
         comments: [{
             author: {
-                type: ObjectId
+                type: String
             },
             body: {
                 type: String
+            },
+            anon: {
+                type: Boolean
             },
         }],
     }],

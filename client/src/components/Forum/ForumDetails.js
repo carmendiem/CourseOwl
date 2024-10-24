@@ -15,7 +15,7 @@ const light_yellow = "#F0DE89";
 function ForumDetails() {
 
     const { forumId } = useParams(); //forum id from url
-
+    const [user, setUser] = useState(null);
     const [forums, setForums] = useState([forumId]);
     const [forumObjs, setForumObjs] = useState([]);
 
@@ -38,6 +38,14 @@ function ForumDetails() {
         setDrafting(!drafting);
     };
 
+    const [triggerPostRefresh, setTriggerPostRefresh] = useState(false);
+    const [commenting, setCommenting] = useState(false);
+    const handleCommentCommented = () => {
+        setCommenting(!commenting);
+        setTriggerPostRefresh(!triggerPostRefresh);
+        console.log("commenting: ", commenting);
+    };
+
     const selectForum = (forumId) => {
         setSelectedForumId(forumId);
         setCurrentForum(forumObjs.find(forum => forum._id === forumId));
@@ -49,7 +57,6 @@ function ForumDetails() {
         setCurrentPostAuthor([]);
         setDrafting(false);
     };
-
     const getForumInfo = async (forums) => {
         const forumData = [];
         for (let i = 0; i < forums.length; i++) {
@@ -64,6 +71,16 @@ function ForumDetails() {
         setForumObjs(forumData);
     };
 
+    const getUser = async () => {
+        try{
+            const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
+            setUser(res.data.user);
+            // console.log("user: ", res.data.user);
+        }catch(error){
+            console.log("error fetching user: ", error);
+        }
+    };
+
     const getUserName = async (userEmail) => {
         try{
             const res = await axios.get(`${config.API_BASE_URL}/forum/getUserName?email=${userEmail}`)
@@ -74,20 +91,29 @@ function ForumDetails() {
         }
     };
 
+    useEffect(() => {
+        getUser();
+    }, []);
+
     const changeSearchedPosts = (searchedPosts) => {
         setSearchedPosts(searchedPosts);
     }
 
-
     useEffect(() => {
+        console.log(forumObjs)
         const fetchForumInfo = async () => {
             await getForumInfo(forums);  
         }
         fetchForumInfo();
         selectForum(selectedForumId);
-    }, [forumId, drafting]);
+        console.log(forumObjs);
+        console.log("currentforum:",currentForum)
+    }, [forumId, drafting, commenting]);
     useEffect(() => {
         selectForum(selectedForumId);
+        if (selectedPostId!=null) {selectPost(selectedPostId)}
+        console.log("post reselected?");
+        console.log(currentPost);
     }, [forumObjs]);
 
     useEffect(() => {
@@ -103,8 +129,6 @@ function ForumDetails() {
                 }  
                 if (currentPost.comments != null) {
                     for (let i = 0; i < currentPost.comments.length; i++) {
-                        const name = await getUserName(currentPost.comments[i].author);
-                        names.push(name);
                         if (currentPost.comments[i].anon != null && currentPost.comments[i].anon) {
                             names.push("Anon");
                         }  
@@ -118,7 +142,7 @@ function ForumDetails() {
             setCurrentPostAuthor(names);
         }
         fetchUserNames();
-    }, [currentPost]);
+    }, [currentPost, triggerPostRefresh]);
 
     return (
         <div>
@@ -206,16 +230,23 @@ function ForumDetails() {
                         borderLeft: `2px solid ${gold}`
                     }}
                 >
-                    {(drafting) ? <DisplayDraft forum={currentForum} handleDraft={handleDraftSubmitted}/> : <DisplayPost post={currentPost} postAuthors={currentPostAuthor}/>}
-                </Grid>
+                    {(drafting) ? 
+                        <DisplayDraft user={user} forum={currentForum} handleDraft={handleDraftSubmitted}/> : 
+                        ( (currentPost === null || currentPost === undefined) ? 
+                            (<Box sx={{backgroundColor: "white", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
+                                <Typography>select a post to read</Typography> 
+                                <Typography>{"<================"}</Typography>
+                            </Box>) : 
+                            <DisplayPost user={user} forumId={currentForum._id} post={currentPost} postAuthors={currentPostAuthor} handleComment={handleCommentCommented}/> 
+                        )}
+               </Grid>
             </Grid>
         </div>
     );
 }
 export default ForumDetails;
 
-function DisplayDraft({forum, handleDraft}) {
-    const [user, setUser] = useState(null);
+function DisplayDraft({user, forum, handleDraft}) {
     const forumId = forum._id;
     const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
@@ -225,22 +256,12 @@ function DisplayDraft({forum, handleDraft}) {
     const [bodyError, setBodyError] = useState("");
 
     useEffect(() => {
-        getUser();
         if (forum.tags === null || forum.tags === undefined) {
             return;
         } else {
             setChosenTag(forum.tags[0]);
         }
     }, []);
-
-    const getUser = async () => {
-        try{
-            const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
-            setUser(res.data.user);
-        }catch(error){
-            console.log("error fetching user: ", error);
-        }
-    }
 
     const postPost = async (post) => {
         try{
@@ -255,7 +276,7 @@ function DisplayDraft({forum, handleDraft}) {
         e.preventDefault();
         if (!user) {
             console.error("User is not loaded yet");
-            await getUser();
+            return;
         }
         if (!title) {
             setTitleError("Title cannot be empty");
@@ -347,8 +368,8 @@ function DisplayDraft({forum, handleDraft}) {
                             label="Post Anonmyously"
                         />
                     </Grid>
-                    <Grid item sx={{alignItems: 'left'}}>
-                        <button type="submit" style={{ padding: "10px 20px" }}>Submit</button>
+                    <Grid item sx={{alignItems: 'right'}}>
+                        <button type="submit" style={{ padding: "10px 20px" }}>Post</button>
                     </Grid>
                 </form>
             </Grid>
@@ -356,7 +377,7 @@ function DisplayDraft({forum, handleDraft}) {
     ); 
 }
 
-function DisplayPost ({post, postAuthors}) {
+function DisplayPost ({user, forumId, post, postAuthors, handleComment}) {
     return (
         (post === null || post === undefined || postAuthors.length === 0) ? (
             <Box sx={{backgroundColor: "white", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
@@ -375,7 +396,7 @@ function DisplayPost ({post, postAuthors}) {
                     </Box>
                     <Typography variant='h6'sx={{textAlign: 'left'}}>Comments:</Typography>
                     {post.comments === null || post.comments.length === 0 ? (
-                        <Typography>no comments yet...</Typography>
+                        <Typography>Be the frist to comment!</Typography>
                     ):(
                         post.comments.map((comment, index) => (
                             <Box key={index} sx={{padding: "5px"}}>
@@ -384,9 +405,83 @@ function DisplayPost ({post, postAuthors}) {
                             </Box>
                         ))
                     )}
+                    <ReplyBox user={user} forumId={forumId} postId={post._id} handleComment={handleComment}/>
                     <Box sx={{height: '25px'}}/>
                 </CardContent>
             </Card>
         )
+    );
+}
+
+function ReplyBox({user, forumId, postId, handleComment}) {
+    const [body, setBody] = useState("");
+    const [anon, setAnon] = useState(false);
+    const [bodyError, setBodyError] = useState("");
+
+    const postComment = async (comment) => {
+        try{
+            const res = await axios.post(`${config.API_BASE_URL}/forum/createComment`, null, {params: comment});
+            console.log("comment created successfully: ", res.data);
+            handleComment();
+            setBody("");
+            setAnon(false);
+        }catch(error){
+            console.log("error posting post: ", error);
+        }
+    }
+
+    const handleReply = async (e) => {
+        e.preventDefault();
+        if (!user) {
+            console.error("User is not loaded yet");
+            return;
+        }
+        if (!body) {
+            setBodyError("Comment cannot be empty");
+            return;
+        }
+        const userEmail = user.email;
+        const comment = {body, anon, userEmail, forumId, postId};
+        await postComment(comment);
+    }
+
+    return (
+        <Grid
+            sx={{
+                display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                padding: "10px",
+                margin: "10px",
+            }}
+        >
+            <form onSubmit={handleReply} style={{width: "100%"}}>
+                <TextField
+                    id="outlined-multiline-static"
+                    label="Reply"
+                    multiline
+                    rows={4}
+                    variant="outlined"
+                    sx={{width: "100%"}}
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    helperText={bodyError}
+                />
+                <Grid item s    x={{display: "flex", flexDirection: "row", marginBottom: '10px'}}>
+                    {/* Anon */}
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={anon}
+                                onChange={(e) => setAnon(e.target.checked)}
+                                name="anon"
+                                color="primary"
+                            />
+                        }
+                        label="Post Anonmyously"
+                    />
+                </Grid>
+                <button type="submit" style={{ padding: "10px 20px" }}>Post</button>
+            </form>
+        </Grid>
     );
 }

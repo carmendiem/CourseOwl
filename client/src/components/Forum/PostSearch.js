@@ -44,7 +44,7 @@ export function PostSearch( {forumId, setSearchedPosts} ) {
                     setSearchAlert("No posts found that match your search, please try again!")
                 }
             } else {
-                setSearchedPosts([]);
+                setSearchedPosts(null);
             }
         };
         searchForums();

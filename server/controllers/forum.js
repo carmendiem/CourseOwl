@@ -52,6 +52,27 @@ export const createPost = async (req, res) => {
     }
 }
 
+export const createComment = async (req, res) => {
+    try {
+        const {body, anon, userEmail, forumId, postId} = req.query;
+        const comment = {body, anon, author: userEmail};
+        const forum = await Forum.findById(forumId);
+        if (!forum) {
+            return res.status(404).json({ status: 'forum not found' });
+        } 
+        const post = forum.posts.id(postId);
+        if (!post) {
+            return res.status(404).json({ status: 'post not found' });
+        }
+        post.comments.push(comment);
+        await forum.save();
+        return res.json(forum);
+    } catch (error) {
+        console.log("Error in createComment:", error);
+        res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
 export const getPost = async (req, res) => {
     try {
         const { searchTerm, forumId } = req.query;
@@ -64,6 +85,7 @@ export const getPost = async (req, res) => {
         const matchingPosts = forum.posts.filter(post =>
             post.title && post.title.toLowerCase().includes(searchTerm.toLowerCase())
         );
+        console.log(matchingPosts)
         return res.json(matchingPosts);
     } catch (error) {
         console.log("Error in getPost: ", error);
