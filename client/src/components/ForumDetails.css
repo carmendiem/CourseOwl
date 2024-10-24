@@ -1,0 +1,111 @@
+:root {
+    --gold: #daaa00;
+    --light_yellow: #F0DE89;
+}
+
+.main-forum-container {
+    direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    border-radius: 15px;
+    overflow: hidden;
+    outline: 3px solid var(--gold);
+}
+
+/* Forum List Display */
+.forum-list-grid {
+    /* background-color: lightgray; */
+    height: 100vh; width: 10%;
+}
+
+/* Post List Display */
+.post-list-grid {
+    /* background-color: lightgray; */
+    height: 100vh; width: 30%;
+    border-left: 2px solid var(--gold);
+    overflow: hidden; overflow-y: auto;
+}
+button.new-post-button {
+    background-color: var(--gold);
+    border-radius: 1px, black;
+    border-radius: 15px; 
+    padding-right: 4px;
+    margin: 5px;
+    /* height: 100%; */
+}
+
+.post-list-title {
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Post Display */
+.post-display-grid {
+    height: 100vh;
+    width: 60%;
+    border-left: 2px solid var(--gold);
+}
+
+.post-display {
+    background-color: white;
+    height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.post-card {
+    height: 100%;
+    overflow: hidden;
+}
+.post-card-content {
+    height: 100%;
+    overflow-y: auto;
+}
+.post-card-title {
+    text-align: left;
+}
+.post-card-tag-author {
+    display: flex; flex-direction: row;
+    align-items: left;
+}
+.post-card-author {
+    text-align: left;
+    margin: 20px;
+}
+.post-card-body-box {
+    padding: 10px;
+}
+.post-card-body-text {
+    text-align: left;
+}
+.post-comment-author {
+    text-align: left;
+}
+.post-comment-body {
+    text-align: left;
+    margin-left: 10px;
+}
+
+/* Reply Box */
+
+/* Post Draft */
+.post-draft-grid {
+    background-color: white;
+    width: 100%;
+    height: 100vh;
+    display: flex; flex-direction: column;
+    padding: 20px;
+}
+.post-draft-entry {
+    display: flex; 
+    flex-direction: row;
+    margin-bottom: 10px;
+}
+button.post-button {
+    padding-left: 10px;
+    padding-right: 10px;
+    border: 1px solid var(--gold);
+}

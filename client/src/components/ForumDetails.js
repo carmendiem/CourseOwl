@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid2';
-import { Card, CardContent, Typography, Box, Button, CardActionArea, Dialog, TextField } from '@mui/material';
+import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField } from '@mui/material';
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
+import { styled } from '@mui/material/styles';
+import { IconButton } from '@mui/material';
+import { Add} from '@mui/icons-material';
+import "./ForumDetails.css";
 
 import config from '../config';
 import axios from "axios";
@@ -10,6 +14,20 @@ import axios from "axios";
 // colors
 const gold = "#daaa00";
 const light_yellow = "#F0DE89";
+
+const Tag = styled(Grid)(({ theme }) => ({
+    display: 'inline-block',
+    backgroundColor: 'white',
+    ...theme.typography.body2,
+    textAlign: 'center',
+    height: "50%", //set height 50% of parent
+    // boxShadow: 'none',
+    borderRadius: "10px",
+    border: `1px solid ${gold}`,
+    padding: '5px 10px',
+}));
+
+const flexRowStyle = {display: 'flex',flexDirection: 'row'};
 
 function ForumDetails() {
 
@@ -136,63 +154,48 @@ function ForumDetails() {
 
     return (
         <div>
-            <Grid container
-                direction="row"
-                justifyContent="center"
-                alignItems="center"
-                sx={{width: "100%",
-                    borderRadius: 5, overflow: "hidden",
-                    outline: `3px solid ${gold}`,
-                }}
-            >
+            <Grid container className="main-forum-container">
                 {/* list of user's forum + forum currently viewing */}
-                <Grid item xs={12}
-                    sx={{
-                        // backgroundColor: "lightgray", 
-                        height: "100vh", width: "10%"}}
-                >
+                <Grid item xs={12} className="forum-list-grid">
                     {forums === null ? (
                         <Typography>no forums...</Typography>
                     ) : (
                         forumObjs.map((forum, index) => (
                             <Card key={index} 
-                                sx={{
-                                    backgroundColor:  forum._id === selectedForumId ? light_yellow : 'transparent',
-                                    }}>
+                                sx={{ backgroundColor:  forum._id === selectedForumId ? light_yellow : 'transparent'}}>
                                 <CardActionArea onClick={() => {selectForum(forum._id)}}>
                                     <CardContent>
-                                        <Typography>{forum.course_code}</Typography>
+                                        {(forum.course_code === null || forum.course_code === undefined) ? 
+                                            <Typography> {forum.name}</Typography> : 
+                                            <Typography>{forum.course_code}</Typography>}
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
                         ))
                     )}
                 </Grid>
-                <Grid item xs={12}
-                    sx={{
-                        // backgroundColor: "gray", 
-                        height: "100vh", width: "35%",
-                        borderLeft: `2px solid ${gold}`,
-                        overflow: "hidden",
-                        overflowY: "auto"
-                    }}
-                >
+                <Grid item xs={12} className="post-list-grid">
                     {/* Forum Posts */}
                     <Box sx={{display: 'flex',flexDirection: 'row'}}>
                         <Box sx={{backgroundColor: "lightgray", borderRadius: "10px", height: "3rem", margin: "5px", width: '70%' }}>Insert Search Bar</Box>
-                        <Button variant="contained" sx={{borderRadius: "10px", margin: "5px", height: "3rem", width : '27%'}} onClick={() => startDraft()}>New Post</Button>
+                        <IconButton variant="contained" className='new-post-button' onClick={() => startDraft()}>
+                            <Typography>New Post</Typography>
+                            <Add/>
+                        </IconButton>
                     </Box>
-                    {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts === undefined) ? (
+                    {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts.length === 0) ? (
                         <Typography>no posts yet...</Typography>
                     ) : (
                         currentForum.posts.map((post, index) => (
                             <Card key={index} 
                                 sx={{
-                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent',
+                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent'
                                     }}>
                                 <CardActionArea onClick={() => {selectPost(post._id)}}>
                                     <CardContent>
-                                        <Typography>{post.title}</Typography>
+                                        <Typography className='post-list-title' >
+                                            {post.title}</Typography>
+                                        {(post.tag === null || post.tag === undefined) ? null : <Tag>{post.tag}</Tag>}
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
@@ -200,17 +203,12 @@ function ForumDetails() {
                     )}
 
                 </Grid>
-                <Grid item xs={12}
-                    sx={{
-                        height: "100vh", width: "55%",
-                        borderLeft: `2px solid ${gold}`
-                    }}
-                >
+                <Grid item xs={12} className="post-display-grid">
                     {(drafting) ? 
                         <DisplayDraft user={user} forum={currentForum} handleDraft={handleDraftSubmitted}/> : 
                         ( (currentPost === null || currentPost === undefined) ? 
-                            (<Box sx={{backgroundColor: "white", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
-                                <Typography>select a post to read</Typography> 
+                            (<Box className='post-display'>
+                                <Typography>Select a Post to Read</Typography> 
                                 <Typography>{"<================"}</Typography>
                             </Box>) : 
                             <DisplayPost user={user} forumId={currentForum._id} post={currentPost} postAuthors={currentPostAuthor} handleComment={handleCommentCommented}/> 
@@ -272,21 +270,15 @@ function DisplayDraft({user, forum, handleDraft}) {
     if (!forum) {
         return (
             <div>
-                <Typography>select a forum to post in</Typography>
+                <Typography>Select a Forum to Post In.</Typography>
             </div>
         );
     }
     return (
         <div>
-            <Grid container 
-                sx={{
-                    backgroundColor: "white", 
-                    width: "100%",height: "100vh", 
-                    display: "flex", flexDirection: "column", 
-                    paddingTop: "20px",
-                }}>
+            <Grid container className="post-draft-grid">
                 <form onSubmit={handleSubmit} style={{ width: "95%", padding: '10px'}}>  
-                    <Grid item sx={{display: "flex", flexDirection: "row", marginBottom: '10px'}}> 
+                    <Grid item className="post-draft-entry"> 
                         {/* Title */}
                         <Typography variant='h6' sx={{width: "10%"}}>Title</Typography>
                         <TextField
@@ -297,7 +289,7 @@ function DisplayDraft({user, forum, handleDraft}) {
                             helperText={titleError}
                         />
                     </Grid>
-                    <Grid item sx={{display: "flex", flexDirection: "row", marginBottom: '10px'}}>
+                    <Grid item className="post-draft-entry">
                         {/* Body */}
                         <Typography variant='h6' sx={{width: "10%"}}>Body</Typography>
                         <TextField
@@ -331,7 +323,7 @@ function DisplayDraft({user, forum, handleDraft}) {
                             </RadioGroup>
                         )}
                     </Grid>
-                    <Grid item sx={{display: "flex", flexDirection: "row", marginBottom: '10px'}}>
+                    <Grid item className='post-draft-entry'>
                         {/* Anon */}
                         <FormControlLabel
                             control={
@@ -346,7 +338,7 @@ function DisplayDraft({user, forum, handleDraft}) {
                         />
                     </Grid>
                     <Grid item sx={{alignItems: 'right'}}>
-                        <button type="submit" style={{ padding: "10px 20px" }}>Post</button>
+                        <Button type="submit" className='post-button'>Post</Button>
                     </Grid>
                 </form>
             </Grid>
@@ -357,28 +349,29 @@ function DisplayDraft({user, forum, handleDraft}) {
 function DisplayPost ({user, forumId, post, postAuthors, handleComment}) {
     return (
         (post === null || post === undefined || postAuthors.length === 0) ? (
-            <Box sx={{backgroundColor: "white", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
-                <Typography>select a post to read</Typography> 
+            <Box className="post-display">
+                <Typography>Select a Post to Read</Typography> 
                 <Typography>{"<================"}</Typography>
             </Box>
         ) : (
-            <Card sx={{height: "100%", overflow: "hidden"}}>
-                <CardContent sx={{height: "100%", overflowY: "auto"}}>
-                    <Box sx={{display: 'flex', flexDirection: 'row', alignItems: 'flex-end', }}>
-                        <Typography variant='h3'>{post.title}</Typography>
-                        <Typography variant='h6' sx={{marginLeft: '20px'}}>by {postAuthors[0]}</Typography>
+            <Card className='post-card'>
+                <CardContent className='post-card-content'>
+                    <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
+                    <Box className='post-card-tag-author'>
+                        <Tag>{post.tag}</Tag>
+                        <Typography variant='h6' className='post-card-author'>by {postAuthors[0]}</Typography>
                     </Box>
-                    <Box sx={{padding: '10px'}}>
-                        <Typography variant='body1' sx={{ textAlign: 'left'}}>{post.body}</Typography>
+                    <Box className='post-card-body-box'>
+                        <Typography variant='body1' className='post-card-body-text'>{post.body}</Typography>
                     </Box>
                     <Typography variant='h6'sx={{textAlign: 'left'}}>Comments:</Typography>
                     {post.comments === null || post.comments.length === 0 ? (
-                        <Typography>Be the frist to comment!</Typography>
+                        null
                     ):(
                         post.comments.map((comment, index) => (
                             <Box key={index} sx={{padding: "5px"}}>
-                                <Typography sx={{textAlign: 'left'}}>by {postAuthors[index+1]}:</Typography>
-                                <Typography variant='body1' sx={{marginLeft:'10px', textAlign: 'left'}}>{comment.body}</Typography>
+                                <Typography className='post-comment-author'>by {postAuthors[index+1]}:</Typography>
+                                <Typography variant='body1' className='post-comment-body'>{comment.body}</Typography>
                             </Box>
                         ))
                     )}
@@ -443,7 +436,7 @@ function ReplyBox({user, forumId, postId, handleComment}) {
                     onChange={(e) => setBody(e.target.value)}
                     helperText={bodyError}
                 />
-                <Grid item s    x={{display: "flex", flexDirection: "row", marginBottom: '10px'}}>
+                <Grid item x={{flexRowStyle, marginBottom: '10px'}}>
                     {/* Anon */}
                     <FormControlLabel
                         control={
