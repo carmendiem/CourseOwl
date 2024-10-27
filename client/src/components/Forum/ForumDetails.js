@@ -321,7 +321,7 @@ function DisplayDraft({user, forum, handleDraft}) {
                 <form onSubmit={handleSubmit} style={{ width: "95%", padding: '10px'}}>  
                     <Grid item className="post-draft-entry"> 
                         {/* Title */}
-                        <Typography variant='h6' sx={{width: "10%"}}>Title</Typography>
+                        <Typography variant='h6' sx={{width: "10%", textAlign: "left", paddingTop: "5px"}}>Title:</Typography>
                         <TextField
                             sx={{width: "90%"}}
                             variant="outlined"
@@ -332,7 +332,7 @@ function DisplayDraft({user, forum, handleDraft}) {
                     </Grid>
                     <Grid item className="post-draft-entry">
                         {/* Body */}
-                        <Typography variant='h6' sx={{width: "10%"}}>Body</Typography>
+                        <Typography variant='h6' sx={{width: "10%", textAlign: "left", paddingTop: "5px"}}>Body:</Typography>
                         <TextField
                             sx={{width: "90%"}}
                             variant="outlined"
