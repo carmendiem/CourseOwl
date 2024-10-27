@@ -16,17 +16,17 @@ import axios from "axios";
 const gold = "#daaa00";
 const light_yellow = "#F0DE89";
 
-const Tag = styled(Grid)(({ theme }) => ({
-    display: 'inline-block',
-    backgroundColor: 'white',
-    ...theme.typography.body2,
-    textAlign: 'center',
-    height: "50%", //set height 50% of parent
-    // boxShadow: 'none',
-    borderRadius: "10px",
-    border: `1px solid ${gold}`,
-    padding: '5px 10px',
-}));
+// const Tag = styled(Grid)(({ theme }) => ({
+//     display: 'inline-block',
+//     backgroundColor: 'white',
+//     ...theme.typography.body2,
+//     textAlign: 'center',
+//     height: "50%", //set height 50% of parent
+//     // boxShadow: 'none',
+//     borderRadius: "10px",
+//     border: `1px solid ${gold}`,
+//     padding: '5px 10px',
+// }));
 
 const flexRowStyle = {display: 'flex',flexDirection: 'row'};
 
@@ -61,7 +61,7 @@ function ForumDetails() {
     const handleCommentCommented = () => {
         setCommenting(!commenting);
         setTriggerPostRefresh(!triggerPostRefresh);
-        console.log("commenting: ", commenting);
+        // console.log("commenting: ", commenting);
     };
 
     const selectForum = (forumId) => {
@@ -118,20 +118,20 @@ function ForumDetails() {
     }
 
     useEffect(() => {
-        console.log(forumObjs)
+        // console.log(forumObjs)
         const fetchForumInfo = async () => {
             await getForumInfo(forums);  
         }
         fetchForumInfo();
         selectForum(selectedForumId);
-        console.log(forumObjs);
-        console.log("currentforum:",currentForum)
+        // console.log(forumObjs);
+        // console.log("currentforum:",currentForum)
     }, [forumId, drafting, commenting]);
     useEffect(() => {
         selectForum(selectedForumId);
         if (selectedPostId!=null) {selectPost(selectedPostId)}
-        console.log("post reselected?");
-        console.log(currentPost);
+        // console.log("post reselected?");
+        // console.log(currentPost);
     }, [forumObjs]);
 
     useEffect(() => {
@@ -172,12 +172,14 @@ function ForumDetails() {
                     ) : (
                         forumObjs.map((forum, index) => (
                             <Card key={index} 
-                                sx={{ backgroundColor:  forum._id === selectedForumId ? light_yellow : 'transparent'}}>
+                                sx={{ backgroundColor:  forum._id === selectedForumId ? light_yellow : 'transparent', 
+                                    boxShadow: 'none', borderBottom: '1px solid gray', borderRadius: '0px'
+                                }}>
                                 <CardActionArea onClick={() => {selectForum(forum._id)}}>
                                     <CardContent>
                                         {(forum.course_code === null || forum.course_code === undefined) ? 
-                                            <Typography> {forum.name}</Typography> : 
-                                            <Typography>{forum.course_code}</Typography>}
+                                            <Typography className='forum-list-title'> {forum.name}</Typography> : 
+                                            <Typography className='forum-list-title'>{forum.course_code}</Typography>}
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
@@ -195,19 +197,20 @@ function ForumDetails() {
                             <Add/>
                         </IconButton>
                     </Box>
+                    <Box sx={{height: '2px', backgroundColor: "#daaa00"}}/>
                     {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts.length === 0) ? (
                         <Typography>no posts yet...</Typography>
                     ) : (searchedPosts && searchedPosts.length > 0) ? (
                         searchedPosts.map((post, index) => (
                             <Card key={index} 
                                 sx={{
-                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent'
+                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent',
+                                    boxShadow: 'none', borderBottom: '1px solid gray', borderRadius: '0px'
                                     }}>
                                 <CardActionArea onClick={() => {selectPost(post._id)}}>
                                     <CardContent>
-                                        <Typography className='post-list-title' >
-                                            {post.title}</Typography>
-                                        {(post.tag === null || post.tag === undefined) ? null : <Tag>{post.tag}</Tag>}
+                                        <Typography className='post-list-title'>{post.title}</Typography>
+                                        {(post.tag === null || post.tag === undefined) ? null : <Typography class="post-tag-text">{post.tag}</Typography>}
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
@@ -217,10 +220,12 @@ function ForumDetails() {
                             <Card key={index} 
                                 sx={{
                                     backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent',
+                                    boxShadow: 'none', borderBottom: '1px solid gray', borderRadius: '0px'
                                 }}>
                                 <CardActionArea onClick={() => {selectPost(post._id)}}>
                                     <CardContent>
-                                        <Typography>{post.title}</Typography>
+                                        <Typography className='post-list-title'>{post.title}</Typography>
+                                        {(post.tag === null || post.tag === undefined) ? null : <Typography class="post-tag-text">{post.tag}</Typography>}
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
@@ -346,9 +351,9 @@ function DisplayDraft({user, forum, handleDraft}) {
                             </RadioGroup>
                         )}
                     </Grid>
-                    <Grid item className='post-draft-entry'>
+                    <Grid item className='anon-submit-grid'>
                         {/* Anon */}
-                        <FormControlLabel
+                        <FormControlLabel sx={{marginLeft: "auto"}}
                             control={
                                 <Checkbox
                                     checked={anon}
@@ -359,8 +364,6 @@ function DisplayDraft({user, forum, handleDraft}) {
                             }
                             label="Post Anonmyously"
                         />
-                    </Grid>
-                    <Grid item sx={{alignItems: 'right'}}>
                         <Button type="submit" className='post-button'>Post</Button>
                     </Grid>
                 </form>
@@ -379,24 +382,28 @@ function DisplayPost ({user, forumId, post, postAuthors, handleComment}) {
         ) : (
             <Card className='post-card'>
                 <CardContent className='post-card-content'>
-                    <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
-                    <Box className='post-card-tag-author'>
-                        <Tag>{post.tag}</Tag>
-                        <Typography variant='h6' className='post-card-author'>by {postAuthors[0]}</Typography>
-                    </Box>
-                    <Box className='post-card-body-box'>
-                        <Typography variant='body1' className='post-card-body-text'>{post.body}</Typography>
-                    </Box>
-                    <Typography variant='h6'sx={{textAlign: 'left'}}>Comments:</Typography>
+                    <Grid className='post-post-grid'>
+                        <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
+                        <Box className='post-card-tag-author'>
+                            <Typography className='post-card-author'>Posted by {postAuthors[0]} as /</Typography>
+                            <Typography className="post-tag-text">{post.tag}</Typography>
+                        </Box>
+                        <Box className='post-card-body-box'>
+                            <Typography variant='body1' className='post-card-body-text'>{post.body}</Typography>
+                        </Box>
+                    </Grid>
+                    <Typography sx={{textAlign: "left"}}>Comments:</Typography>
                     {post.comments === null || post.comments.length === 0 ? (
                         null
                     ):(
-                        post.comments.map((comment, index) => (
-                            <Box key={index} sx={{padding: "5px"}}>
-                                <Typography className='post-comment-author'>by {postAuthors[index+1]}:</Typography>
-                                <Typography variant='body1' className='post-comment-body'>{comment.body}</Typography>
-                            </Box>
-                        ))
+                        <Grid className='post-comment-grid'>
+                            {post.comments.map((comment, index) => (
+                                <Box key={index} sx={{padding: "5px"}}>
+                                    <Typography className='post-comment-author'>{postAuthors[index+1]}:</Typography>
+                                    <Typography variant='body1' className='post-comment-body'>{comment.body}</Typography>
+                                </Box>   
+                            ))}
+                        </Grid>    
                     )}
                     <ReplyBox user={user} forumId={forumId} postId={post._id} handleComment={handleComment}/>
                     <Box sx={{height: '25px'}}/>
@@ -439,29 +446,22 @@ function ReplyBox({user, forumId, postId, handleComment}) {
     }
 
     return (
-        <Grid
-            sx={{
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                padding: "10px",
-                margin: "10px",
-            }}
-        >
+        <Grid className='reply-box-grid'>
             <form onSubmit={handleReply} style={{width: "100%"}}>
                 <TextField
                     id="outlined-multiline-static"
                     label="Reply"
                     multiline
-                    rows={4}
+                    rows={2}
                     variant="outlined"
                     sx={{width: "100%"}}
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
                     helperText={bodyError}
                 />
-                <Grid item x={{flexRowStyle, marginBottom: '10px'}}>
+                <Grid className="anon-submit-grid">
                     {/* Anon */}
-                    <FormControlLabel
+                    <FormControlLabel sx={{marginLeft: "auto"}} 
                         control={
                             <Checkbox
                                 checked={anon}
@@ -472,8 +472,8 @@ function ReplyBox({user, forumId, postId, handleComment}) {
                         }
                         label="Post Anonmyously"
                     />
+                    <Button type="submit" className='post-button'>Post</Button>
                 </Grid>
-                <button type="submit" style={{ padding: "10px 20px" }}>Post</button>
             </form>
         </Grid>
     );

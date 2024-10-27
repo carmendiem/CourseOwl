@@ -1,6 +1,11 @@
 :root {
     --gold: #daaa00;
     --light_yellow: #F0DE89;
+    --color1: #561d25;
+    --color2: #ce8147;
+    --color3: #ecdd7b;
+    --color4: #d3e298;
+    --color5: #cde7be;   
 }
 
 .main-forum-container {
@@ -17,6 +22,10 @@
 .forum-list-grid {
     /* background-color: lightgray; */
     height: 100vh; width: 10%;
+}
+.forum-list-title {
+    font-weight: bold !important;
+    text-align: left;
 }
 
 /* Post List Display */
@@ -36,11 +45,18 @@ button.new-post-button {
 }
 
 .post-list-title {
+    font-weight: bold !important;
     text-align: left;
     white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis;
+    margin: 0px;
 }
 
+.post-tag-text {
+    color: var(--gold);
+    font-weight: bold !important;
+    margin: 0px;
+}
 /* Post Display */
 .post-display-grid {
     height: 100vh;
@@ -64,32 +80,55 @@ button.new-post-button {
     height: 100%;
     overflow-y: auto;
 }
+.post-post-grid {
+    border-radius: 10px;
+    /* border: 1px solid var(--gold); */
+}
 .post-card-title {
     text-align: left;
+    padding-bottom: 15px;
 }
 .post-card-tag-author {
     display: flex; flex-direction: row;
-    align-items: left;
 }
 .post-card-author {
     text-align: left;
-    margin: 20px;
 }
 .post-card-body-box {
     padding: 10px;
 }
 .post-card-body-text {
     text-align: left;
+    margin-bottom: 20px !important;
+}
+.post-comment-grid {
+    border-radius: 10px;
+    border: 1px solid var(--color3);
+    margin-top: 10px;
+    align-items: left;
+    padding: 15px;
+    padding-top: 5px;
 }
 .post-comment-author {
     text-align: left;
 }
 .post-comment-body {
     text-align: left;
-    margin-left: 10px;
+    margin-left: 10px !important;
 }
 
 /* Reply Box */
+.reply-box-grid {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin-top: 10px;
+}
+.anon-submit-grid {
+    display: flex; flex-direction: row;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    justify-content: flex-end;
+}
 
 /* Post Draft */
 .post-draft-grid {
