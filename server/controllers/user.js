@@ -60,7 +60,6 @@ export const logoutUser = (req, res) => {
 export const getUser = (req, res) => {
     if (req.session.user) {
         res.json({ user: req.session.user });
-        console.log(req.session.user )
     } else {
         res.status(401).json("Not authenticated");
     }
@@ -93,7 +92,6 @@ export const getFreshUserInfo = async (req, res) => {
  
         res.json({ user: req.session.user });
     } catch (error) {
-        console.error('Error fetching user from DB:', error);
         res.status(500).json({ error: 'Error fetching user from the database' });
     }
  
@@ -101,7 +99,7 @@ export const getFreshUserInfo = async (req, res) => {
 
 // Handle updating user details (year in school, major)
 export const updateUserDetails = async (req, res) => {
-    const { year_in_school, major } = req.body;
+    const { year_in_school, major, name, email } = req.body;
 
     // Check if the user is authenticated
     if (!req.session.user) {
@@ -116,23 +114,30 @@ export const updateUserDetails = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Update the user's details
+        // Update fields only if they have changed
+        if (name) user.name = name;
+        if (email && email !== user.email) {
+            user.email = email;
+            user.isVerified = false;  // Reset verification status
+        }
         user.year_in_school = year_in_school || user.year_in_school;
         user.major = major || user.major;
 
-        // Save the updated user details
+        // Save updated user details
         const updatedUser = await user.save();
 
         // Update session data with updated user info
         req.session.user = {
             ...req.session.user,
+            name: updatedUser.name,
+            email: updatedUser.email,
             year_in_school: updatedUser.year_in_school,
-            major: updatedUser.major
+            major: updatedUser.major,
+            isVerified: updatedUser.isVerified
         };
 
         res.status(200).json({ message: "User details updated successfully", user: updatedUser });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: "Server error" });
     }
 };
@@ -178,7 +183,7 @@ export const sendVerificationEmail = async (req, res) => {
         await user.save();
 
         // Send verification email
-        const verificationLink = `http://localhost:3001/user/verify/${verificationToken}`;
+        const verificationLink = `http://localhost:3000/user/verify/${verificationToken}`;
         const message = `Please verify your email by clicking the following link: ${verificationLink}`;
 
         await transporter.sendMail({
@@ -190,7 +195,6 @@ export const sendVerificationEmail = async (req, res) => {
 
         res.status(200).json({ message: "Verification email sent" });
     } catch (error) {
-        console.error("Error sending verification email:", error);
         res.status(500).json({ message: "Failed to send verification email" });
     }
 };

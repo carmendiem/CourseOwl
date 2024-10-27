@@ -13,24 +13,29 @@ const years = ['Freshman', 'Sophomore', 'Junior', 'Senior'];
 const AccountDetails = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null); // To handle errors for any API call
+    const [error, setError] = useState(null);
 
-    // States for editing fields
+    // Edit states
+    const [editName, setEditName] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [editEmail, setEditEmail] = useState(false);
+    const [newEmail, setNewEmail] = useState('');
     const [editYear, setEditYear] = useState(false);
     const [newYear, setNewYear] = useState('');
     const [editMajor, setEditMajor] = useState(false);
     const [newMajor, setNewMajor] = useState('');
     const [isVerified, setIsVerified] = useState(false);
     
-    // States for email verification
     const [verificationSent, setVerificationSent] = useState(false);
-    const [emailError, setEmailError] = useState(null); // Error state for email verification
+    const [emailError, setEmailError] = useState(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
                 const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
                 setUser(res.data.user);
+                setNewName(res.data.user.name || '');
+                setNewEmail(res.data.user.email || '');
                 setNewYear(res.data.user.year_in_school || '');
                 setNewMajor(res.data.user.major || '');
                 setIsVerified(res.data.user.isVerified || false);
@@ -44,7 +49,7 @@ const AccountDetails = () => {
     }, []);
 
     const handleSendVerification = async () => {
-        setEmailError(null); // Reset error before attempting to send
+        setEmailError(null);
         try {
             const res = await axios.post(`${config.API_BASE_URL}/user/verify/send`, {}, { withCredentials: true });
             if (res.status === 200) {
@@ -54,6 +59,32 @@ const AccountDetails = () => {
             }
         } catch (error) {
             setEmailError('Error sending verification email: ' + error);
+        }
+    };
+
+    const handleSaveName = async () => {
+        try {
+            const res = await axios.put(`${config.API_BASE_URL}/user/update`, { name: newName }, { withCredentials: true });
+            if (res.status === 200) {
+                setUser(res.data.user);
+                setEditName(false);
+            }
+        } catch (error) {
+            setError('Failed to update name.');
+        }
+    };
+
+    const handleSaveEmail = async () => {
+        try {
+            const res = await axios.put(`${config.API_BASE_URL}/user/update`, { email: newEmail }, { withCredentials: true });
+            if (res.status === 200) {
+                setUser(res.data.user);
+                setIsVerified(false);  // Reset verification status
+                setVerificationSent(false);
+                setEditEmail(false);
+            }
+        } catch (error) {
+            setError('Failed to update email.');
         }
     };
 
@@ -95,7 +126,29 @@ const AccountDetails = () => {
                     <Typography variant="h6">Name:</Typography>
                 </Grid>
                 <Grid item xs={9}>
-                    <Typography>{user?.name || 'Not Provided'}</Typography>
+                    {editName ? (
+                        <>
+                            <TextField
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                label="Name"
+                                fullWidth
+                            />
+                            <IconButton onClick={handleSaveName}>
+                                <SaveIcon />
+                            </IconButton>
+                            <IconButton onClick={() => setEditName(false)}>
+                                <CancelIcon />
+                            </IconButton>
+                        </>
+                    ) : (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Typography>{user?.name || 'Not Provided'}</Typography>
+                            <IconButton onClick={() => setEditName(true)}>
+                                <EditIcon />
+                            </IconButton>
+                        </Box>
+                    )}
                 </Grid>
 
                 {/* Email Section */}
@@ -103,28 +156,50 @@ const AccountDetails = () => {
                     <Typography variant="h6">Email:</Typography>
                 </Grid>
                 <Grid item xs={9}>
-                    <Typography>{user?.email}</Typography>
-                    {isVerified ? (
-                        <VerifiedIcon color="success" sx={{ ml: 1 }} />
-                    ) : (
+                    {editEmail ? (
                         <>
-                            <Typography color="error">Not Verified</Typography>
-                            {user?.email?.endsWith('@purdue.edu') && !verificationSent && (
-                                <Button onClick={handleSendVerification} variant="contained" sx={{ ml: 2 }}>
-                                    Verify Email
-                                </Button>
-                            )}
-                            {verificationSent && (
-                                <Typography color="primary" sx={{ ml: 2 }}>
-                                    Verification email sent!
-                                </Typography>
-                            )}
-                            {emailError && (
-                                <Typography color="error" sx={{ ml: 2 }}>
-                                    {emailError}
-                                </Typography>
-                            )}
+                            <TextField
+                                value={newEmail}
+                                onChange={(e) => setNewEmail(e.target.value)}
+                                label="Email"
+                                fullWidth
+                            />
+                            <IconButton onClick={handleSaveEmail}>
+                                <SaveIcon />
+                            </IconButton>
+                            <IconButton onClick={() => setEditEmail(false)}>
+                                <CancelIcon />
+                            </IconButton>
                         </>
+                    ) : (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Typography>{user?.email}</Typography>
+                            {isVerified ? (
+                                <VerifiedIcon color="success" sx={{ ml: 1 }} />
+                            ) : (
+                                <>
+                                    <Typography color="error">Not Verified</Typography>
+                                    {user?.email?.endsWith('@purdue.edu') && !verificationSent && (
+                                        <Button onClick={handleSendVerification} variant="contained" sx={{ ml: 2 }}>
+                                            Verify Email
+                                        </Button>
+                                    )}
+                                    {verificationSent && (
+                                        <Typography color="primary" sx={{ ml: 2 }}>
+                                            Verification email sent!
+                                        </Typography>
+                                    )}
+                                    {emailError && (
+                                        <Typography color="error" sx={{ ml: 2 }}>
+                                            {emailError}
+                                        </Typography>
+                                    )}
+                                </>
+                            )}
+                            <IconButton onClick={() => setEditEmail(true)}>
+                                <EditIcon />
+                            </IconButton>
+                        </Box>
                     )}
                 </Grid>
 
@@ -178,7 +253,7 @@ const AccountDetails = () => {
                                 label="Major"
                                 fullWidth
                             />
-                            <IconButton onClick={handleSaveMajor}>
+                           <IconButton onClick={handleSaveMajor}>
                                 <SaveIcon />
                             </IconButton>
                             <IconButton onClick={() => setEditMajor(false)}>
