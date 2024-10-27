@@ -8,6 +8,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+@font-face {
+  font-family: 'PurpleBeast';
+  src: url('../public/fonts/Paradose.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
 /* code {
 /* code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',

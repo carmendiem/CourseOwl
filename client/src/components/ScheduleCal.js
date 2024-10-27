@@ -84,9 +84,8 @@ export function CalendarView({user, change}) {
     const [courseDisp, setCourseDisp] = useState([]);
 
     function getColor(){ 
-        return "hsl(" + 360 * Math.random() + ',' +
-                   (25 + 70 * Math.random()) + '%,' + 
-                   (85 + 10 * Math.random()) + '%)'
+        const colors = ['#F8E5EE', '#ce8147', '#ecdd7b', '#d3e298', '#cde7be', '#ffdda1'];
+        return colors[Math.floor(Math.random() * colors.length)];
     }
 
     // get courses from user
@@ -115,7 +114,6 @@ export function CalendarView({user, change}) {
             }
         }
         setCourseObjs(courseData);
-        console.log("courseData: ", courseData);
     };
 
     const refreshCourses = async () => {
@@ -231,7 +229,6 @@ export function CalendarView({user, change}) {
            await refreshCourses(); //idk why it needs to be called twice
            await refreshCourses();
         }
-        console.log("Changed: ", change);
         fetchCoursesAndInfo();
     }, [change]);
 

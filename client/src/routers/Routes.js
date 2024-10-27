@@ -9,6 +9,7 @@ import Forums from '../pages/Forums';
 import Courses from '../pages/Courses'; 
 import NotFound from "../pages/NotFound"; 
 import { ProtectedRoute } from "./ProtectedRoute";
+import ForumDetails from "../components/Forum/ForumDetails";
 
 export function Rout({ setIsLoggedIn, isLoggedIn }) {
     return (
@@ -20,6 +21,8 @@ export function Rout({ setIsLoggedIn, isLoggedIn }) {
             <Route path="/home" element={<HomePage />} />
             <Route path="/professor/:alias" element={<ProfessorDetails />} />
             <Route path="/course/:course_code" element={<CourseDetails />} />
+            {/* change to use forum code later */}
+            <Route path="/forum/:forumId" element={ <ForumDetails />} /> 
 
             <Route 
                 path="/alerts" 
