@@ -13,7 +13,6 @@ import axios from "axios";
 
 // colors
 const light_yellow = "#fbefb5";
-const light_green = "#cde7be";
 
 const getTagColor = (forum, tag) => {
     if (forum.tags === null || forum.tags === undefined) {
@@ -72,14 +71,6 @@ function ForumDetails() {
         setDrafting(!drafting);
     };
 
-    const [triggerPostRefresh, setTriggerPostRefresh] = useState(false);
-    const [commenting, setCommenting] = useState(false);
-    const handleCommentCommented = () => {
-        setCommenting(!commenting);
-        setTriggerPostRefresh(!triggerPostRefresh);
-        // console.log("commenting: ", commenting);
-    };
-
     const selectForum = (forumId) => {
         setSelectedForumId(forumId);
         setCurrentForum(forumObjs.find(forum => forum._id === forumId));
@@ -91,6 +82,11 @@ function ForumDetails() {
         setCurrentPostAuthor([]);
         setDrafting(false);
     };
+    const handleCurrentPost = (post, author) => {
+        setCurrentPost(post);
+        setCurrentPostAuthor([...currentPostAuthor, author]);
+    }
+    
     const getForumInfo = async (forums) => {
         const forumData = [];
         for (let i = 0; i < forums.length; i++) {
@@ -109,7 +105,6 @@ function ForumDetails() {
         try{
             const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
             setUser(res.data.user);
-            // console.log("user: ", res.data.user);
         }catch(error){
             console.log("error fetching user: ", error);
         }
@@ -150,6 +145,11 @@ function ForumDetails() {
 
     useEffect(() => {
         getUser();
+        const fetchForumInfo = async () => {
+            await getForumInfo(forums);  
+        }
+        fetchForumInfo();
+        selectForum(selectedForumId);
     }, []);
 
     const changeSearchedPosts = (searchedPosts) => {
@@ -157,20 +157,15 @@ function ForumDetails() {
     }
 
     useEffect(() => {
-        // console.log(forumObjs)
         const fetchForumInfo = async () => {
             await getForumInfo(forums);  
         }
         fetchForumInfo();
         selectForum(selectedForumId);
-        // console.log(forumObjs);
-        // console.log("currentforum:",currentForum)
-    }, [forumId, drafting, commenting]);
+    }, [forumId, drafting]);
     useEffect(() => {
         selectForum(selectedForumId);
         if (selectedPostId!=null) {selectPost(selectedPostId)}
-        // console.log("post reselected?");
-        // console.log(currentPost);
     }, [forumObjs]);
 
     useEffect(() => {
@@ -199,7 +194,7 @@ function ForumDetails() {
             setCurrentPostAuthor(names);
         }
         fetchUserNames();
-    }, [currentPost, triggerPostRefresh]);
+    }, [currentPost]);
 
     return (
         <div>
@@ -322,7 +317,7 @@ function ForumDetails() {
                                 <Typography>Select a Post to Read</Typography> 
                                 <Typography>{"<================"}</Typography>
                             </Box>) : 
-                            <DisplayPostandReply user={user} forum={currentForum} post={currentPost} postAuthors={currentPostAuthor} handleComment={handleCommentCommented}/> 
+                            <DisplayPostandReply user={user} forum={currentForum} post={currentPost} postAuthors={currentPostAuthor} handlePost={handleCurrentPost}/> 
                         )}
                </Grid>
             </Grid>
@@ -454,7 +449,7 @@ function DisplayDraft({user, forum, handleDraft}) {
     ); 
 }
 
-function DisplayPostandReply({user, forum, post, postAuthors, handleComment}) {
+function DisplayPostandReply({user, forum, post, postAuthors, handlePost}) {
     const [body, setBody] = useState("");
     const [anon, setAnon] = useState(false);
     const [bodyError, setBodyError] = useState("");
@@ -462,8 +457,14 @@ function DisplayPostandReply({user, forum, post, postAuthors, handleComment}) {
     const postComment = async (comment) => {
         try{
             const res = await axios.post(`${config.API_BASE_URL}/forum/createComment`, null, {params: comment});
+            const commentInPost = {author: comment.userEmail, body: comment.body, anon: comment.anon};
+            post.comments.push(commentInPost);
+            if (comment.anon) {
+                handlePost(post,"Anon");
+            } else {
+                handlePost(post, user.name);
+            }
             console.log("comment created successfully: ", res.data);
-            handleComment();
             setBody("");
             setAnon(false);
         }catch(error){
@@ -511,7 +512,6 @@ function DisplayPostandReply({user, forum, post, postAuthors, handleComment}) {
                         null
                     ):(
                         <Grid className='post-comment-grid'>
-                            {console.log("post: ", post)}
                             {post.comments.map((comment, index) => (
                                 <Box key={index} sx={{padding: "5px"}}>
                                     <Typography className='post-comment-author'>{postAuthors[index+1]}:</Typography>
