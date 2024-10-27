@@ -26,9 +26,9 @@ const forumSchema = new Schema({
         body: {
             type: String
         },
-        tag: [{
+        tag: {
             type: String
-        }],
+        },
         author: {
             type: String
         },

@@ -3,32 +3,45 @@ import Grid from '@mui/material/Grid2';
 import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField } from '@mui/material';
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import { styled } from '@mui/material/styles';
 import { IconButton } from '@mui/material';
 import { Add} from '@mui/icons-material';
 import "./ForumDetails.css";
 import { PostSearch } from './PostSearch';
 
 import config from '../../config';
-import axios from "axios";
+import axios from "axios"; 
 
 // colors
-const gold = "#daaa00";
-const light_yellow = "#F0DE89";
+const light_yellow = "#fbefb5";
+const light_green = "#cde7be";
 
-// const Tag = styled(Grid)(({ theme }) => ({
-//     display: 'inline-block',
-//     backgroundColor: 'white',
-//     ...theme.typography.body2,
-//     textAlign: 'center',
-//     height: "50%", //set height 50% of parent
-//     // boxShadow: 'none',
-//     borderRadius: "10px",
-//     border: `1px solid ${gold}`,
-//     padding: '5px 10px',
-// }));
-
-const flexRowStyle = {display: 'flex',flexDirection: 'row'};
+const getTagColor = (forum, tag) => {
+    if (forum.tags === null || forum.tags === undefined) {
+        return "gray";
+    } else { 
+        var tagNum = -1;
+        for (let i = 0; i < forum.tags.length; i++) {
+            if (tag === forum.tags[i]) {
+                tagNum = i;
+                break;
+            }
+        }
+        switch (tagNum % 5) {
+            case 0:
+                return "#e3697a";
+            case 1:
+                return "#ce8147";
+            case 2:
+                return "#cab008";   
+            case 3:
+                return "#9baf4d";
+            case 4:
+                return "#60a867";  
+            default:
+                return "gray";
+        }
+    }    
+}
 
 function ForumDetails() {
 
@@ -204,13 +217,13 @@ function ForumDetails() {
                         searchedPosts.map((post, index) => (
                             <Card key={index} 
                                 sx={{
-                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent',
+                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'white',
                                     boxShadow: 'none', borderBottom: '1px solid gray', borderRadius: '0px'
                                     }}>
                                 <CardActionArea onClick={() => {selectPost(post._id)}}>
                                     <CardContent>
                                         <Typography className='post-list-title'>{post.title}</Typography>
-                                        {(post.tag === null || post.tag === undefined) ? null : <Typography class="post-tag-text">{post.tag}</Typography>}
+                                        {(post.tag === null || post.tag === undefined) ? null : <Typography sx={{color: getTagColor(currentForum, post.tag), fontWeight: "bold", margin: "0px", textAlign: "left"}} >{post.tag}</Typography>}
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
@@ -219,13 +232,13 @@ function ForumDetails() {
                         currentForum.posts.map((post, index) => (
                             <Card key={index} 
                                 sx={{
-                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'transparent',
+                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'white',
                                     boxShadow: 'none', borderBottom: '1px solid gray', borderRadius: '0px'
                                 }}>
                                 <CardActionArea onClick={() => {selectPost(post._id)}}>
                                     <CardContent>
                                         <Typography className='post-list-title'>{post.title}</Typography>
-                                        {(post.tag === null || post.tag === undefined) ? null : <Typography class="post-tag-text">{post.tag}</Typography>}
+                                        {(post.tag === null || post.tag === undefined) ? null : <Typography sx={{color: getTagColor(currentForum, post.tag), fontWeight: "bold", margin: "0px", textAlign: "left"}} >{post.tag}</Typography>}
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
@@ -240,7 +253,7 @@ function ForumDetails() {
                                 <Typography>Select a Post to Read</Typography> 
                                 <Typography>{"<================"}</Typography>
                             </Box>) : 
-                            <DisplayPost user={user} forumId={currentForum._id} post={currentPost} postAuthors={currentPostAuthor} handleComment={handleCommentCommented}/> 
+                            <DisplayPostandReply user={user} forum={currentForum} post={currentPost} postAuthors={currentPostAuthor} handleComment={handleCommentCommented}/> 
                         )}
                </Grid>
             </Grid>
@@ -372,48 +385,7 @@ function DisplayDraft({user, forum, handleDraft}) {
     ); 
 }
 
-function DisplayPost ({user, forumId, post, postAuthors, handleComment}) {
-    return (
-        (post === null || post === undefined || postAuthors.length === 0) ? (
-            <Box className="post-display">
-                <Typography>Select a Post to Read</Typography> 
-                <Typography>{"<================"}</Typography>
-            </Box>
-        ) : (
-            <Card className='post-card'>
-                <CardContent className='post-card-content'>
-                    <Grid className='post-post-grid'>
-                        <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
-                        <Box className='post-card-tag-author'>
-                            <Typography className='post-card-author'>Posted by {postAuthors[0]} as /</Typography>
-                            <Typography className="post-tag-text">{post.tag}</Typography>
-                        </Box>
-                        <Box className='post-card-body-box'>
-                            <Typography variant='body1' className='post-card-body-text'>{post.body}</Typography>
-                        </Box>
-                    </Grid>
-                    <Typography sx={{textAlign: "left"}}>Comments:</Typography>
-                    {post.comments === null || post.comments.length === 0 ? (
-                        null
-                    ):(
-                        <Grid className='post-comment-grid'>
-                            {post.comments.map((comment, index) => (
-                                <Box key={index} sx={{padding: "5px"}}>
-                                    <Typography className='post-comment-author'>{postAuthors[index+1]}:</Typography>
-                                    <Typography variant='body1' className='post-comment-body'>{comment.body}</Typography>
-                                </Box>   
-                            ))}
-                        </Grid>    
-                    )}
-                    <ReplyBox user={user} forumId={forumId} postId={post._id} handleComment={handleComment}/>
-                    <Box sx={{height: '25px'}}/>
-                </CardContent>
-            </Card>
-        )
-    );
-}
-
-function ReplyBox({user, forumId, postId, handleComment}) {
+function DisplayPostandReply({user, forum, post, postAuthors, handleComment}) {
     const [body, setBody] = useState("");
     const [anon, setAnon] = useState(false);
     const [bodyError, setBodyError] = useState("");
@@ -441,40 +413,77 @@ function ReplyBox({user, forumId, postId, handleComment}) {
             return;
         }
         const userEmail = user.email;
+        const postId = post._id;
+        const forumId = forum._id;
         const comment = {body, anon, userEmail, forumId, postId};
         await postComment(comment);
     }
-
     return (
-        <Grid className='reply-box-grid'>
-            <form onSubmit={handleReply} style={{width: "100%"}}>
-                <TextField
-                    id="outlined-multiline-static"
-                    label="Reply"
-                    multiline
-                    rows={2}
-                    variant="outlined"
-                    sx={{width: "100%"}}
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    helperText={bodyError}
-                />
-                <Grid className="anon-submit-grid">
-                    {/* Anon */}
-                    <FormControlLabel sx={{marginLeft: "auto"}} 
-                        control={
-                            <Checkbox
-                                checked={anon}
-                                onChange={(e) => setAnon(e.target.checked)}
-                                name="anon"
-                                color="primary"
+        (post === null || post === undefined || postAuthors.length === 0) ? (
+            <Box className="post-display">
+                <Typography>Select a Post to Read</Typography> 
+                <Typography>{"<================"}</Typography>
+            </Box>
+        ) : (
+            <Card className='post-card'>
+                <CardContent className='post-card-content'>
+                    <Grid className='post-post-grid'>
+                        <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
+                        <Box className='post-card-tag-author'>
+                            <Typography className='post-card-author'>Posted by {postAuthors[0]} as /</Typography>
+                            <Typography sx={{color: getTagColor(forum, post.tag), fontWeight: "bold", margin: "0px"}} >{post.tag}</Typography>
+                        </Box>
+                        <Box className='post-card-body-box'>
+                            <Typography variant='body1' className='post-card-body-text'>{post.body}</Typography>
+                        </Box>
+                    </Grid>
+                    <Typography sx={{textAlign: "left"}}>Comments:</Typography>
+                    {post.comments === null || post.comments.length === 0 ? (
+                        null
+                    ):(
+                        <Grid className='post-comment-grid'>
+                            {console.log("post: ", post)}
+                            {post.comments.map((comment, index) => (
+                                <Box key={index} sx={{padding: "5px"}}>
+                                    <Typography className='post-comment-author'>{postAuthors[index+1]}:</Typography>
+                                    <Typography variant='body1' className='post-comment-body'>{comment.body}</Typography>
+                                </Box>   
+                            ))}
+                        </Grid>    
+                    )}
+                    <Grid className='reply-box-grid'>
+                        <form onSubmit={handleReply} style={{width: "100%"}}>
+                            <TextField
+                                id="outlined-multiline-static"
+                                label="Reply"
+                                multiline
+                                rows={2}
+                                variant="outlined"
+                                sx={{width: "100%"}}
+                                value={body}
+                                onChange={(e) => setBody(e.target.value)}
+                                helperText={bodyError}
                             />
-                        }
-                        label="Post Anonmyously"
-                    />
-                    <Button type="submit" className='post-button'>Post</Button>
-                </Grid>
-            </form>
-        </Grid>
+                            <Grid className="anon-submit-grid">
+                                {/* Anon */}
+                                <FormControlLabel sx={{marginLeft: "auto"}} 
+                                    control={
+                                        <Checkbox
+                                            checked={anon}
+                                            onChange={(e) => setAnon(e.target.checked)}
+                                            name="anon"
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Post Anonmyously"
+                                />
+                                <Button type="submit" className='post-button'>Post</Button>
+                            </Grid>
+                        </form>
+                    </Grid>
+                    <Box sx={{height: '25px'}}/>
+                </CardContent>
+            </Card>
+        )
     );
 }
