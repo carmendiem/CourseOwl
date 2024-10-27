@@ -57,6 +57,9 @@ function ForumDetails() {
     const [currentPostAuthor, setCurrentPostAuthor] = useState(null);
 
     const [searchedPosts, setSearchedPosts] = useState(null);
+    const tags = ["general", "questions"];
+    const [selectedTag, setSelectedTag] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const [drafting, setDrafting] = useState(false);
     const startDraft = () => {
@@ -119,6 +122,29 @@ function ForumDetails() {
             return data;
         }catch(error){
             console.log("error fetching forums: ", error);
+        }
+    };
+
+    const searchByTag = async (searchTerm, forumId, tag) => {
+        try{
+            const res = await axios.get(`${config.API_BASE_URL}/forum/getPost?searchTerm=${searchTerm}&forumId=${forumId}&tag=${tag}`);
+            const data = await res.data;
+            return data;
+        }catch(error){
+            console.log("error fetching posts: ", error);
+        }
+    }
+
+    const handleTagClick = async (tag) => {
+        if (selectedTag === tag) {
+            setSelectedTag(null); // deselect if the same tag is clicked
+            const result = await searchByTag(searchTerm, forumId, null);
+            setSearchedPosts(result);
+            
+        } else {
+            setSelectedTag(tag); // set new selected tag
+            const result = await searchByTag(searchTerm, forumId, tag);
+            setSearchedPosts(result);
         }
     };
 
@@ -198,12 +224,52 @@ function ForumDetails() {
                             </Card>
                         ))
                     )}
+                    {/* sort by category */}
+                    {
+                       <div>
+                       {tags.map((tag, index) => (
+                           <div
+                               key={index}
+                               onClick={() => handleTagClick(tag)}
+                               style={{
+                                   display: 'flex',
+                                   alignItems: 'center',
+                                   cursor: 'pointer',
+                                   padding: '10px',
+                                   backgroundColor: selectedTag === tag ? '#f0f0f0' : 'white', // highlight when selected
+                                   borderRadius: '4px',
+                                   //margin: '5px 0',
+                                   transition: 'background-color 0.3s',
+                               }}
+                           >
+                               <div
+                                   style={{
+                                       width: '12px', // Width of the square
+                                       height: '12px', // Height of the square
+                                      // backgroundColor: getTagColor(currentForum, tag), // Tag color
+                                       marginRight: '10px',
+                                       borderRadius: '4px',
+                                   }}
+                               />
+                               <Typography
+                                   sx={{
+                                       fontWeight: 'bold',
+                                       margin: '0px',
+                                       textAlign: 'left',
+                                   }}
+                               >
+                                   {tag}
+                               </Typography>
+                           </div>
+                       ))}
+                   </div>
+                    }
                 </Grid>
                 <Grid item xs={12} className="post-list-grid">
                     {/* Forum Posts */}
                     <Box sx={{display: 'flex',flexDirection: 'row'}}>
                         <Box sx={{borderRadius: "10px", height: "3rem", margin: "5px", width: '70%' }}>
-                            <PostSearch forumId={forumId} setSearchedPosts={changeSearchedPosts}/>
+                            <PostSearch forumId={forumId} setSearchedPosts={changeSearchedPosts} tag={selectedTag} searchTerm={searchTerm} setSearchTerm={setSearchTerm}/>
                         </Box>
                         <IconButton variant="contained" className='new-post-button' onClick={() => startDraft()}>
                             <Typography>New Post</Typography>
@@ -213,7 +279,8 @@ function ForumDetails() {
                     <Box sx={{height: '2px', backgroundColor: "#daaa00"}}/>
                     {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts.length === 0) ? (
                         <Typography>no posts yet...</Typography>
-                    ) : (searchedPosts && searchedPosts.length > 0) ? (
+                    ) : (searchedPosts) ? (
+                        (searchedPosts.length > 0) ? (
                         searchedPosts.map((post, index) => (
                             <Card key={index} 
                                 sx={{
@@ -227,7 +294,9 @@ function ForumDetails() {
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
-                        ))
+                        ))) : (
+                            <Typography>No posts found, please search again!</Typography>
+                        )
                     ) : (
                         currentForum.posts.map((post, index) => (
                             <Card key={index} 

@@ -22,14 +22,7 @@ export function Rout({ setIsLoggedIn, isLoggedIn }) {
             <Route path="/professor/:alias" element={<ProfessorDetails />} />
             <Route path="/course/:course_code" element={<CourseDetails />} />
             {/* change to use forum code later */}
-            <Route
-                path="/forum/:forumId"
-                element={
-                    <ProtectedRoute isLoggedIn={isLoggedIn}>
-                        <ForumDetails />
-                    </ProtectedRoute>
-                }
-            /> 
+            <Route path="/forum/:forumId" element={ <ForumDetails />} /> 
 
             <Route 
                 path="/alerts" 

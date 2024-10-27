@@ -5,9 +5,9 @@ import config from "../../config";
 import axios from "axios";
 import { Typography } from '@mui/material';
 
-async function fetchPosts(searchTerm, forumId) {
+async function fetchPosts(searchTerm, forumId, tag) {
     try {
-        const res = await axios.get(`${config.API_BASE_URL}/forum/getPost?searchTerm=${searchTerm}&forumId=${forumId}`);
+        const res = await axios.get(`${config.API_BASE_URL}/forum/getPost?searchTerm=${searchTerm}&forumId=${forumId}&tag=${tag}`);
         const data = res.data;
         return data;
     } catch (error) {
@@ -15,9 +15,8 @@ async function fetchPosts(searchTerm, forumId) {
     }
 }
 
-export function PostSearch( {forumId, setSearchedPosts} ) {
+export function PostSearch( {forumId, setSearchedPosts, tag, searchTerm, setSearchTerm} ) {
     const [postResults, setPostResults] = useState([])
-    const [searchTerm, setSearchTerm] = useState("");
     const [searchAlert, setSearchAlert] = useState("");
     const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
 
@@ -29,13 +28,14 @@ export function PostSearch( {forumId, setSearchedPosts} ) {
         return () => {
             clearTimeout(handler);  // Cleanup the timeout if input changes
         };
-    }, [searchTerm]);
+    }, [searchTerm, tag]);
 
     // Fetch courses based on debounced search term
     useEffect(() => {
         const searchForums = async () => {
-            if (debouncedTerm && debouncedTerm.trim() !== "") {
-                const results = await fetchPosts(debouncedTerm, forumId);
+            //
+            //if (debouncedTerm && debouncedTerm.trim() !== "") {
+                const results = await fetchPosts(debouncedTerm, forumId, tag);
                 if (results) {
                     setSearchedPosts(results);
                     setSearchAlert("")
@@ -43,9 +43,9 @@ export function PostSearch( {forumId, setSearchedPosts} ) {
                     setSearchedPosts([]);
                     setSearchAlert("No posts found that match your search, please try again!")
                 }
-            } else {
+            /*} else {
                 setSearchedPosts(null);
-            }
+            }*/
         };
         searchForums();
     }, [debouncedTerm]);
