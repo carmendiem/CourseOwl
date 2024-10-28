@@ -24,7 +24,12 @@ const userSchema = new mongoose.Schema({
     },
     upvotedReviews: {
         type: [ObjectId]
-    }
+    },
+    notifPreference: {
+        type: String,
+        enum: ["email", "in_app", "both", "none"],
+        default: "in_app",
+    },
 });
 
 const User = mongoose.model('User', userSchema);

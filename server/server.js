@@ -10,9 +10,10 @@ import calendarRoutes from "./routes/calendar.js";
 import professorRoutes from './routes/professor.js';
 import forumRoutes from './routes/forum.js';
 
+import alertRoutes from './routes/alert.js';
 import courseRoutes from './routes/courseRoutes.js';
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 const app = express();
 
 // Middleware
@@ -33,12 +34,13 @@ app.use(session({
 }));
 
 // Routes
-app.use("/user", userRoutes); // Use the user routes
+app.use("/user", userRoutes);
 app.use("/course", courses);
 app.use("/calendar", calendarRoutes);
 app.use("/professor", professorRoutes);
 app.use("/forum", forumRoutes);
 
+app.use("/api/alerts", alertRoutes); // Added alerts route
 app.use('/course', courseRoutes);
 
 // Start the server

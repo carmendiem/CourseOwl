@@ -110,7 +110,8 @@ export const getUserFromDB = async (req, res) => {
             email: user.email,
             courses: user.courses,
             isVerified: user.isVerified,
-            upvotedReviews: user.upvotedReviews
+            upvotedReviews: user.upvotedReviews,
+            notifPreference: user.notifPreference
         };
 
         res.json({ user: req.session.user });
