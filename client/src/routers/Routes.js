@@ -7,7 +7,6 @@ import Signup from "../components/Signup";
 import ProfessorDetails from '../components/ProfessorDetails';
 import CourseDetails from '../components/CourseDetails';
 import AccountDetails from '../components/AccountDetails'; // Import AccountDetails
-import Alerts from '../pages/Alerts'; 
 import Forums from '../pages/Forums'; 
 import Courses from '../pages/Courses'; 
 import NotFound from "../pages/NotFound"; 
