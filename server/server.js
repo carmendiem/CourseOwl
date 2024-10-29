@@ -133,7 +133,7 @@ const runCourseAvailabilityScript = () => {
 runCourseAvailabilityScript();
 
 // Set an interval to run the script every 5 minutes (300,000 ms)
-setInterval(runCourseAvailabilityScript, 300000); // 300,000 ms = 5 minutes
+setInterval(runCourseAvailabilityScript, 60000); // 300,000 ms = 5 minutes
 
 // Start the server
 app.listen(PORT, () => {
