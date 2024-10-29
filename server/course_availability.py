@@ -7,6 +7,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
+from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # MongoDB setup
 client = MongoClient('mongodb+srv://carmendiem2003:L0w7i3EeU1rlrx4v@courseowl.sne0b.mongodb.net/?tls=true&tlsAllowInvalidCertificates=true')
@@ -14,6 +18,13 @@ client = MongoClient('mongodb+srv://carmendiem2003:L0w7i3EeU1rlrx4v@courseowl.sn
 db = client['course_data']
 users_collection = db['users']
 courses_collection = db['course_info3']
+alerts_collection = db['alerts']  # Assuming alerts are stored in a collection named 'alerts'
+
+# SMTP setup
+smtp_server = "smtp.gmail.com"
+smtp_port = 587
+email_sender = "courseowlapp@gmail.com"
+email_password = "uxqv ebab htkf vswi"
 
 # Selenium setup for Chrome
 options = webdriver.ChromeOptions()
@@ -25,11 +36,12 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 all_avail_ids = []
 
 for user in users_collection.find():
-   if ("avail_ids" in user):
+   if "avail_ids" in user:
         all_avail_ids.extend(user['avail_ids'])
 
 print(all_avail_ids)
-# Step 2: Get courses with matching _id in avail_ids from course_info4 collection
+
+# Step 2: Get courses with matching _id in avail_ids from course_info3 collection
 courses = courses_collection.find({"_id": {"$in": all_avail_ids}})
 
 # Loop through each course's availability URL and scrape availability details
@@ -41,16 +53,13 @@ for course in courses:
     # Navigate to the availability URL
     while True:
         driver.get(course_url)
-        # WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
         WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, 'datadisplaytable')))
-
+        
         page_source = driver.page_source
         if "received too many requests" not in page_source:
             break  # Exit the loop if no error message is found
         else:
             print("Received 'too many requests' message, waiting to retry...")
-            # time.sleep(10)  # Wait before retrying
-
 
     soup = BeautifulSoup(page_source, 'html.parser')
     
@@ -64,13 +73,52 @@ for course in courses:
             if len(seat_numbers) == 3:
                 capacity = seat_numbers[0].text.strip()
                 actual = seat_numbers[1].text.strip()
-                remaining = seat_numbers[2].text.strip()
-
-                # Update course_info4 with course availability data
+                remaining = int(seat_numbers[2].text.strip())
+                
+                # Update course_info3 with the current availability data
                 courses_collection.update_one(
                     {"_id": course["_id"]},
-                    {"$set": {"course_availability":int(remaining)}}
+                    {"$set": {"availSeats": remaining}}
                 )
+
+                print(course["_id"], remaining)
+
+                # If the course was previously full and now has available seats, send alert
+                if remaining > 0:
+                    # Find users who opted in for availability alerts for this course
+                    users_to_notify = users_collection.find({"avail_ids": course["_id"]})
+
+                    for user in users_to_notify:
+                        # Create an alert for each user
+                        alert_data = {
+                            "userId": user["_id"],
+                            "courseId": [course["_id"]],
+                            "isRead": False,
+                            "date": datetime.now(),
+                            "type": "Availability Update"
+                        }
+                        alerts_collection.insert_one(alert_data)
+                        print(f"Alert created for user {user['_id']} about course {course['_id']} availability.")
+
+                        if user.get("notifPreference") in ["email", "both"]:
+                            msg = MIMEMultipart()
+                            msg['From'] = email_sender
+                            msg['To'] = user["email"]
+                            msg['Subject'] = "Course Available Alert"
+
+                            body = f"Dear {user['name']},\n\nThe course {course['course_name']} ({course['course_code']}) is now available. Log in to CourseOwl to view the updated availability.\n\nBest regards,\nCourseOwl Team"
+                            msg.attach(MIMEText(body, 'plain'))
+
+                            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                                server.starttls()
+                                server.login(email_sender, email_password)
+                                server.sendmail(email_sender, user["email"], msg.as_string())
+
+                        # Remove the courseId from the user's avail_ids after alert is created
+                        users_collection.update_one(
+                            {"_id": user["_id"]},
+                            {"$pull": {"avail_ids": course["_id"]}}
+                        )
 
 # Close the browser
 driver.quit()

@@ -82,7 +82,8 @@ export const getFreshUserInfo = async (req, res) => {
             courses: user.courses,
             isVerified: user.isVerified,
             major: user.major,
-            year_in_school: user.year_in_school
+            year_in_school: user.year_in_school,
+            notifPreference: user.notifPreference
         };
  
  
@@ -95,7 +96,7 @@ export const getFreshUserInfo = async (req, res) => {
 
 // Handle updating user details (year in school, major)
 export const updateUserDetails = async (req, res) => {
-    const { year_in_school, major, name, email } = req.body;
+    const { year_in_school, major, name, email, notifPreference } = req.body;
 
     // Check if the user is authenticated
     if (!req.session.user) {
@@ -105,10 +106,14 @@ export const updateUserDetails = async (req, res) => {
     try {
         // Find the user by their ID from the session
         const user = await UserModel.findById(req.session.user.id);
-
+        
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
+
+        // Debugging logs
+        console.log("Received notifPreference:", notifPreference);
+        console.log("Current user notifPreference:", user.notifPreference);
 
         // Update fields only if they have changed
         if (name) user.name = name;
@@ -118,6 +123,7 @@ export const updateUserDetails = async (req, res) => {
         }
         user.year_in_school = year_in_school || user.year_in_school;
         user.major = major || user.major;
+        user.notifPreference = notifPreference || user.notifPreference;
 
         // Save updated user details
         const updatedUser = await user.save();
@@ -129,11 +135,13 @@ export const updateUserDetails = async (req, res) => {
             email: updatedUser.email,
             year_in_school: updatedUser.year_in_school,
             major: updatedUser.major,
-            isVerified: updatedUser.isVerified
+            isVerified: updatedUser.isVerified,
+            notifPreference: updatedUser.notifPreference
         };
 
         res.status(200).json({ message: "User details updated successfully", user: updatedUser });
     } catch (error) {
+        console.error("Error in updateUserDetails:", error); // Add this line to catch errors
         res.status(500).json({ message: "Server error" });
     }
 };
@@ -152,6 +160,31 @@ const transporter = nodemailer.createTransport({
         pass: emailPassword,
     },
 });
+
+export const sendTestEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await UserModel.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const message = `Hello ${user.name},\n\nThis is a test email to confirm that your email alerts have been set up correctly.\n\nBest,\nCourseOwl Team`;
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_SENDER,
+            to: email,
+            subject: "CourseOwl Email Alert Test",
+            text: message,
+        });
+
+        res.status(200).json({ message: "Test email sent successfully" });
+    } catch (error) {
+        console.error("Error sending test email:", error);
+        res.status(500).json({ message: "Failed to send test email" });
+    }
+};
 
 // Handle sending verification email
 // Handle sending verification email
