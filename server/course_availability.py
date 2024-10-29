@@ -13,7 +13,7 @@ client = MongoClient('mongodb+srv://carmendiem2003:L0w7i3EeU1rlrx4v@courseowl.sn
 
 db = client['course_data']
 users_collection = db['users']
-courses_collection = db['course_info4']
+courses_collection = db['course_info3']
 
 # Selenium setup for Chrome
 options = webdriver.ChromeOptions()

@@ -1,6 +1,6 @@
 // /models/User.js
 import mongoose from 'mongoose';
-import { ObjectId} from "bson";
+import { ObjectId } from 'bson';
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -19,9 +19,23 @@ const userSchema = new mongoose.Schema({
     courses: {
         type: [ObjectId]
     },
-    isVerified: {
-        type: Boolean
+
+    year_in_school: {
+        type: String,
     },
+    major: {
+        type: String,
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    verificationToken: {
+        type: String,  // Used to store the token sent in the verification email
+    },
+    resetToken: String,
+    resetTokenExpiry: Date,
+
     upvotedReviews: {
         type: [ObjectId]
     },

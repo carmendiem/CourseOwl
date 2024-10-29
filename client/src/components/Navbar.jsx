@@ -9,6 +9,7 @@ import Divider from '@mui/material/Divider';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import SettingsIcon from '@mui/icons-material/Settings';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import ForumIcon from '@mui/icons-material/Forum';
 import ClassIcon from '@mui/icons-material/Class';
@@ -93,6 +94,14 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                                     <ClassIcon />
                                 </IconButton>
                                 <Typography sx={textStyle(location.pathname.startsWith('/courses') || location.pathname.startsWith('/course/'))}>Courses</Typography>
+                            </ListItem>
+
+                            {/* New Account Button */}
+                            <ListItem button component={Link} to="/account" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <IconButton sx={iconStyle(location.pathname === '/account')}>
+                                    <AccountCircleIcon />
+                                </IconButton>
+                                <Typography sx={textStyle(location.pathname === '/account')}>Account</Typography>
                             </ListItem>
                         </>
                     ) : (
