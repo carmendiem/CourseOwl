@@ -1,5 +1,7 @@
 import bcrypt from "bcrypt";
 import UserModel from "../models/User.js";
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 
 export const signupUser = async (req, res) => {
     try {
@@ -24,7 +26,7 @@ export const loginUser = async (req, res) => {
         if (user) {
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (passwordMatch) {
-                req.session.user = { id: user._id, name: user.name, email: user.email, courses: user.courses, isVerified: user.isVerified, upvotedReviews: user.upvotedReviews};
+                req.session.user = { id: user._id, name: user.name, email: user.email, courses: user.courses, isVerified: user.isVerified, upvotedReviews: user.upvotedReviews, year_in_school: user.year_in_school, major: user.major};
                 res.json("Success");
             } else {
                 res.status(401).json("Password doesn't match");
@@ -86,10 +88,183 @@ export const getFreshUserInfo = async (req, res) => {
  
         res.json({ user: req.session.user });
     } catch (error) {
-        console.error('Error fetching user from DB:', error);
         res.status(500).json({ error: 'Error fetching user from the database' });
     }
  
+};
+
+// Handle updating user details (year in school, major)
+export const updateUserDetails = async (req, res) => {
+    const { year_in_school, major, name, email } = req.body;
+
+    // Check if the user is authenticated
+    if (!req.session.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+        // Find the user by their ID from the session
+        const user = await UserModel.findById(req.session.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Update fields only if they have changed
+        if (name) user.name = name;
+        if (email && email !== user.email) {
+            user.email = email;
+            user.isVerified = false;  // Reset verification status
+        }
+        user.year_in_school = year_in_school || user.year_in_school;
+        user.major = major || user.major;
+
+        // Save updated user details
+        const updatedUser = await user.save();
+
+        // Update session data with updated user info
+        req.session.user = {
+            ...req.session.user,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            year_in_school: updatedUser.year_in_school,
+            major: updatedUser.major,
+            isVerified: updatedUser.isVerified
+        };
+
+        res.status(200).json({ message: "User details updated successfully", user: updatedUser });
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+const smtpServer = "smtp.gmail.com";
+const smtpPort = 587;
+const emailSender = "courseowlapp@gmail.com";
+const emailPassword = "uxqv ebab htkf vswi"
+
+const transporter = nodemailer.createTransport({
+    host: smtpServer,
+    port: smtpPort,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: emailSender,
+        pass: emailPassword,
+    },
+});
+
+// Handle sending verification email
+// Handle sending verification email
+export const sendVerificationEmail = async (req, res) => {
+    const userId = req.session.user?.id;
+    if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+        const user = await UserModel.findById(userId);
+
+        // Check if the user exists and has a Purdue email
+        if (!user || !user.email.endsWith("@purdue.edu")) {
+            return res.status(400).json({ message: "Only @purdue.edu email addresses can be verified" });
+        }
+
+        // Generate verification token
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+
+        // Set the verificationToken on the user model and save the user to MongoDB
+        user.verificationToken = verificationToken;
+        
+        // Use await to make sure it's saving properly to the database
+        await user.save();
+
+        // Send verification email
+        const verificationLink = `http://localhost:3000/user/verify/${verificationToken}`;
+        const message = `Please verify your email by clicking the following link: ${verificationLink}`;
+
+        await transporter.sendMail({
+            from: emailSender,
+            to: user.email,
+            subject: "CourseOwl Email Verification",
+            text: message,
+        });
+
+        res.status(200).json({ message: "Verification email sent" });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to send verification email" });
+    }
+};
+
+
+// Handle verifying user from link
+// Handle verifying user from link
+export const verifyUser = async (req, res) => {
+    const { token } = req.params; // Correctly extract the token
+    console.log("Verification token:", token);  // For debugging
+    const strippedToken = token.trim();
+    console.log("after trim token:", strippedToken);
+
+    try {
+        const user = await UserModel.findOne({ verificationToken: strippedToken });
+        console.log(user)
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        // Verify the user
+        user.isVerified = true;
+        user.verificationToken = undefined; // Clear the token after verification
+        await user.save();
+
+        res.status(200).json({ message: "Email verified successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Verification failed" });
+    }
+};
+
+export const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    const user = await UserModel.findOne({ email });
+
+    if (!user) return res.status(404).json({ message: "Email not found" });
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = Date.now() + 3600000;  // Token valid for 1 hour
+
+    await user.save();
+    const resetLink = `http://localhost:3000/user/reset-password/${resetToken}`;
+    const message = `Reset password by clicking here: ${resetLink}`;
+
+    await transporter.sendMail({
+        from: "courseowlapp@gmail.com",
+        to: user.email,
+        subject: "Password Reset Request",
+        text: message
+    });
+
+    res.json({ message: "Password reset email sent" });
+};
+
+export const resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+    const user = await UserModel.findOne({
+        resetToken: token,
+        resetTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+
+    // Hash the new password and save it
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+
+    await user.save();
+    res.status(200).json({ message: "Password has been reset successfully" });
 };
 
 export const getUserFromDB = async (req, res) => {
@@ -119,3 +294,4 @@ export const getUserFromDB = async (req, res) => {
         res.status(500).json({ error: 'Error fetching user from the database' });
     }
 };
+
