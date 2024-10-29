@@ -200,13 +200,10 @@ export const sendVerificationEmail = async (req, res) => {
 // Handle verifying user from link
 export const verifyUser = async (req, res) => {
     const { token } = req.params; // Correctly extract the token
-    console.log("Verification token:", token);  // For debugging
     const strippedToken = token.trim();
-    console.log("after trim token:", strippedToken);
 
     try {
         const user = await UserModel.findOne({ verificationToken: strippedToken });
-        console.log(user)
 
         if (!user) {
             return res.status(400).json({ message: "Invalid or expired token" });

@@ -7,13 +7,18 @@ const reviewSchema = new Schema({
         type: String,   
         required: true  
     },
+    user_id: {
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User',
+        required:true
+    },
     userEmail: {
         type: String,
-        required: true,
+        // required: true,
     },
     userName: {
         type: String,   
-        required: true,
+        // required: true,
     },
     content: {
         type: String,   
@@ -29,8 +34,9 @@ const reviewSchema = new Schema({
     },
     isVerified: {
         type: Boolean,  
-        default: false  
-    }
+        // default: false  
+    },
+   
 }, { collection: 'reviews' });  
 
 const Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
