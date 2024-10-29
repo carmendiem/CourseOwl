@@ -14,15 +14,18 @@
   "dependencies": {
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
+    "chromedriver": "^130.0.1",
     "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "express-session": "^1.18.0",
+    "jsdom": "^25.0.1",
     "moment-timezone": "^0.5.45",
-    "mongoose": "^7.8.1",
+    "mongoose": "^7.8.2",
     "node": "^22.9.0",
     "nodemailer": "^6.9.16",
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "selenium-webdriver": "^4.25.0"
   }
 }

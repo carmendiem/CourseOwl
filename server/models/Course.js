@@ -38,9 +38,14 @@ const courseSchema = new Schema({
     }],
     credit_hours: {
         type: Number
-    }
-    
-}, { collection: 'course_info' });
+    }, 
+    avail_url: {
+        type: String
+    },
+    availSeats: {
+        type: Number, default: null
+    },
+}, { collection: 'course_info3' });
 
 const Course = mongoose.models.Course || mongoose.model('Course', courseSchema);
 export default Course;
