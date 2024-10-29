@@ -16,6 +16,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import VerificationSuccessPage from "../pages/VerificationSuccessPage";
 import ResetPassword from "../pages/ResetPassword";
 import ForumDetails from "../components/Forum/ForumDetails";
+import AlertsPage from "../pages/AlertsPage";
 
 
 export function Rout({ setIsLoggedIn, isLoggedIn }) {
@@ -48,7 +49,7 @@ export function Rout({ setIsLoggedIn, isLoggedIn }) {
                 path="/alerts" 
                 element={
                     <ProtectedRoute isLoggedIn={isLoggedIn}>
-                        <Alerts />
+                        <AlertsPage />
                     </ProtectedRoute>
                 } 
             />

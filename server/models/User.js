@@ -38,8 +38,13 @@ const userSchema = new mongoose.Schema({
 
     upvotedReviews: {
         type: [ObjectId]
-    }
-
+    },
+    notifPreference: {
+        type: String,
+        enum: ["email", "in_app", "both", "none"],
+        default: "in_app",
+    },
+    avail_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
 });
 
 const User = mongoose.model('User', userSchema);
