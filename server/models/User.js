@@ -31,7 +31,9 @@ const userSchema = new mongoose.Schema({
     },
     verificationToken: {
         type: String,  // Used to store the token sent in the verification email
-    }
+    },
+    resetToken: String,
+    resetTokenExpiry: Date,
 });
 
 const User = mongoose.model('User', userSchema);

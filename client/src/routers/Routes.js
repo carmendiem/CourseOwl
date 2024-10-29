@@ -13,6 +13,7 @@ import Courses from '../pages/Courses';
 import NotFound from "../pages/NotFound"; 
 import { ProtectedRoute } from "./ProtectedRoute";
 import VerificationSuccessPage from "../pages/VerificationSuccessPage";
+import ResetPassword from "../pages/ResetPassword";
 
 export function Rout({ setIsLoggedIn, isLoggedIn }) {
     return (
@@ -25,6 +26,7 @@ export function Rout({ setIsLoggedIn, isLoggedIn }) {
             <Route path="/professor/:alias" element={<ProfessorDetails />} />
             <Route path="/course/:course_code" element={<CourseDetails />} />
             <Route path="/user/verify/:token" element={<VerificationSuccessPage />} />
+            <Route path="?user/reset-password/:token" element={<ResetPassword />} />
             {/* Add route for AccountDetails */}
             <Route 
                 path="/account" 

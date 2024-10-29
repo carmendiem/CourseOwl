@@ -227,6 +227,49 @@ export const verifyUser = async (req, res) => {
     }
 };
 
+export const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    const user = await UserModel.findOne({ email });
+
+    if (!user) return res.status(404).json({ message: "Email not found" });
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = Date.now() + 3600000;  // Token valid for 1 hour
+
+    await user.save();
+    const resetLink = `http://localhost:3000/user/reset-password/${resetToken}`;
+    const message = `Reset password by clicking here: ${resetLink}`;
+
+    await transporter.sendMail({
+        from: "courseowlapp@gmail.com",
+        to: user.email,
+        subject: "Password Reset Request",
+        text: message
+    });
+
+    res.json({ message: "Password reset email sent" });
+};
+
+export const resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+    const user = await UserModel.findOne({
+        resetToken: token,
+        resetTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+
+    // Hash the new password and save it
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+
+    await user.save();
+    res.status(200).json({ message: "Password has been reset successfully" });
+};
 
 
 
