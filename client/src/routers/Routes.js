@@ -12,8 +12,11 @@ import Forums from '../pages/Forums';
 import Courses from '../pages/Courses'; 
 import NotFound from "../pages/NotFound"; 
 import { ProtectedRoute } from "./ProtectedRoute";
+
 import VerificationSuccessPage from "../pages/VerificationSuccessPage";
 import ResetPassword from "../pages/ResetPassword";
+import ForumDetails from "../components/Forum/ForumDetails";
+
 
 export function Rout({ setIsLoggedIn, isLoggedIn }) {
     return (
@@ -25,6 +28,7 @@ export function Rout({ setIsLoggedIn, isLoggedIn }) {
             <Route path="/home" element={<HomePage />} />
             <Route path="/professor/:alias" element={<ProfessorDetails />} />
             <Route path="/course/:course_code" element={<CourseDetails />} />
+
             <Route path="/user/verify/:token" element={<VerificationSuccessPage />} />
             <Route path="?user/reset-password/:token" element={<ResetPassword />} />
             {/* Add route for AccountDetails */}
@@ -36,6 +40,9 @@ export function Rout({ setIsLoggedIn, isLoggedIn }) {
                     </ProtectedRoute>
                 } 
             />
+            {/* change to use forum code later */}
+            <Route path="/forum/:forumId" element={ <ForumDetails />} /> 
+
 
             <Route 
                 path="/alerts" 

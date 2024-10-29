@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
     courses: {
         type: [ObjectId]
     },
+
     year_in_school: {
         type: String,
     },
@@ -34,6 +35,11 @@ const userSchema = new mongoose.Schema({
     },
     resetToken: String,
     resetTokenExpiry: Date,
+
+    upvotedReviews: {
+        type: [ObjectId]
+    }
+
 });
 
 const User = mongoose.model('User', userSchema);
