@@ -111,7 +111,7 @@ export function TableView({user, change}) {
                 <TableCell component="th" scope="row">
                   {course.course_name}
                 </TableCell>
-                <TableCell align="right">{course.availability || 'N/A'}</TableCell>
+                <TableCell align="right">{course.availSeats || 'N/A'}</TableCell>
                 <TableCell align="right">{course.Time || 'N/A'}</TableCell>
                 <TableCell align="right">{course.Where || 'N/A'}</TableCell>
                 <TableCell align="right">
