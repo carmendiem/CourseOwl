@@ -8,6 +8,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # MongoDB setup
 client = MongoClient('mongodb+srv://carmendiem2003:L0w7i3EeU1rlrx4v@courseowl.sne0b.mongodb.net/?tls=true&tlsAllowInvalidCertificates=true')
@@ -16,6 +19,12 @@ db = client['course_data']
 users_collection = db['users']
 courses_collection = db['course_info3']
 alerts_collection = db['alerts']  # Assuming alerts are stored in a collection named 'alerts'
+
+# SMTP setup
+smtp_server = "smtp.gmail.com"
+smtp_port = 587
+email_sender = "courseowlapp@gmail.com"
+email_password = "uxqv ebab htkf vswi"
 
 # Selenium setup for Chrome
 options = webdriver.ChromeOptions()
@@ -90,6 +99,20 @@ for course in courses:
                         }
                         alerts_collection.insert_one(alert_data)
                         print(f"Alert created for user {user['_id']} about course {course['_id']} availability.")
+
+                        if user.get("notifPreference") in ["email", "both"]:
+                            msg = MIMEMultipart()
+                            msg['From'] = email_sender
+                            msg['To'] = user["email"]
+                            msg['Subject'] = "Course Available Alert"
+
+                            body = f"Dear {user['name']},\n\nThe course {course['course_name']} ({course['course_code']}) is now available. Log in to CourseOwl to view the updated availability.\n\nBest regards,\nCourseOwl Team"
+                            msg.attach(MIMEText(body, 'plain'))
+
+                            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                                server.starttls()
+                                server.login(email_sender, email_password)
+                                server.sendmail(email_sender, user["email"], msg.as_string())
 
                         # Remove the courseId from the user's avail_ids after alert is created
                         users_collection.update_one(
