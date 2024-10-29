@@ -3,26 +3,37 @@ import Professor from '../models/Professor.js';
 import User from '../models/User.js';
 
 export const getReviewsByAlias = async (req, res) => {
-    const alias = req.params.alias;
-    try {
-        const reviews = await Review.find({ professorAlias: alias });
-        
-        if (!reviews || reviews.length === 0) {
-            return res.status(200).json([]); 
-        }
-        
-        res.json(reviews);
-    } catch (error) {
-        console.error('Error fetching reviews:', error);
-        res.status(500).json({ message: 'Error fetching reviews' });
-    }
+  const alias = req.params.alias;
+  try {
+      const reviews = await Review.find({ professorAlias: alias })
+          .populate({
+              path: 'user_id',
+              select: 'email isVerified name',  // Select only the necessary fields from the User model
+          });
+      
+      if (!reviews || reviews.length === 0) {
+          return res.status(200).json([]); 
+      }
+
+      // Map the reviews to include `userEmail`, `isVerified`, and `userName`
+      const reviewsWithUserDetails = reviews.map(review => ({
+          ...review.toObject(),
+          userEmail: review.user_id?.email,
+          isVerified: review.user_id?.isVerified,
+          userName: review.user_id?.name,
+      }));
+      res.json(reviewsWithUserDetails);
+  } catch (error) {
+      console.error('Error fetching reviews:', error);
+      res.status(500).json({ message: 'Error fetching reviews' });
+  }
 };
 
 
 export const addReview = async (req, res) => {
     const alias = req.params.alias;    
 
-    const { userEmail, userName, content, isVerified } = req.body;
+    const {userEmail, userName, user_id, content, isVerified } = req.body;
     try {
         const professor = await Professor.findOne({ ALIAS: alias });
         if (!professor) {
@@ -31,12 +42,14 @@ export const addReview = async (req, res) => {
 
         const newReview = new Review({
             professorAlias: alias,
-            userName,
-            userEmail,
-            content,
-            date: new Date(),
+            user_id:user_id,
+            userEmail: userEmail,
+            userName: userName,
             isVerified: isVerified,
+            content:content,
+            date: new Date(),
         });
+        
         await newReview.save();
         res.status(201).json(newReview);
     } catch (error) {

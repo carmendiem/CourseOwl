@@ -104,6 +104,7 @@ function ProfessorDetails() {
       const newReviewData = {
         userEmail: user.email,
         userName: user.name,
+        user_id:user.id,
         content: newReview,
         isVerified: user.isVerified,
       };
@@ -285,7 +286,7 @@ function ProfessorDetails() {
         {reviews
           .filter(review => review.isVerified)
           .map((review) => (
-            <Grid item xs={12} md={6} key={review._id}>
+            <Grid item xs={12} md={6} key={review._id}>  {/*Who knows*/}
               <Card sx={{ marginBottom: 2, border: '10px solid #2E3B55' }}>
                 <CardContent>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -295,7 +296,7 @@ function ProfessorDetails() {
                     <Typography variant="h6" sx={{ fontWeight: 'bold', textAlign: 'center', flexGrow: 1 }}>
                       {review.userName}
                     </Typography>
-                    {user && user.name === review.userName ? (
+                    {user && (user.id === review.user_id._id || user.id === review.user_id)? (
                       <IconButton onClick={() => handleDeleteReview(review._id)}>
                         <DeleteIcon />
                       </IconButton>
@@ -340,7 +341,7 @@ function ProfessorDetails() {
                     <Typography variant="h6" sx={{ fontWeight: 'bold', textAlign: 'center', flexGrow: 1 }}>
                       {review.userName}
                     </Typography>
-                    {user && user.name === review.userName ? (
+                    {user && (user.id === review.user_id._id || user.id === review.user_id) ? (
                       <IconButton onClick={() => handleDeleteReview(review._id)}>
                         <DeleteIcon />
                       </IconButton>
