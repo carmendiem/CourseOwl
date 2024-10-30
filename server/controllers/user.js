@@ -10,14 +10,27 @@ export const signupUser = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ error: "Email already exists" });
         }
+        
+        // Hash the password and create the new user
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new UserModel({ name, email, password: hashedPassword, courses: [] });
         const savedUser = await newUser.save();
+
+        // Send a welcome email to the user
+        const message = `Hello ${name},\n\nWelcome to CourseOwl! Your account has been successfully created.\n\nBest,\nCourseOwl Team`;
+        await transporter.sendMail({
+            from: emailSender,
+            to: email,
+            subject: "Welcome to CourseOwl",
+            text: message,
+        });
+
         res.status(201).json(savedUser);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 export const loginUser = async (req, res) => {
     try {
@@ -94,6 +107,19 @@ export const getFreshUserInfo = async (req, res) => {
  
 };
 
+// Utility function to send account update notification email
+const sendAccountUpdateEmail = async (user, updatedFields) => {
+    const changes = updatedFields.map(field => `- ${field}`).join("\n");
+    const message = `Hello ${user.name},\n\nThe following changes were made to your account:\n\n${changes}\n\nIf you did not make these changes, please contact support immediately.\n\nBest,\nCourseOwl Team`;
+
+    await transporter.sendMail({
+        from: emailSender,
+        to: user.email,
+        subject: "CourseOwl Account Update Notification",
+        text: message,
+    });
+};
+
 // Handle updating user details (year in school, major)
 export const updateUserDetails = async (req, res) => {
     const { year_in_school, major, name, email, notifPreference } = req.body;
@@ -116,13 +142,25 @@ export const updateUserDetails = async (req, res) => {
         console.log("Current user notifPreference:", user.notifPreference);
 
         // Update fields only if they have changed
-        if (name) user.name = name;
+        const updatedFields = [];
+
+        if (name && name !== user.name) {
+            user.name = name;
+            updatedFields.push("Name");
+        }
         if (email && email !== user.email) {
             user.email = email;
-            user.isVerified = false;  // Reset verification status
+            user.isVerified = false; // Reset verification status if email changes
+            updatedFields.push("Email");
         }
-        user.year_in_school = year_in_school || user.year_in_school;
-        user.major = major || user.major;
+        if (year_in_school && year_in_school !== user.year_in_school) {
+            user.year_in_school = year_in_school;
+            updatedFields.push("Year in School");
+        }
+        if (major && major !== user.major) {
+            user.major = major;
+            updatedFields.push("Major");
+        }
         user.notifPreference = notifPreference || user.notifPreference;
 
         // Save updated user details
@@ -138,6 +176,10 @@ export const updateUserDetails = async (req, res) => {
             isVerified: updatedUser.isVerified,
             notifPreference: updatedUser.notifPreference
         };
+
+        if (updatedFields.length > 0) {
+            await sendAccountUpdateEmail(updatedUser, updatedFields);
+        }
 
         res.status(200).json({ message: "User details updated successfully", user: updatedUser });
     } catch (error) {
@@ -253,6 +295,7 @@ export const verifyUser = async (req, res) => {
     }
 };
 
+// Handle forgot password
 export const forgotPassword = async (req, res) => {
     const { email } = req.body;
     const user = await UserModel.findOne({ email });
@@ -261,39 +304,49 @@ export const forgotPassword = async (req, res) => {
 
     const resetToken = crypto.randomBytes(32).toString("hex");
     user.resetToken = resetToken;
-    user.resetTokenExpiry = Date.now() + 3600000;  // Token valid for 1 hour
+    user.resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
 
     await user.save();
     const resetLink = `http://localhost:3000/user/reset-password/${resetToken}`;
-    const message = `Reset password by clicking here: ${resetLink}`;
+    const message = `To reset your password, please click here: ${resetLink}`;
 
     await transporter.sendMail({
-        from: "courseowlapp@gmail.com",
+        from: emailSender,
         to: user.email,
         subject: "Password Reset Request",
-        text: message
+        text: message,
     });
 
     res.json({ message: "Password reset email sent" });
 };
 
+// Handle resetting the password
 export const resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
     const user = await UserModel.findOne({
         resetToken: token,
-        resetTokenExpiry: { $gt: Date.now() }
+        resetTokenExpiry: { $gt: Date.now() },
     });
 
     if (!user) return res.status(400).json({ message: "Invalid or expired token" });
 
-    // Hash the new password and save it
     const hashedPassword = await bcrypt.hash(password, 10);
     user.password = hashedPassword;
     user.resetToken = undefined;
     user.resetTokenExpiry = undefined;
 
     await user.save();
+
+    // Send email notification for password change
+    const message = `Hello ${user.name},\n\nYour password has been successfully changed.\n\nIf you did not make this change, please contact support immediately.\n\nBest,\nCourseOwl Team`;
+    await transporter.sendMail({
+        from: emailSender,
+        to: user.email,
+        subject: "Password Change Confirmation",
+        text: message,
+    });
+
     res.status(200).json({ message: "Password has been reset successfully" });
 };
 
