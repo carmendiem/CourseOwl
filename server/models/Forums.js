@@ -30,14 +30,14 @@ const forumSchema = new Schema({
             type: String
         },
         author: {
-            type: String
+            type: ObjectId
         },
         anon: {
             type: Boolean
         },
         comments: [{
             author: {
-                type: String
+                type: ObjectId
             },
             body: {
                 type: String

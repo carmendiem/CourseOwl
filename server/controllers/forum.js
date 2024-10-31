@@ -23,8 +23,8 @@ export const getForumInfo = async (req, res) => {
 
 export const getUserName = async (req, res) => {
     try {
-        const {email} = req.query;
-        const user = await User.findOne({email: email});
+        const {userId} = req.query;
+        const user = await User.findById(userId);
         if (user != null) {
             return res.json(user.name);
         } else {
@@ -38,8 +38,8 @@ export const getUserName = async (req, res) => {
 
 export const createPost = async (req, res) => {
     try {
-        const { title, body, anon, chosenTag, userEmail, forumId} = req.query;
-        const post = {title, body, anon, tag: chosenTag, author: userEmail, comments:[]};
+        const { title, body, anon, chosenTag, userId, forumId} = req.query;
+        const post = {title, body, anon, tag: chosenTag, author: userId, comments:[]};
         const forum = await Forum.findOneAndUpdate({_id: forumId}, {$push: {posts: post}}, {new: true});
         if (forum != null) {
             return res.json(forum);
@@ -54,8 +54,8 @@ export const createPost = async (req, res) => {
 
 export const createComment = async (req, res) => {
     try {
-        const {body, anon, userEmail, forumId, postId} = req.query;
-        const comment = {body, anon, author: userEmail};
+        const {body, anon, userId, forumId, postId} = req.query;
+        const comment = {body, anon, author: userId};
         const forum = await Forum.findById(forumId);
         if (!forum) {
             return res.status(404).json({ status: 'forum not found' });
