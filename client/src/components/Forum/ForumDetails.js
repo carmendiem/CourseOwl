@@ -82,7 +82,6 @@ function ForumDetails() {
     const selectPost = (postId) => {
         setSelectedPostId(postId);
         setCurrentPost(currentForum.posts.find(post => post._id === postId));
-        setCurrentPostAuthor([]);
         setDrafting(false);
     };
     const handleCurrentPost = (post, author) => {
@@ -172,6 +171,7 @@ function ForumDetails() {
     }, [forumObjs]);
 
     useEffect(() => {
+        setCurrentPostAuthor([]);
         const fetchUserNames = async () => {
             const names = [];
             if(currentPost != null){
@@ -492,6 +492,7 @@ function DisplayPostandReply({user, forum, post, postAuthors, handlePost}) {
         await postComment(comment);
     }
     return (
+        console.log(postAuthors),
         (post === null || post === undefined || postAuthors.length === 0) ? (
             <Box className="post-display">
                 <Typography>Select a Post to Read</Typography> 
