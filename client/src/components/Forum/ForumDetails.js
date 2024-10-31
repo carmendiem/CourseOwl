@@ -69,6 +69,9 @@ function ForumDetails() {
 
     const handleDraftSubmitted = () => {
         setDrafting(!drafting);
+        setSearchTerm("");
+        setSelectedTag(null);
+        setSearchedPosts(null);
     };
 
     const selectForum = (forumId) => {

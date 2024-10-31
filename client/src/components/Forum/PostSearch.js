@@ -34,7 +34,7 @@ export function PostSearch( {forumId, setSearchedPosts, tag, searchTerm, setSear
     useEffect(() => {
         const searchForums = async () => {
             //
-            //if (debouncedTerm && debouncedTerm.trim() !== "") {
+            if ((debouncedTerm && debouncedTerm.trim() !== "") || (debouncedTerm && tag !== null)) {
                 const results = await fetchPosts(debouncedTerm, forumId, tag);
                 if (results) {
                     setSearchedPosts(results);
@@ -43,9 +43,9 @@ export function PostSearch( {forumId, setSearchedPosts, tag, searchTerm, setSear
                     setSearchedPosts([]);
                     setSearchAlert("No posts found that match your search, please try again!")
                 }
-            /*} else {
+            } else  {
                 setSearchedPosts(null);
-            }*/
+            }
         };
         searchForums();
     }, [debouncedTerm]);
