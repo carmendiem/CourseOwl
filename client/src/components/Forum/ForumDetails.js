@@ -110,9 +110,9 @@ function ForumDetails() {
         }
     };
 
-    const getUserName = async (userEmail) => {
+    const getUserName = async (userId) => {
         try{
-            const res = await axios.get(`${config.API_BASE_URL}/forum/getUserName?email=${userEmail}`)
+            const res = await axios.get(`${config.API_BASE_URL}/forum/getUserName?userId=${userId}`)
             const data = await res.data;
             return data;
         }catch(error){
@@ -366,8 +366,8 @@ function DisplayDraft({user, forum, handleDraft}) {
             setBodyError("Body cannot be empty");
             return;
         }
-        const userEmail = user.email;
-        const post = { title, body, anon, chosenTag, userEmail, forumId};
+        const userId = user.id;
+        const post = { title, body, anon, chosenTag, userId, forumId};
         await postPost(post);
 
     };
@@ -457,7 +457,7 @@ function DisplayPostandReply({user, forum, post, postAuthors, handlePost}) {
     const postComment = async (comment) => {
         try{
             const res = await axios.post(`${config.API_BASE_URL}/forum/createComment`, null, {params: comment});
-            const commentInPost = {author: comment.userEmail, body: comment.body, anon: comment.anon};
+            const commentInPost = {author: comment.userId, body: comment.body, anon: comment.anon};
             post.comments.push(commentInPost);
             if (comment.anon) {
                 handlePost(post,"Anon");
@@ -482,10 +482,10 @@ function DisplayPostandReply({user, forum, post, postAuthors, handlePost}) {
             setBodyError("Comment cannot be empty");
             return;
         }
-        const userEmail = user.email;
+        const userId = user.id;
         const postId = post._id;
         const forumId = forum._id;
-        const comment = {body, anon, userEmail, forumId, postId};
+        const comment = {body, anon, userId, forumId, postId};
         await postComment(comment);
     }
     return (
