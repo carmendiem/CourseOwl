@@ -4,9 +4,11 @@ import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField }
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { IconButton } from '@mui/material';
-import { Add} from '@mui/icons-material';
+import { Add , Verified} from '@mui/icons-material';
+// import VerifiedIcon from '@mui/icons-material/Verified';
 import "./ForumDetails.css";
 import { PostSearch } from './PostSearch';
+
 
 import config from '../../config';
 import axios from "axios"; 
@@ -54,6 +56,7 @@ function ForumDetails() {
     const [selectedPostId, setSelectedPostId] = useState(null);
     const [currentPost, setCurrentPost] = useState(null);
     const [currentPostAuthor, setCurrentPostAuthor] = useState(null);
+    const [currentPostAuthorVer, setCurrentPostAuthorVer] = useState(null);
 
     const [searchedPosts, setSearchedPosts] = useState(null);
     const tags = ["general", "questions"];
@@ -84,9 +87,10 @@ function ForumDetails() {
         setCurrentPost(currentForum.posts.find(post => post._id === postId));
         setDrafting(false);
     };
-    const handleCurrentPost = (post, author) => {
+    const handleCurrentPost = (post, author, ver) => {
         setCurrentPost(post);
         setCurrentPostAuthor([...currentPostAuthor, author]);
+        setCurrentPostAuthorVer([...currentPostAuthorVer, ver]);
     }
     
     const getForumInfo = async (forums) => {
@@ -112,13 +116,13 @@ function ForumDetails() {
         }
     };
 
-    const getUserName = async (userId) => {
+    const getUserNameVerification = async (userId) => {
         try{
-            const res = await axios.get(`${config.API_BASE_URL}/forum/getUserName?userId=${userId}`)
+            const res = await axios.get(`${config.API_BASE_URL}/forum/getUserNameVerification?userId=${userId}`)
             const data = await res.data;
             return data;
         }catch(error){
-            console.log("error fetching forums: ", error);
+            console.log("error fetching user: ", error);
         }
     };
 
@@ -172,31 +176,36 @@ function ForumDetails() {
 
     useEffect(() => {
         setCurrentPostAuthor([]);
-        const fetchUserNames = async () => {
+        setCurrentPostAuthorVer([]);
+        const fetchUserInfo = async () => {
             const names = [];
+            const verified = [];
             if(currentPost != null){
+                const response = await getUserNameVerification(currentPost.author);
+                verified.push(response.verStatus);
                 if (currentPost.anon != null && currentPost.anon) {
                     names.push("Anon");
                 }  
                 else {
-                    const name = await getUserName(currentPost.author);
-                    names.push(name);
+                    names.push(response.name);
                 }  
                 if (currentPost.comments != null) {
                     for (let i = 0; i < currentPost.comments.length; i++) {
+                        const comment = await getUserNameVerification(currentPost.comments[i].author);
+                        verified.push(comment.verStatus)
                         if (currentPost.comments[i].anon != null && currentPost.comments[i].anon) {
                             names.push("Anon");
                         }  
                         else {
-                            const name = await getUserName(currentPost.comments[i].author);
-                            names.push(name);         
+                            names.push(comment.name);         
                         }  
                     }
                 }
             }
             setCurrentPostAuthor(names);
+            setCurrentPostAuthorVer(verified);
         }
-        fetchUserNames();
+        fetchUserInfo();
     }, [currentPost]);
 
     return (
@@ -320,7 +329,7 @@ function ForumDetails() {
                                 <Typography>Select a Post to Read</Typography> 
                                 <Typography>{"<================"}</Typography>
                             </Box>) : 
-                            <DisplayPostandReply user={user} forum={currentForum} post={currentPost} postAuthors={currentPostAuthor} handlePost={handleCurrentPost}/> 
+                            <DisplayPostandReply user={user} forum={currentForum} post={currentPost} postAuthors={currentPostAuthor} postVer={currentPostAuthorVer} handlePost={handleCurrentPost}/> 
                         )}
                </Grid>
             </Grid>
@@ -452,7 +461,7 @@ function DisplayDraft({user, forum, handleDraft}) {
     ); 
 }
 
-function DisplayPostandReply({user, forum, post, postAuthors, handlePost}) {
+function DisplayPostandReply({user, forum, post, postAuthors, postVer, handlePost}) {
     const [body, setBody] = useState("");
     const [anon, setAnon] = useState(false);
     const [bodyError, setBodyError] = useState("");
@@ -463,9 +472,9 @@ function DisplayPostandReply({user, forum, post, postAuthors, handlePost}) {
             const commentInPost = {author: comment.userId, body: comment.body, anon: comment.anon};
             post.comments.push(commentInPost);
             if (comment.anon) {
-                handlePost(post,"Anon");
+                handlePost(post,"Anon", user.isVerified);
             } else {
-                handlePost(post, user.name);
+                handlePost(post, user.name, user.isVerified);
             }
             console.log("comment created successfully: ", res.data);
             setBody("");
@@ -492,7 +501,6 @@ function DisplayPostandReply({user, forum, post, postAuthors, handlePost}) {
         await postComment(comment);
     }
     return (
-        console.log(postAuthors),
         (post === null || post === undefined || postAuthors.length === 0) ? (
             <Box className="post-display">
                 <Typography>Select a Post to Read</Typography> 
@@ -504,7 +512,12 @@ function DisplayPostandReply({user, forum, post, postAuthors, handlePost}) {
                     <Grid className='post-post-grid'>
                         <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
                         <Box className='post-card-tag-author'>
-                            <Typography className='post-card-author'>Posted by {postAuthors[0]} as /</Typography>
+
+                            <Typography className='post-card-author'>
+                                Posted by <span style={{fontWeight: 'bold'}}>{postAuthors[0]} </span>
+                                {postVer[0] ? <Verified sx={{ color: '#9baf4d', fontSize: '1rem', position: 'relative', top: '2px'}} />: null} 
+                                {" "} as /
+                            </Typography>
                             <Typography sx={{color: getTagColor(forum, post.tag), fontWeight: "bold", margin: "0px"}} >{post.tag}</Typography>
                         </Box>
                         <Box className='post-card-body-box'>
@@ -518,7 +531,12 @@ function DisplayPostandReply({user, forum, post, postAuthors, handlePost}) {
                         <Grid className='post-comment-grid'>
                             {post.comments.map((comment, index) => (
                                 <Box key={index} sx={{padding: "5px"}}>
-                                    <Typography className='post-comment-author'>{postAuthors[index+1]}:</Typography>
+                                        <Typography className='post-comment-author'>
+                                            {postAuthors[index+1]} 
+                                            {postVer[index+1] ? (
+                                                <Verified sx={{ color: '#9baf4d', fontSize: '1rem', marginLeft: '3px', position: 'relative', top: '2px'}} />
+                                            ) : null} 
+                                        </Typography>
                                     <Typography variant='body1' className='post-comment-body'>{comment.body}</Typography>
                                 </Box>   
                             ))}

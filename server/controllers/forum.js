@@ -21,17 +21,18 @@ export const getForumInfo = async (req, res) => {
     }
 }
 
-export const getUserName = async (req, res) => {
+export const getUserNameVerification = async (req, res) => {
     try {
         const {userId} = req.query;
         const user = await User.findById(userId);
         if (user != null) {
-            return res.json(user.name);
+            const nameAndVer = {name: user.name, verStatus: user.isVerified}
+            return res.json(nameAndVer);
         } else {
             return res.status(404).json({ status: 'user not found' });
         }
     } catch (error) {
-        console.log("Error in getUserName:", error);
+        console.log("Error in getUserNameVerification:", error);
         res.status(400).json({ status: 'Error fetching forum' });
     }
 }
