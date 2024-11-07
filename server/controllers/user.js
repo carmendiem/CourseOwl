@@ -96,7 +96,8 @@ export const getFreshUserInfo = async (req, res) => {
             isVerified: user.isVerified,
             major: user.major,
             year_in_school: user.year_in_school,
-            notifPreference: user.notifPreference
+            notifPreference: user.notifPreference,
+            upvotedPosts: user.upvotedPosts
         };
  
  

@@ -46,6 +46,14 @@ const forumSchema = new Schema({
                 type: Boolean
             },
         }],
+        upvotes: {
+            type: Number,   
+            default: 0    
+        },
+        date: {
+            type: Date, 
+            default: Date.now  
+        },
     }],
     
 }, { collection: 'forums' });
