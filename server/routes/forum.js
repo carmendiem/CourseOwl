@@ -1,5 +1,5 @@
 import express from "express";
-import {getForumInfo, getUserName, createPost, getForumSearch, getPost, createComment, upvotePost, removeUpvote, getPostById, bookmarkPost, getSortedPosts} from "../controllers/forum.js";
+import {getForumInfo, getUserName, createPost, getForumSearch, getPost, createComment, upvotePost, removeUpvote, getPostById, bookmarkPost, getSortedPosts, reportPost} from "../controllers/forum.js";
 
 const router = express.Router();
 
@@ -14,5 +14,6 @@ router.post("/upvotePost", upvotePost);
 router.post("/removeUpvote", removeUpvote);
 router.post("/bookmarkPost", bookmarkPost);
 router.get("/getSortedPosts", getSortedPosts)
+router.post("/reportPost", reportPost)
 
 export default router;

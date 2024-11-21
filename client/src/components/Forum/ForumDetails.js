@@ -11,9 +11,15 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import StarIcon from '@mui/icons-material/Star';
 import ForumIcon from '@mui/icons-material/Forum';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-
+import ReportIcon from '@mui/icons-material/Report';
 import config from '../../config';
 import axios from "axios";
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
 
 // colors
 const light_yellow = "#fbefb5";
@@ -502,6 +508,34 @@ function DisplayPostandReply({ user, forum, post, postAuthors, handlePost, setUs
     const [bodyError, setBodyError] = useState("");
     const [upvotedPosts, setUpvotedPosts] = useState(user?.upvotedPosts || []);
     const [savedPosts, setSavedPosts] = useState(user?.savedPosts || []);
+    const [open, setOpen] = React.useState(false);
+    const [reportMessage, setReportMessage] = useState("")
+    const [pendingReport, setPendingReport] = useState(false);
+
+    useEffect(() => {
+        if (pendingReport) {
+            reportPost(forum._id, reportMessage);
+            setPendingReport(false);
+        }
+    }, [reportMessage]);
+
+    const handleReportOpen = (postId) => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+    };
+
+    const reportPost = async (forumId) => {
+        const reportData = {
+            postName: post.title, 
+            forumId: forumId,
+            reportMessage: reportMessage,
+            user: user
+        };
+        const res = await axios.post(`${config.API_BASE_URL}/forum/reportPost`, reportData);
+    }
 
     const postComment = async (comment) => {
         try {
@@ -603,6 +637,44 @@ function DisplayPostandReply({ user, forum, post, postAuthors, handlePost, setUs
         ) : (
             <Card className='post-card'>
                 <CardContent className='post-card-content'>
+                        <Dialog
+                            open={open}
+                            onClose={handleClose}
+                            PaperProps={{
+                                component: 'form',
+                                onSubmit: (event) => {
+                                    event.preventDefault();
+                                    const formData = new FormData(event.currentTarget);
+                                    const formJson = Object.fromEntries(formData.entries());
+                                    const report = formJson.report;
+                                    setReportMessage(report)
+                                    setPendingReport(true)
+                                    handleClose();
+                                },
+                            }}
+                        >
+                            <DialogTitle>Report Post</DialogTitle>
+                            <DialogContent>
+                                <DialogContentText>
+                                    Please briefly describe why you are reporting the post and our moderators will review shortly. Thank you!
+                                </DialogContentText>
+                                <TextField
+                                    autoFocus
+                                    required
+                                    margin="dense"
+                                    id="name"
+                                    name="report"
+                                    label="Reason for reporting"
+                                    type="report"
+                                    fullWidth
+                                    variant="standard"
+                                />
+                            </DialogContent>
+                            <DialogActions>
+                                <Button onClick={handleClose}>Cancel</Button>
+                                <Button type="submit">Report</Button>
+                            </DialogActions>
+                        </Dialog>
                     <Grid className='post-post-grid'>
                         <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
                         <Box className='post-card-tag-author'>
@@ -610,25 +682,34 @@ function DisplayPostandReply({ user, forum, post, postAuthors, handlePost, setUs
                             <Typography sx={{ color: getTagColor(forum, post.tag), fontWeight: "bold", margin: "0px" }} >{post.tag}</Typography>
                         </Box>
                         <Box className='post-card-body-box'>
-                            <Typography variant='body1' className='post-card-body-text'>{post.body}</Typography>
-                        </Box>
-                        <Box display="flex" alignItems="center">
-                            <IconButton
-                                color={upvotedPosts.includes(post._id) ? 'primary' : 'default'}
-                                onClick={() => handleUpvote(post._id)}
-                            >
-                                <ThumbUpIcon />
-                            </IconButton>
-                            <Typography sx={{ ml: 0.5 }}>{updatedPost?.upvotes ?? post.upvotes}</Typography>
-                            <IconButton
-                             color={savedPosts.includes(post._id) ? 'primary' : 'default'}
-                             onClick={() => handleBookmark(post._id)}
-                            >
-                                <StarIcon />
-                            </IconButton>
-                        </Box>
-                    </Grid>
-                    <Typography sx={{ textAlign: "left" }}>Comments:</Typography>
+                                <Typography variant='body1' className='post-card-body-text'>{post.body}</Typography>
+                            </Box>
+                            <Box display="flex" alignItems="center" sx={{ justifyContent: 'space-between', width: '100%' }}>
+                                <Box display="flex" alignItems="center">
+                                    <IconButton
+                                        color={upvotedPosts.includes(post._id) ? 'primary' : 'default'}
+                                        onClick={() => handleUpvote(post._id)}
+                                    >
+                                        <ThumbUpIcon />
+                                    </IconButton>
+                                    <Typography sx={{ ml: 0.5 }}>{updatedPost?.upvotes ?? post.upvotes}</Typography>
+                                    <IconButton
+                                        color={savedPosts.includes(post._id) ? 'primary' : 'default'}
+                                        onClick={() => handleBookmark(post._id)}
+                                    >
+                                        <StarIcon />
+                                    </IconButton>
+                                </Box>
+
+                                {/* Report Icon on the right */}
+                                <IconButton
+                                    onClick={() => handleReportOpen(post._id)}
+                                >
+                                    <ReportIcon />
+                                </IconButton>
+                            </Box>
+                        </Grid>
+                        <Typography sx={{ textAlign: "left" }}>Comments:</Typography>
                     {post.comments === null || post.comments.length === 0 ? (
                         null
                     ) : (
