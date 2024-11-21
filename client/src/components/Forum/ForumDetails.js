@@ -4,7 +4,7 @@ import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField }
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { IconButton } from '@mui/material';
-import { Add, ConstructionOutlined } from '@mui/icons-material';
+import { Add } from '@mui/icons-material';
 import "./ForumDetails.css";
 import { PostSearch } from './PostSearch';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
