@@ -2,6 +2,7 @@ import connectMongo from "../connection.js"
 import Forum from "../models/Forums.js";
 import mongoose from 'mongoose';
 import User from "../models/User.js";
+import nodemailer from 'nodemailer';
 
 mongoose.set('strictQuery', false);
 connectMongo();
@@ -294,5 +295,41 @@ export const getSortedPosts = async (req, res) => {
     } catch (error) {
         console.error('Error getting posts:', error);
         res.status(500).json({ message: 'Error getting posts' });
+    }
+};
+
+const smtpServer = "smtp.gmail.com";
+const smtpPort = 587;
+const emailSender = "courseowlapp@gmail.com";
+const emailPassword = "uxqv ebab htkf vswi"
+
+const transporter = nodemailer.createTransport({
+    host: smtpServer,
+    port: smtpPort,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: emailSender,
+        pass: emailPassword,
+    },
+});
+
+export const reportPost = async (req, res) => {
+    const { postName, forumId, reportMessage, user } = req.body;
+
+    try {
+        const forum = await Forum.findOne({ _id: forumId });
+        console.log(forum)
+        const message = `Post '${postName}' was reported in forum ${forum.course_code} by user ${user.email}.\nReason for reporting: ${reportMessage}`;
+
+        await transporter.sendMail({
+            from: emailSender,
+            to: "carmendiem2003@gmail.com",
+            subject: "User Report Alert",
+            text: message,
+        });
+        res.status(200).json({ message: "Report sent" });
+    } catch (error) {
+        console.error('Error reporting post:', error);
+        res.status(500).json({ message: 'Error reporting post' });
     }
 };
