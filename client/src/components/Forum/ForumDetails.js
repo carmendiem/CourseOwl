@@ -4,10 +4,13 @@ import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField }
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { IconButton } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Add, ConstructionOutlined } from '@mui/icons-material';
 import "./ForumDetails.css";
 import { PostSearch } from './PostSearch';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import StarIcon from '@mui/icons-material/Star';
+import ForumIcon from '@mui/icons-material/Forum';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 import config from '../../config';
 import axios from "axios";
@@ -62,6 +65,28 @@ function ForumDetails() {
     const [searchTerm, setSearchTerm] = useState("");
     const [updatedPost, setUpdatedPost] = useState(null);
 
+    const [selectedIcon, setSelectedIcon] = useState(null);
+
+    const handleIconClick = async (type, forumId) => {
+        if (selectedIcon === type) {
+            setSelectedIcon(null);
+            type = "none"
+        }
+        else {
+            setSelectedIcon(type); // Update the selected icon
+        }
+    
+        try {
+            const res = await axios.get(`${config.API_BASE_URL}/forum/getSortedPosts?type=${type}&forumId=${forumId}&savedPosts=${user.savedPosts}&searchTerm=${searchTerm}`);
+            const data = await res.data;
+            setSearchedPosts(data);
+        } catch (error) {
+            console.log("error getting sorted posts: ", error);
+        }
+    };
+
+    const getIconButtonColor = (type) => (selectedIcon === type ? 'primary' : 'default');
+
     const [drafting, setDrafting] = useState(false);
     const startDraft = () => {
         setDrafting(true);
@@ -72,6 +97,8 @@ function ForumDetails() {
     const handleDraftSubmitted = () => {
         setDrafting(!drafting);
         setSearchTerm("");
+        setSelectedIcon(null);
+        getIconButtonColor('default')
         setSelectedTag(null);
         setSearchedPosts(null);
     };
@@ -277,6 +304,20 @@ function ForumDetails() {
                             <Add />
                         </IconButton>
                     </Box>
+                    <Box display="flex" justifyContent="flex-end">
+                        <IconButton onClick={() => handleIconClick('likes', selectedForumId)} color={getIconButtonColor('likes')}>
+                            <ThumbUpIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleIconClick('saved', selectedForumId)} color={getIconButtonColor('saved')}>
+                            <StarIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleIconClick('replies', selectedForumId)} color={getIconButtonColor('replies')}>
+                            <ForumIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleIconClick('recent', selectedForumId)} color={getIconButtonColor('recent')}>
+                            <AccessTimeIcon />
+                        </IconButton>
+                    </Box>
                     <Box sx={{ height: '2px', backgroundColor: "#daaa00" }} />
                     {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts.length === 0) ? (
                         <Typography>no posts yet...</Typography>
@@ -459,7 +500,8 @@ function DisplayPostandReply({ user, forum, post, postAuthors, handlePost, setUs
     const [body, setBody] = useState("");
     const [anon, setAnon] = useState(false);
     const [bodyError, setBodyError] = useState("");
-    const [upvotedPosts, setUpvotedPosts] = useState(user.upvotedPosts || []);
+    const [upvotedPosts, setUpvotedPosts] = useState(user?.upvotedPosts || []);
+    const [savedPosts, setSavedPosts] = useState(user?.savedPosts || []);
 
     const postComment = async (comment) => {
         try {
@@ -507,7 +549,7 @@ function DisplayPostandReply({ user, forum, post, postAuthors, handlePost, setUs
 
     useEffect(() => {
         fetchPost(forum._id, post._id);
-    }, [forum, post, upvotedPosts])
+    }, [forum, post]) // removed savedPosts and upvotedPosts from use effect
 
     const handleUpvote = async (postId) => {
         try {
@@ -536,6 +578,22 @@ function DisplayPostandReply({ user, forum, post, postAuthors, handlePost, setUs
         }
     };
 
+    const handleBookmark = async (postId) => {
+        try {
+            const bookmarkData = {
+                userId: user.id || user._id,
+                postId: postId,
+                forumId: forum._id
+            };
+            const res = await axios.post(`${config.API_BASE_URL}/forum/bookmarkPost`, bookmarkData);
+            const data = await res.data;
+            setSavedPosts(data.savedPosts)
+            setUser(data)
+        } catch (error) {
+            console.error('Error saving post:', error);
+        }
+    }
+
     return (
         (post === null || post === undefined || postAuthors.length === 0) ? (
             <Box className="post-display">
@@ -562,6 +620,12 @@ function DisplayPostandReply({ user, forum, post, postAuthors, handlePost, setUs
                                 <ThumbUpIcon />
                             </IconButton>
                             <Typography sx={{ ml: 0.5 }}>{updatedPost?.upvotes ?? post.upvotes}</Typography>
+                            <IconButton
+                             color={savedPosts.includes(post._id) ? 'primary' : 'default'}
+                             onClick={() => handleBookmark(post._id)}
+                            >
+                                <StarIcon />
+                            </IconButton>
                         </Box>
                     </Grid>
                     <Typography sx={{ textAlign: "left" }}>Comments:</Typography>

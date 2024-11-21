@@ -75,7 +75,6 @@ export const createComment = async (req, res) => {
 
 export const getPost = async (req, res) => {
     try {
-        console.log("recieved?")
         const { searchTerm, forumId, tag } = req.query;
         const forum = await Forum.findOne({ _id: forumId });
 
@@ -185,7 +184,7 @@ export const removeUpvote = async (req, res) => {
         );
         const post = forum ? forum.posts[0] : null;
         const user = await User.findById(userId);
-        console.log(userId, postId, forumId)
+
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
         }
@@ -207,10 +206,93 @@ export const removeUpvote = async (req, res) => {
         await forum.save();
         await user.save();
 
-        req.session.user = user;
         res.json({ post, user });
     } catch (error) {
         console.error('Error removing upvote:', error);
         res.status(500).json({ message: 'Error removing upvote' });
+    }
+};
+
+export const bookmarkPost = async (req, res) => {
+    const { userId, postId, forumId } = req.body;
+
+    try {
+        const forum = await Forum.findOne(
+            { _id: forumId, "posts._id": postId },
+            { posts: { $elemMatch: { _id: postId } } }
+        );
+        const post = forum ? forum.posts[0] : null;
+        const user = await User.findById(userId);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (!user.savedPosts) {
+            user.savedPosts = [];
+        }
+        if (!user.savedPosts.includes(postId)) {
+            user.savedPosts.push(postId);
+        } else {
+            user.savedPosts = user.savedPosts.filter(id => id.toString() !== postId);
+        }
+        await user.save();
+        res.json(user);
+
+    } catch (error) {
+        console.error('Error bookmarking post:', error);
+        res.status(500).json({ message: 'Error bookmarking post' });
+    }
+};
+
+export const getSortedPosts = async (req, res) => {
+    const { type, forumId, savedPosts, searchTerm } = req.query;
+
+    try {
+        const forum = await Forum.findOne(
+            { _id: forumId },
+            { posts: 1 } 
+        );
+
+        if (!forum) {
+            return res.status(404).json({ message: "Forum not found" });
+        }
+
+        let sortedPosts; 
+
+        if (type === "likes") {
+            sortedPosts = forum.posts
+                .slice() 
+                .sort((a, b) => b.upvotes - a.upvotes); 
+        }
+        else if (type === "saved") {
+            sortedPosts = forum.posts.filter(post => {
+                return savedPosts.indexOf(post._id.toString()) !== -1; 
+            });
+        }
+        else if (type === "replies") {
+            sortedPosts = forum.posts
+                .slice() 
+                .sort((a, b) => (b.comments?.length || 0) - (a.comments?.length || 0)); 
+        }
+        else if (type === "recent") {
+            sortedPosts = forum.posts
+            .slice()
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+        else if (type === "none") {
+            sortedPosts = forum.posts
+        }
+
+        if (searchTerm && searchTerm.trim() !== "") {
+            const searchTermRegex = new RegExp(searchTerm, 'i'); 
+            sortedPosts = sortedPosts.filter(post => searchTermRegex.test(post.title)); 
+        }
+
+        res.json(sortedPosts);
+    } catch (error) {
+        console.error('Error getting posts:', error);
+        res.status(500).json({ message: 'Error getting posts' });
     }
 };
