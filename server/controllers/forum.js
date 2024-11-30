@@ -2,13 +2,14 @@ import connectMongo from "../connection.js"
 import Forum from "../models/Forums.js";
 import mongoose from 'mongoose';
 import User from "../models/User.js";
+import nodemailer from 'nodemailer';
 
 mongoose.set('strictQuery', false);
 connectMongo();
 
 export const getForumInfo = async (req, res) => {
     try {
-        const {forumId} = req.query;
+        const { forumId } = req.query;
         const forum = await Forum.findById(forumId);
         if (forum != null) {
             return res.json(forum);
@@ -23,7 +24,7 @@ export const getForumInfo = async (req, res) => {
 
 export const getUserNameVerification = async (req, res) => {
     try {
-        const {userId} = req.query;
+        const { userId } = req.query;
         const user = await User.findById(userId);
         if (user != null) {
             const nameAndVer = {name: user.name, verStatus: user.isVerified}
@@ -39,9 +40,9 @@ export const getUserNameVerification = async (req, res) => {
 
 export const createPost = async (req, res) => {
     try {
-        const { title, body, anon, chosenTag, userId, forumId} = req.query;
-        const post = {title, body, anon, tag: chosenTag, author: userId, comments:[]};
-        const forum = await Forum.findOneAndUpdate({_id: forumId}, {$push: {posts: post}}, {new: true});
+        const { title, body, anon, chosenTag, userId, forumId } = req.query;
+        const post = { title, body, anon, tag: chosenTag, author: userId, comments: [] };
+        const forum = await Forum.findOneAndUpdate({ _id: forumId }, { $push: { posts: post } }, { new: true });
         if (forum != null) {
             return res.json(forum);
         } else {
@@ -55,12 +56,12 @@ export const createPost = async (req, res) => {
 
 export const createComment = async (req, res) => {
     try {
-        const {body, anon, userId, forumId, postId} = req.query;
-        const comment = {body, anon, author: userId};
+        const { body, anon, userId, forumId, postId } = req.query;
+        const comment = { body, anon, author: userId };
         const forum = await Forum.findById(forumId);
         if (!forum) {
             return res.status(404).json({ status: 'forum not found' });
-        } 
+        }
         const post = forum.posts.id(postId);
         if (!post) {
             return res.status(404).json({ status: 'post not found' });
@@ -85,8 +86,8 @@ export const getPost = async (req, res) => {
 
         const matchingPosts = forum.posts.filter(post => {
             const titleMatches = post.title && post.title.toLowerCase().includes(searchTerm.toLowerCase());
-            const tagMatches = tag !== "null" ? post.tag === tag : true;    
-            return titleMatches && tagMatches; 
+            const tagMatches = tag !== "null" ? post.tag === tag : true;
+            return titleMatches && tagMatches;
         });
 
         return res.json(matchingPosts);
@@ -96,9 +97,30 @@ export const getPost = async (req, res) => {
     }
 }
 
+export const getPostById = async (req, res) => {
+    try {
+        const { forumId, postId } = req.query;
+        console.log("forumId:", forumId, "postId:", postId);
+        const forum = await Forum.findOne(
+            { _id: forumId, "posts._id": postId },
+            { "posts.$": 1 } 
+        );
+
+        if (forum && forum.posts.length > 0) {
+            return res.json(forum.posts[0]); 
+        } 
+
+        return res.status(404).json({ status: 'Post not found' });
+        
+    } catch (error) {
+        console.log("Error in getPostById: ", error);
+        res.status(400).json({ status: 'Error getting post by id' });
+    }
+}
+
 export const getForumSearch = async (req, res) => {
     try {
-        const {searchTerm} = req.query;
+        const { searchTerm } = req.query;
         const forums = await Forum.find({
             $or: [
                 { course_code: { $regex: new RegExp(`^${searchTerm}`, 'i') } },
@@ -112,6 +134,203 @@ export const getForumSearch = async (req, res) => {
         return res.json(forums);
     } catch (error) {
         console.log("Error in getForum: ", error)
-        res.status(400).json({status: 'Error searching for forum'})
+        res.status(400).json({ status: 'Error searching for forum' })
     }
 }
+
+export const upvotePost = async (req, res) => {
+    const { userId, postId, forumId } = req.body;
+
+    try {
+        const forum = await Forum.findOne(
+            { _id: forumId, "posts._id": postId },
+            { posts: { $elemMatch: { _id: postId } } }
+        );
+        const post = forum ? forum.posts[0] : null;
+        const user = await User.findById(userId);
+
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        console.log(userId, postId, forumId)
+        if (!user.upvotedPosts) {
+            user.upvotedPosts = [];
+        }
+
+        if (!user.upvotedPosts.includes(postId)) {
+            post.upvotes += 1;
+            user.upvotedPosts.push(postId);
+
+        } else {
+            return res.status(400).json({ message: 'Post already upvoted' });
+        }
+
+        await forum.save();
+        await user.save();
+
+        req.session.user = user;
+        res.json({ post, user });
+    } catch (error) {
+        console.error('Error upvoting post:', error);
+        res.status(500).json({ message: 'Error upvoting post' });
+    }
+};
+
+export const removeUpvote = async (req, res) => {
+    const { userId, postId, forumId } = req.body;
+
+    try {
+        const forum = await Forum.findOne(
+            { _id: forumId, "posts._id": postId },
+            { posts: { $elemMatch: { _id: postId } } }
+        );
+        const post = forum ? forum.posts[0] : null;
+        const user = await User.findById(userId);
+
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        if (!user.upvotedPosts) {
+            user.upvotedPosts = [];
+        }
+        if (user.upvotedPosts.includes(postId)) {
+            post.upvotes -= 1;
+            user.upvotedPosts = user.upvotedPosts.filter(id => id.toString() !== postId);
+
+        } else {
+            return res.status(400).json({ message: 'Post not upvoted yet' });
+        }
+
+        await forum.save();
+        await user.save();
+
+        res.json({ post, user });
+    } catch (error) {
+        console.error('Error removing upvote:', error);
+        res.status(500).json({ message: 'Error removing upvote' });
+    }
+};
+
+export const bookmarkPost = async (req, res) => {
+    const { userId, postId, forumId } = req.body;
+
+    try {
+        const forum = await Forum.findOne(
+            { _id: forumId, "posts._id": postId },
+            { posts: { $elemMatch: { _id: postId } } }
+        );
+        const post = forum ? forum.posts[0] : null;
+        const user = await User.findById(userId);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (!user.savedPosts) {
+            user.savedPosts = [];
+        }
+        if (!user.savedPosts.includes(postId)) {
+            user.savedPosts.push(postId);
+        } else {
+            user.savedPosts = user.savedPosts.filter(id => id.toString() !== postId);
+        }
+        await user.save();
+        res.json(user);
+
+    } catch (error) {
+        console.error('Error bookmarking post:', error);
+        res.status(500).json({ message: 'Error bookmarking post' });
+    }
+};
+
+export const getSortedPosts = async (req, res) => {
+    const { type, forumId, savedPosts, searchTerm } = req.query;
+
+    try {
+        const forum = await Forum.findOne(
+            { _id: forumId },
+            { posts: 1 } 
+        );
+
+        if (!forum) {
+            return res.status(404).json({ message: "Forum not found" });
+        }
+
+        let sortedPosts; 
+
+        if (type === "likes") {
+            sortedPosts = forum.posts
+                .slice() 
+                .sort((a, b) => b.upvotes - a.upvotes); 
+        }
+        else if (type === "saved") {
+            sortedPosts = forum.posts.filter(post => {
+                return savedPosts.indexOf(post._id.toString()) !== -1; 
+            });
+        }
+        else if (type === "replies") {
+            sortedPosts = forum.posts
+                .slice() 
+                .sort((a, b) => (b.comments?.length || 0) - (a.comments?.length || 0)); 
+        }
+        else if (type === "recent") {
+            sortedPosts = forum.posts
+            .slice()
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+        else if (type === "none") {
+            sortedPosts = forum.posts
+        }
+
+        if (searchTerm && searchTerm.trim() !== "") {
+            const searchTermRegex = new RegExp(searchTerm, 'i'); 
+            sortedPosts = sortedPosts.filter(post => searchTermRegex.test(post.title)); 
+        }
+
+        res.json(sortedPosts);
+    } catch (error) {
+        console.error('Error getting posts:', error);
+        res.status(500).json({ message: 'Error getting posts' });
+    }
+};
+
+const smtpServer = "smtp.gmail.com";
+const smtpPort = 587;
+const emailSender = "courseowlapp@gmail.com";
+const emailPassword = "uxqv ebab htkf vswi"
+
+const transporter = nodemailer.createTransport({
+    host: smtpServer,
+    port: smtpPort,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: emailSender,
+        pass: emailPassword,
+    },
+});
+
+export const reportPost = async (req, res) => {
+    const { postName, forumId, reportMessage, user } = req.body;
+
+    try {
+        const forum = await Forum.findOne({ _id: forumId });
+        console.log(forum)
+        const message = `Post '${postName}' was reported in forum ${forum.course_code} by user ${user.email}.\nReason for reporting: ${reportMessage}`;
+
+        await transporter.sendMail({
+            from: emailSender,
+            to: "carmendiem2003@gmail.com",
+            subject: "User Report Alert",
+            text: message,
+        });
+        res.status(200).json({ message: "Report sent" });
+    } catch (error) {
+        console.error('Error reporting post:', error);
+        res.status(500).json({ message: 'Error reporting post' });
+    }
+};

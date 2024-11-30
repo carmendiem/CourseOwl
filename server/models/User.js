@@ -39,6 +39,14 @@ const userSchema = new mongoose.Schema({
     upvotedReviews: {
         type: [ObjectId]
     },
+    upvotedPosts: {
+        type: [ObjectId],
+        default: []
+    },
+    savedPosts: {
+        type: [ObjectId],
+        default: []
+    },
     notifPreference: {
         type: String,
         enum: ["email", "in_app", "both", "none"],

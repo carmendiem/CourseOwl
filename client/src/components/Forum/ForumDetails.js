@@ -4,14 +4,23 @@ import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField }
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { IconButton } from '@mui/material';
-import { Add , Verified} from '@mui/icons-material';
+import { Add , Verified } from '@mui/icons-material';
 // import VerifiedIcon from '@mui/icons-material/Verified';
 import "./ForumDetails.css";
 import { PostSearch } from './PostSearch';
-
-
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import StarIcon from '@mui/icons-material/Star';
+import ForumIcon from '@mui/icons-material/Forum';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ReportIcon from '@mui/icons-material/Report';
 import config from '../../config';
-import axios from "axios"; 
+import axios from "axios";
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
 
 // colors
 const light_yellow = "#fbefb5";
@@ -19,7 +28,7 @@ const light_yellow = "#fbefb5";
 const getTagColor = (forum, tag) => {
     if (forum.tags === null || forum.tags === undefined) {
         return "gray";
-    } else { 
+    } else {
         var tagNum = -1;
         for (let i = 0; i < forum.tags.length; i++) {
             if (tag === forum.tags[i]) {
@@ -33,15 +42,15 @@ const getTagColor = (forum, tag) => {
             case 1:
                 return "#ce8147";
             case 2:
-                return "#cab008";   
+                return "#cab008";
             case 3:
                 return "#9baf4d";
             case 4:
-                return "#60a867";  
+                return "#60a867";
             default:
                 return "gray";
         }
-    }    
+    }
 }
 
 function ForumDetails() {
@@ -62,6 +71,29 @@ function ForumDetails() {
     const tags = ["general", "questions"];
     const [selectedTag, setSelectedTag] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [updatedPost, setUpdatedPost] = useState(null);
+
+    const [selectedIcon, setSelectedIcon] = useState(null);
+
+    const handleIconClick = async (type, forumId) => {
+        if (selectedIcon === type) {
+            setSelectedIcon(null);
+            type = "none"
+        }
+        else {
+            setSelectedIcon(type); // Update the selected icon
+        }
+    
+        try {
+            const res = await axios.get(`${config.API_BASE_URL}/forum/getSortedPosts?type=${type}&forumId=${forumId}&savedPosts=${user.savedPosts}&searchTerm=${searchTerm}`);
+            const data = await res.data;
+            setSearchedPosts(data);
+        } catch (error) {
+            console.log("error getting sorted posts: ", error);
+        }
+    };
+
+    const getIconButtonColor = (type) => (selectedIcon === type ? 'primary' : 'default');
 
     const [drafting, setDrafting] = useState(false);
     const startDraft = () => {
@@ -73,6 +105,8 @@ function ForumDetails() {
     const handleDraftSubmitted = () => {
         setDrafting(!drafting);
         setSearchTerm("");
+        setSelectedIcon(null);
+        getIconButtonColor('default')
         setSelectedTag(null);
         setSearchedPosts(null);
     };
@@ -80,7 +114,7 @@ function ForumDetails() {
     const selectForum = (forumId) => {
         setSelectedForumId(forumId);
         setCurrentForum(forumObjs.find(forum => forum._id === forumId));
-        
+
     };
     const selectPost = (postId) => {
         setSelectedPostId(postId);
@@ -92,15 +126,15 @@ function ForumDetails() {
         setCurrentPostAuthor([...currentPostAuthor, author]);
         setCurrentPostAuthorVer([...currentPostAuthorVer, ver]);
     }
-    
+
     const getForumInfo = async (forums) => {
         const forumData = [];
         for (let i = 0; i < forums.length; i++) {
-            try{
+            try {
                 const res = await axios.get(`${config.API_BASE_URL}/forum/getForum?forumId=${forums[i]}`)
                 const data = await res.data;
                 forumData.push(data);
-            }catch(error){
+            } catch (error) {
                 console.log("error fetching forums: ", error);
             }
         }
@@ -108,16 +142,16 @@ function ForumDetails() {
     };
 
     const getUser = async () => {
-        try{
+        try {
             const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
             setUser(res.data.user);
-        }catch(error){
+        } catch (error) {
             console.log("error fetching user: ", error);
         }
     };
 
     const getUserNameVerification = async (userId) => {
-        try{
+        try {
             const res = await axios.get(`${config.API_BASE_URL}/forum/getUserNameVerification?userId=${userId}`)
             const data = await res.data;
             return data;
@@ -127,11 +161,11 @@ function ForumDetails() {
     };
 
     const searchByTag = async (searchTerm, forumId, tag) => {
-        try{
+        try {
             const res = await axios.get(`${config.API_BASE_URL}/forum/getPost?searchTerm=${searchTerm}&forumId=${forumId}&tag=${tag}`);
             const data = await res.data;
             return data;
-        }catch(error){
+        } catch (error) {
             console.log("error fetching posts: ", error);
         }
     }
@@ -141,7 +175,7 @@ function ForumDetails() {
             setSelectedTag(null); // deselect if the same tag is clicked
             const result = await searchByTag(searchTerm, forumId, null);
             setSearchedPosts(result);
-            
+
         } else {
             setSelectedTag(tag); // set new selected tag
             const result = await searchByTag(searchTerm, forumId, tag);
@@ -152,7 +186,7 @@ function ForumDetails() {
     useEffect(() => {
         getUser();
         const fetchForumInfo = async () => {
-            await getForumInfo(forums);  
+            await getForumInfo(forums);
         }
         fetchForumInfo();
         selectForum(selectedForumId);
@@ -164,14 +198,14 @@ function ForumDetails() {
 
     useEffect(() => {
         const fetchForumInfo = async () => {
-            await getForumInfo(forums);  
+            await getForumInfo(forums);
         }
         fetchForumInfo();
         selectForum(selectedForumId);
     }, [forumId, drafting]);
     useEffect(() => {
         selectForum(selectedForumId);
-        if (selectedPostId!=null) {selectPost(selectedPostId)}
+        if (selectedPostId != null) { selectPost(selectedPostId) }
     }, [forumObjs]);
 
     useEffect(() => {
@@ -185,7 +219,7 @@ function ForumDetails() {
                 verified.push(response.verStatus);
                 if (currentPost.anon != null && currentPost.anon) {
                     names.push("Anon");
-                }  
+                }
                 else {
                     names.push(response.name);
                 }  
@@ -195,10 +229,11 @@ function ForumDetails() {
                         verified.push(comment.verStatus)
                         if (currentPost.comments[i].anon != null && currentPost.comments[i].anon) {
                             names.push("Anon");
-                        }  
+                        }
                         else {
-                            names.push(comment.name);         
-                        }  
+                            const name = await getUserNameVerification(currentPost.comments[i].author);
+                            names.push(name);
+                        }
                     }
                 }
             }
@@ -217,14 +252,15 @@ function ForumDetails() {
                         <Typography>no forums...</Typography>
                     ) : (
                         forumObjs.map((forum, index) => (
-                            <Card key={index} 
-                                sx={{ backgroundColor:  forum._id === selectedForumId ? light_yellow : 'transparent', 
+                            <Card key={index}
+                                sx={{
+                                    backgroundColor: forum._id === selectedForumId ? light_yellow : 'transparent',
                                     boxShadow: 'none', borderBottom: '1px solid gray', borderRadius: '0px'
                                 }}>
-                                <CardActionArea onClick={() => {selectForum(forum._id)}}>
+                                <CardActionArea onClick={() => { selectForum(forum._id) }}>
                                     <CardContent>
-                                        {(forum.course_code === null || forum.course_code === undefined) ? 
-                                            <Typography className='forum-list-title'> {forum.name}</Typography> : 
+                                        {(forum.course_code === null || forum.course_code === undefined) ?
+                                            <Typography className='forum-list-title'> {forum.name}</Typography> :
                                             <Typography className='forum-list-title'>{forum.course_code}</Typography>}
                                     </CardContent>
                                 </CardActionArea>
@@ -233,88 +269,102 @@ function ForumDetails() {
                     )}
                     {/* sort by category */}
                     {
-                       <div>
-                       {tags.map((tag, index) => (
-                           <div
-                               key={index}
-                               onClick={() => handleTagClick(tag)}
-                               style={{
-                                   display: 'flex',
-                                   alignItems: 'center',
-                                   cursor: 'pointer',
-                                   padding: '10px',
-                                   backgroundColor: selectedTag === tag ? '#f0f0f0' : 'white', // highlight when selected
-                                   borderRadius: '4px',
-                                   //margin: '5px 0',
-                                   transition: 'background-color 0.3s',
-                               }}
-                           >
-                               <div
-                                   style={{
-                                       width: '12px', // Width of the square
-                                       height: '12px', // Height of the square
-                                      // backgroundColor: getTagColor(currentForum, tag), // Tag color
-                                       marginRight: '10px',
-                                       borderRadius: '4px',
-                                   }}
-                               />
-                               <Typography
-                                   sx={{
-                                       fontWeight: 'bold',
-                                       margin: '0px',
-                                       textAlign: 'left',
-                                   }}
-                               >
-                                   {tag}
-                               </Typography>
-                           </div>
-                       ))}
-                   </div>
+                        <div>
+                            {tags.map((tag, index) => (
+                                <div
+                                    key={index}
+                                    onClick={() => handleTagClick(tag)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        cursor: 'pointer',
+                                        padding: '10px',
+                                        backgroundColor: selectedTag === tag ? '#f0f0f0' : 'white', // highlight when selected
+                                        borderRadius: '4px',
+                                        //margin: '5px 0',
+                                        transition: 'background-color 0.3s',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            width: '12px', // Width of the square
+                                            height: '12px', // Height of the square
+                                            // backgroundColor: getTagColor(currentForum, tag), // Tag color
+                                            marginRight: '10px',
+                                            borderRadius: '4px',
+                                        }}
+                                    />
+                                    <Typography
+                                        sx={{
+                                            fontWeight: 'bold',
+                                            margin: '0px',
+                                            textAlign: 'left',
+                                        }}
+                                    >
+                                        {tag}
+                                    </Typography>
+                                </div>
+                            ))}
+                        </div>
                     }
                 </Grid>
                 <Grid item xs={12} className="post-list-grid">
                     {/* Forum Posts */}
-                    <Box sx={{display: 'flex',flexDirection: 'row'}}>
-                        <Box sx={{borderRadius: "10px", height: "3rem", margin: "5px", width: '70%' }}>
-                            <PostSearch forumId={forumId} setSearchedPosts={changeSearchedPosts} tag={selectedTag} searchTerm={searchTerm} setSearchTerm={setSearchTerm}/>
+                    <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+                        <Box sx={{ borderRadius: "10px", height: "3rem", margin: "5px", width: '70%' }}>
+                            <PostSearch forumId={forumId} setSearchedPosts={changeSearchedPosts} tag={selectedTag} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
                         </Box>
                         <IconButton variant="contained" className='new-post-button' onClick={() => startDraft()}>
                             <Typography>New Post</Typography>
-                            <Add/>
+                            <Add />
                         </IconButton>
                     </Box>
-                    <Box sx={{height: '2px', backgroundColor: "#daaa00"}}/>
+                    <Box display="flex" justifyContent="flex-end">
+                        <IconButton onClick={() => handleIconClick('likes', selectedForumId)} color={getIconButtonColor('likes')}>
+                            <ThumbUpIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleIconClick('saved', selectedForumId)} color={getIconButtonColor('saved')}>
+                            <StarIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleIconClick('replies', selectedForumId)} color={getIconButtonColor('replies')}>
+                            <ForumIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleIconClick('recent', selectedForumId)} color={getIconButtonColor('recent')}>
+                            <AccessTimeIcon />
+                        </IconButton>
+                    </Box>
+                    <Box sx={{ height: '2px', backgroundColor: "#daaa00" }} />
                     {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts.length === 0) ? (
                         <Typography>no posts yet...</Typography>
                     ) : (searchedPosts) ? (
                         (searchedPosts.length > 0) ? (
-                        searchedPosts.map((post, index) => (
-                            <Card key={index} 
-                                sx={{
-                                    backgroundColor: post._id === selectedPostId ? light_yellow : 'white',
-                                    boxShadow: 'none', borderBottom: '1px solid gray', borderRadius: '0px'
+                            searchedPosts.map((post, index) => (
+                                <Card key={index}
+                                    sx={{
+                                        backgroundColor: post._id === selectedPostId ? light_yellow : 'white',
+                                        boxShadow: 'none', borderBottom: '1px solid gray', borderRadius: '0px'
                                     }}>
-                                <CardActionArea onClick={() => {selectPost(post._id)}}>
-                                    <CardContent>
-                                        <Typography className='post-list-title'>{post.title}</Typography>
-                                        {(post.tag === null || post.tag === undefined) ? null : <Typography sx={{color: getTagColor(currentForum, post.tag), fontWeight: "bold", margin: "0px", textAlign: "left"}} >{post.tag}</Typography>}
-                                    </CardContent>
-                                </CardActionArea>
-                            </Card>
-                        ))) : (
+                                    <CardActionArea onClick={() => { selectPost(post._id) }}>
+                                        <CardContent>
+                                            <Typography className='post-list-title'>{post.title}</Typography>
+                                            {(post.tag === null || post.tag === undefined) ? null : <Typography sx={{ color: getTagColor(currentForum, post.tag), fontWeight: "bold", margin: "0px", textAlign: "left" }} >{post.tag}</Typography>}
+                                        </CardContent>
+                                    </CardActionArea>
+                                </Card>
+                            ))) : (
                             <Typography>No posts found, please search again!</Typography>
                         )
                     ) : (
                         currentForum.posts.map((post, index) => (
-                            <Card key={index} 
+                            <Card key={index}
                                 sx={{
                                     backgroundColor: post._id === selectedPostId ? light_yellow : 'white',
                                     boxShadow: 'none', borderBottom: '1px solid gray', borderRadius: '0px'
                                 }}>
-                                <CardActionArea onClick={() => {selectPost(post._id)}}>
+                                <CardActionArea onClick={() => { selectPost(post._id) }}>
                                     <CardContent>
                                         <Typography className='post-list-title'>{post.title}</Typography>
-                                        {(post.tag === null || post.tag === undefined) ? null : <Typography sx={{color: getTagColor(currentForum, post.tag), fontWeight: "bold", margin: "0px", textAlign: "left"}} >{post.tag}</Typography>}
+                                        {(post.tag === null || post.tag === undefined) ? null : <Typography sx={{ color: getTagColor(currentForum, post.tag), fontWeight: "bold", margin: "0px", textAlign: "left" }} >{post.tag}</Typography>}
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
@@ -322,23 +372,23 @@ function ForumDetails() {
 
                 </Grid>
                 <Grid item xs={12} className="post-display-grid">
-                    {(drafting) ? 
-                        <DisplayDraft user={user} forum={currentForum} handleDraft={handleDraftSubmitted}/> : 
-                        ( (currentPost === null || currentPost === undefined) ? 
+                    {(drafting) ?
+                        <DisplayDraft user={user} forum={currentForum} handleDraft={handleDraftSubmitted} /> :
+                        ((currentPost === null || currentPost === undefined) ?
                             (<Box className='post-display'>
-                                <Typography>Select a Post to Read</Typography> 
+                                <Typography>Select a Post to Read</Typography>
                                 <Typography>{"<================"}</Typography>
-                            </Box>) : 
-                            <DisplayPostandReply user={user} forum={currentForum} post={currentPost} postAuthors={currentPostAuthor} postVer={currentPostAuthorVer} handlePost={handleCurrentPost}/> 
+                            </Box>) :
+                            <DisplayPostandReply user={user} forum={currentForum} post={currentPost} postAuthors={currentPostAuthor} postVer={currentPostAuthorVer} handlePost={handleCurrentPost} setUser={setUser} updatedPost={updatedPost} setUpdatedPost={setUpdatedPost} />
                         )}
-               </Grid>
+                </Grid>
             </Grid>
         </div>
     );
 }
 export default ForumDetails;
 
-function DisplayDraft({user, forum, handleDraft}) {
+function DisplayDraft({ user, forum, handleDraft }) {
     const forumId = forum._id;
     const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
@@ -356,10 +406,10 @@ function DisplayDraft({user, forum, handleDraft}) {
     }, []);
 
     const postPost = async (post) => {
-        try{
-            const res = await axios.post(`${config.API_BASE_URL}/forum/createPost`, null, {params: post});
+        try {
+            const res = await axios.post(`${config.API_BASE_URL}/forum/createPost`, null, { params: post });
             handleDraft();
-        }catch(error){
+        } catch (error) {
             console.log("error posting post: ", error);
         }
     }
@@ -379,7 +429,7 @@ function DisplayDraft({user, forum, handleDraft}) {
             return;
         }
         const userId = user.id;
-        const post = { title, body, anon, chosenTag, userId, forumId};
+        const post = { title, body, anon, chosenTag, userId, forumId };
         await postPost(post);
 
     };
@@ -394,12 +444,12 @@ function DisplayDraft({user, forum, handleDraft}) {
     return (
         <div>
             <Grid container className="post-draft-grid">
-                <form onSubmit={handleSubmit} style={{ width: "95%", padding: '10px'}}>  
-                    <Grid item className="post-draft-entry"> 
+                <form onSubmit={handleSubmit} style={{ width: "95%", padding: '10px' }}>
+                    <Grid item className="post-draft-entry">
                         {/* Title */}
-                        <Typography variant='h6' sx={{width: "10%", textAlign: "left", paddingTop: "5px"}}>Title:</Typography>
+                        <Typography variant='h6' sx={{ width: "10%", textAlign: "left", paddingTop: "5px" }}>Title:</Typography>
                         <TextField
-                            sx={{width: "90%"}}
+                            sx={{ width: "90%" }}
                             variant="outlined"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
@@ -408,9 +458,9 @@ function DisplayDraft({user, forum, handleDraft}) {
                     </Grid>
                     <Grid item className="post-draft-entry">
                         {/* Body */}
-                        <Typography variant='h6' sx={{width: "10%", textAlign: "left", paddingTop: "5px"}}>Body:</Typography>
+                        <Typography variant='h6' sx={{ width: "10%", textAlign: "left", paddingTop: "5px" }}>Body:</Typography>
                         <TextField
-                            sx={{width: "90%"}}
+                            sx={{ width: "90%" }}
                             variant="outlined"
                             multiline
                             rows={4}
@@ -423,7 +473,7 @@ function DisplayDraft({user, forum, handleDraft}) {
                         {/* Tags */}
                         {(forum.tags === null || forum.tags === undefined) ? (
                             null
-                        ):(
+                        ) : (
                             <RadioGroup
                                 value={chosenTag}
                                 onChange={(e) => setChosenTag(e.target.value)}
@@ -442,7 +492,7 @@ function DisplayDraft({user, forum, handleDraft}) {
                     </Grid>
                     <Grid item className='anon-submit-grid'>
                         {/* Anon */}
-                        <FormControlLabel sx={{marginLeft: "auto"}}
+                        <FormControlLabel sx={{ marginLeft: "auto" }}
                             control={
                                 <Checkbox
                                     checked={anon}
@@ -458,28 +508,57 @@ function DisplayDraft({user, forum, handleDraft}) {
                 </form>
             </Grid>
         </div>
-    ); 
+    );
 }
 
-function DisplayPostandReply({user, forum, post, postAuthors, postVer, handlePost}) {
+function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePost, setUser, updatedPost, setUpdatedPost }) {
     const [body, setBody] = useState("");
     const [anon, setAnon] = useState(false);
     const [bodyError, setBodyError] = useState("");
+    const [upvotedPosts, setUpvotedPosts] = useState(user?.upvotedPosts || []);
+    const [savedPosts, setSavedPosts] = useState(user?.savedPosts || []);
+    const [open, setOpen] = React.useState(false);
+    const [reportMessage, setReportMessage] = useState("")
+    const [pendingReport, setPendingReport] = useState(false);
+
+    useEffect(() => {
+        if (pendingReport) {
+            reportPost(forum._id, reportMessage);
+            setPendingReport(false);
+        }
+    }, [reportMessage]);
+
+    const handleReportOpen = (postId) => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+    };
+
+    const reportPost = async (forumId) => {
+        const reportData = {
+            postName: post.title, 
+            forumId: forumId,
+            reportMessage: reportMessage,
+            user: user
+        };
+        const res = await axios.post(`${config.API_BASE_URL}/forum/reportPost`, reportData);
+    }
 
     const postComment = async (comment) => {
-        try{
-            const res = await axios.post(`${config.API_BASE_URL}/forum/createComment`, null, {params: comment});
-            const commentInPost = {author: comment.userId, body: comment.body, anon: comment.anon};
+        try {
+            const res = await axios.post(`${config.API_BASE_URL}/forum/createComment`, null, { params: comment });
+            const commentInPost = { author: comment.userId, body: comment.body, anon: comment.anon };
             post.comments.push(commentInPost);
             if (comment.anon) {
-                handlePost(post,"Anon", user.isVerified);
+                handlePost(post, "Anon", user.isVerified);
             } else {
                 handlePost(post, user.name, user.isVerified);
             }
-            console.log("comment created successfully: ", res.data);
             setBody("");
             setAnon(false);
-        }catch(error){
+        } catch (error) {
             console.log("error posting post: ", error);
         }
     }
@@ -497,18 +576,114 @@ function DisplayPostandReply({user, forum, post, postAuthors, postVer, handlePos
         const userId = user.id;
         const postId = post._id;
         const forumId = forum._id;
-        const comment = {body, anon, userId, forumId, postId};
+        const comment = { body, anon, userId, forumId, postId };
         await postComment(comment);
     }
+
+    const fetchPost = async (forumId, postId) => {
+            try {
+                const res = await axios.get(`${config.API_BASE_URL}/forum/getPostById?forumId=${forumId}&postId=${postId}`);
+                const data = await res.data;
+                setUpdatedPost(data);
+            } catch (error) {
+                console.log("error in fetching post: ", error);
+            }
+    }
+
+    useEffect(() => {
+        fetchPost(forum._id, post._id);
+    }, [forum, post]) // removed savedPosts and upvotedPosts from use effect
+
+    const handleUpvote = async (postId) => {
+        try {
+            const isUpvoted = upvotedPosts.includes(postId);
+            const newUpvoteData = {
+                userId: user.id || user._id,
+                postId: postId,
+                forumId: forum._id
+            };
+            if (!isUpvoted) {
+                const res = await axios.post(`${config.API_BASE_URL}/forum/upvotePost`, newUpvoteData);
+                const data = await res.data;
+                setUser(data.user)
+                setUpdatedPost(data.post);
+                setUpvotedPosts([...upvotedPosts, postId]);
+            } else {
+                const res = await axios.post(`${config.API_BASE_URL}/forum/removeUpvote`, newUpvoteData);
+                const data = await res.data;
+                setUser(data.user)
+                setUpdatedPost(data.post);
+                setUpvotedPosts(upvotedPosts.filter(id => id !== postId));
+            }
+
+        } catch (error) {
+            console.error('Error upvoting/downvoting post:', error);
+        }
+    };
+
+    const handleBookmark = async (postId) => {
+        try {
+            const bookmarkData = {
+                userId: user.id || user._id,
+                postId: postId,
+                forumId: forum._id
+            };
+            const res = await axios.post(`${config.API_BASE_URL}/forum/bookmarkPost`, bookmarkData);
+            const data = await res.data;
+            setSavedPosts(data.savedPosts)
+            setUser(data)
+        } catch (error) {
+            console.error('Error saving post:', error);
+        }
+    }
+
     return (
         (post === null || post === undefined || postAuthors.length === 0) ? (
             <Box className="post-display">
-                <Typography>Select a Post to Read</Typography> 
+                <Typography>Select a Post to Read</Typography>
                 <Typography>{"<================"}</Typography>
             </Box>
         ) : (
             <Card className='post-card'>
                 <CardContent className='post-card-content'>
+                        <Dialog
+                            open={open}
+                            onClose={handleClose}
+                            PaperProps={{
+                                component: 'form',
+                                onSubmit: (event) => {
+                                    event.preventDefault();
+                                    const formData = new FormData(event.currentTarget);
+                                    const formJson = Object.fromEntries(formData.entries());
+                                    const report = formJson.report;
+                                    setReportMessage(report)
+                                    setPendingReport(true)
+                                    handleClose();
+                                },
+                            }}
+                        >
+                            <DialogTitle>Report Post</DialogTitle>
+                            <DialogContent>
+                                <DialogContentText>
+                                    Please briefly describe why you are reporting the post and our moderators will review shortly. Thank you!
+                                </DialogContentText>
+                                <TextField
+                                    autoFocus
+                                    required
+                                    margin="dense"
+                                    id="name"
+                                    name="report"
+                                    label="Reason for reporting"
+                                    type="report"
+                                    fullWidth
+                                    variant="standard"
+                                />
+                            </DialogContent>
+                            <DialogActions>
+                                <Button onClick={handleClose}>Cancel</Button>
+                                <Button type="submit">Report</Button>
+                            </DialogActions>
+                        </Dialog>
                     <Grid className='post-post-grid'>
                         <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
                         <Box className='post-card-tag-author'>
@@ -521,13 +696,37 @@ function DisplayPostandReply({user, forum, post, postAuthors, postVer, handlePos
                             <Typography sx={{color: getTagColor(forum, post.tag), fontWeight: "bold", margin: "0px"}} >{post.tag}</Typography>
                         </Box>
                         <Box className='post-card-body-box'>
-                            <Typography variant='body1' className='post-card-body-text'>{post.body}</Typography>
-                        </Box>
-                    </Grid>
-                    <Typography sx={{textAlign: "left"}}>Comments:</Typography>
+                                <Typography variant='body1' className='post-card-body-text'>{post.body}</Typography>
+                            </Box>
+                            <Box display="flex" alignItems="center" sx={{ justifyContent: 'space-between', width: '100%' }}>
+                                <Box display="flex" alignItems="center">
+                                    <IconButton
+                                        color={upvotedPosts.includes(post._id) ? 'primary' : 'default'}
+                                        onClick={() => handleUpvote(post._id)}
+                                    >
+                                        <ThumbUpIcon />
+                                    </IconButton>
+                                    <Typography sx={{ ml: 0.5 }}>{updatedPost?.upvotes ?? post.upvotes}</Typography>
+                                    <IconButton
+                                        color={savedPosts.includes(post._id) ? 'primary' : 'default'}
+                                        onClick={() => handleBookmark(post._id)}
+                                    >
+                                        <StarIcon />
+                                    </IconButton>
+                                </Box>
+
+                                {/* Report Icon on the right */}
+                                <IconButton
+                                    onClick={() => handleReportOpen(post._id)}
+                                >
+                                    <ReportIcon />
+                                </IconButton>
+                            </Box>
+                        </Grid>
+                        <Typography sx={{ textAlign: "left" }}>Comments:</Typography>
                     {post.comments === null || post.comments.length === 0 ? (
                         null
-                    ):(
+                    ) : (
                         <Grid className='post-comment-grid'>
                             {post.comments.map((comment, index) => (
                                 <Box key={index} sx={{padding: "5px"}}>
@@ -538,26 +737,26 @@ function DisplayPostandReply({user, forum, post, postAuthors, postVer, handlePos
                                             ) : null} 
                                         </Typography>
                                     <Typography variant='body1' className='post-comment-body'>{comment.body}</Typography>
-                                </Box>   
+                                </Box>
                             ))}
-                        </Grid>    
+                        </Grid>
                     )}
                     <Grid className='reply-box-grid'>
-                        <form onSubmit={handleReply} style={{width: "100%"}}>
+                        <form onSubmit={handleReply} style={{ width: "100%" }}>
                             <TextField
                                 id="outlined-multiline-static"
                                 label="Reply"
                                 multiline
                                 rows={2}
                                 variant="outlined"
-                                sx={{width: "100%"}}
+                                sx={{ width: "100%" }}
                                 value={body}
                                 onChange={(e) => setBody(e.target.value)}
                                 helperText={bodyError}
                             />
                             <Grid className="anon-submit-grid">
                                 {/* Anon */}
-                                <FormControlLabel sx={{marginLeft: "auto"}} 
+                                <FormControlLabel sx={{ marginLeft: "auto" }}
                                     control={
                                         <Checkbox
                                             checked={anon}
@@ -572,7 +771,7 @@ function DisplayPostandReply({user, forum, post, postAuthors, postVer, handlePos
                             </Grid>
                         </form>
                     </Grid>
-                    <Box sx={{height: '25px'}}/>
+                    <Box sx={{ height: '25px' }} />
                 </CardContent>
             </Card>
         )
