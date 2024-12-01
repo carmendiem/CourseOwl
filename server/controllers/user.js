@@ -97,6 +97,7 @@ export const getFreshUserInfo = async (req, res) => {
             major: user.major,
             year_in_school: user.year_in_school,
             notifPreference: user.notifPreference,
+            savedForums: user.savedForums,
             upvotedPosts: user.upvotedPosts,
             savedPosts: user.savedPosts
         };

@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema({
         type: [ObjectId],
         default: []
     },
+    savedForums: {
+        type: [ObjectId],
+        default: []
+    },
     notifPreference: {
         type: String,
         enum: ["email", "in_app", "both", "none"],

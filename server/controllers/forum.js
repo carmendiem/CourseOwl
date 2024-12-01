@@ -7,6 +7,23 @@ import nodemailer from 'nodemailer';
 mongoose.set('strictQuery', false);
 connectMongo();
 
+export const getUserForums = async (req, res) => {
+    try{
+        const {userId} = req.query;
+        const user = await User.findById(userId)
+        if (!user.savedForums) {
+            user.savedForums = [];
+            return res.status(404).json({status: 'Forums not found'});
+        }
+        else {
+            return res.json(user.savedForums);
+        }
+    } catch (error) {
+        console.log("Error in getUserForums:", error);
+        res.status(400).json({ status: 'Error fetching forums' });
+    }
+}
+
 export const getForumInfo = async (req, res) => {
     try {
         const { forumId } = req.query;
@@ -35,6 +52,31 @@ export const getUserNameVerification = async (req, res) => {
     } catch (error) {
         console.log("Error in getUserNameVerification:", error);
         res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
+export const joinOrLeaveForum = async (req, res) => {
+    try {
+        const { userId, forumId } = req.query;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (!user.savedForums) {
+            user.savedForums = [];
+        }
+        if (!user.savedForums.includes(forumId)) {
+            user.savedForums.push(forumId); //join forum
+        } else {
+            // leave forum
+            user.savedForums = user.savedForums.filter(id => id.toString() !== forumId);
+        }
+        await user.save();
+        res.json(user);
+
+    } catch (error) {
+        console.error('Error joining forum:', error);
+        res.status(500).json({ message: 'Error joining forum' });
     }
 }
 

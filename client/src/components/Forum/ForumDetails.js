@@ -5,7 +5,6 @@ import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { IconButton } from '@mui/material';
 import { Add , Verified } from '@mui/icons-material';
-// import VerifiedIcon from '@mui/icons-material/Verified';
 import "./ForumDetails.css";
 import { PostSearch } from './PostSearch';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
@@ -13,6 +12,7 @@ import StarIcon from '@mui/icons-material/Star';
 import ForumIcon from '@mui/icons-material/Forum';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ReportIcon from '@mui/icons-material/Report';
+import { Bookmark, BookmarkBorder } from '@mui/icons-material';
 import config from '../../config';
 import axios from "axios";
 import Dialog from '@mui/material/Dialog';
@@ -66,6 +66,7 @@ function ForumDetails() {
     const [currentPost, setCurrentPost] = useState(null);
     const [currentPostAuthor, setCurrentPostAuthor] = useState(null);
     const [currentPostAuthorVer, setCurrentPostAuthorVer] = useState(null);
+    const [joined, setJoined] = useState(false);
 
     const [searchedPosts, setSearchedPosts] = useState(null);
     const tags = ["general", "questions"];
@@ -74,6 +75,8 @@ function ForumDetails() {
     const [updatedPost, setUpdatedPost] = useState(null);
 
     const [selectedIcon, setSelectedIcon] = useState(null);
+
+    const [open, setOpen] = useState(false);
 
     const handleIconClick = async (type, forumId) => {
         if (selectedIcon === type) {
@@ -114,7 +117,12 @@ function ForumDetails() {
     const selectForum = (forumId) => {
         setSelectedForumId(forumId);
         setCurrentForum(forumObjs.find(forum => forum._id === forumId));
-
+        if (user != null && user.savedForums.includes(forumId)) {
+            setJoined(true);
+        } else {
+            setJoined(false);
+        }
+        setSelectedTag(null);
     };
     const selectPost = (postId) => {
         setSelectedPostId(postId);
@@ -125,7 +133,16 @@ function ForumDetails() {
         setCurrentPost(post);
         setCurrentPostAuthor([...currentPostAuthor, author]);
         setCurrentPostAuthorVer([...currentPostAuthorVer, ver]);
-    }
+    };
+
+    const getUser = async () => {
+        try {
+            const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
+            setUser(res.data.user);
+        } catch (error) {
+            console.log("error fetching user: ", error);
+        }
+    };
 
     const getForumInfo = async (forums) => {
         const forumData = [];
@@ -139,15 +156,6 @@ function ForumDetails() {
             }
         }
         setForumObjs(forumData);
-    };
-
-    const getUser = async () => {
-        try {
-            const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
-            setUser(res.data.user);
-        } catch (error) {
-            console.log("error fetching user: ", error);
-        }
     };
 
     const getUserNameVerification = async (userId) => {
@@ -183,14 +191,59 @@ function ForumDetails() {
         }
     };
 
+    const handleJoinLeaveClick = async (event) => {
+        if (joined) { 
+            setOpen(true); // dialog to confirm leave
+        } else {
+            await joinLeaveForum(event);
+            setJoined(!joined);
+        }
+    }
+
+    const handleConfirmLeave = async () => {
+        setOpen(false);
+        await joinLeaveForum();
+        setJoined(!joined);
+    }
+
+    const handleClose = () => {
+        setOpen(false);
+    }
+
+    const joinLeaveForum = async (event) => {
+        console.log("Join/Leave forum clicked");
+        const userId = user.id;
+        const forumId = selectedForumId;
+        try {
+            const res = await axios.get(`${config.API_BASE_URL}/forum/joinLeaveForum?userId=${userId}&forumId=${forumId}`);
+            user.savedForums = res.data.savedForums;
+            joined = !joined;
+        } catch (error) {
+            console.log("Error joining/leaving forum: ", error);
+        }
+    }
+
     useEffect(() => {
-        getUser();
-        const fetchForumInfo = async () => {
+        const fetchUser = async () => {
+            await getUser();
+        }
+        fetchUser();
+        selectForum(selectedForumId);
+    }, []); 
+
+    useEffect(() => {
+        const fetchUserForums = async () => {
             await getForumInfo(forums);
         }
-        fetchForumInfo();
-        selectForum(selectedForumId);
-    }, []);
+        if (user != null) { 
+            if (user.savedForums.includes(forumId)) {
+                setForums(user.savedForums);
+            } else {
+                setForums([forumId, ...user.savedForums]);
+            }
+            fetchUserForums();  
+        }
+    }, [user]);
 
     const changeSearchedPosts = (searchedPosts) => {
         setSearchedPosts(searchedPosts);
@@ -252,6 +305,7 @@ function ForumDetails() {
                         <Typography>no forums...</Typography>
                     ) : (
                         forumObjs.map((forum, index) => (
+                            <>
                             <Card key={index}
                                 sx={{
                                     backgroundColor: forum._id === selectedForumId ? light_yellow : 'transparent',
@@ -265,47 +319,50 @@ function ForumDetails() {
                                     </CardContent>
                                 </CardActionArea>
                             </Card>
+                            {forum._id === selectedForumId ? (<DisplayTagSelector tags={tags} selectedTag={selectedTag} handleTagClick={handleTagClick}/>): null}
+                            </>
                         ))
                     )}
                     {/* sort by category */}
                     {
-                        <div>
-                            {tags.map((tag, index) => (
-                                <div
-                                    key={index}
-                                    onClick={() => handleTagClick(tag)}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        cursor: 'pointer',
-                                        padding: '10px',
-                                        backgroundColor: selectedTag === tag ? '#f0f0f0' : 'white', // highlight when selected
-                                        borderRadius: '4px',
-                                        //margin: '5px 0',
-                                        transition: 'background-color 0.3s',
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            width: '12px', // Width of the square
-                                            height: '12px', // Height of the square
-                                            // backgroundColor: getTagColor(currentForum, tag), // Tag color
-                                            marginRight: '10px',
-                                            borderRadius: '4px',
-                                        }}
-                                    />
-                                    <Typography
-                                        sx={{
-                                            fontWeight: 'bold',
-                                            margin: '0px',
-                                            textAlign: 'left',
-                                        }}
-                                    >
-                                        {tag}
-                                    </Typography>
-                                </div>
-                            ))}
-                        </div>
+                        // <div>
+                        //     {tags.map((tag, index) => (
+                        //         <div
+                        //             key={index}
+                        //             onClick={() => handleTagClick(tag)}
+                        //             style={{
+                        //                 display: 'flex',
+                        //                 alignItems: 'center',
+                        //                 cursor: 'pointer',
+                        //                 padding: '10px',
+                        //                 backgroundColor: selectedTag === tag ? '#f0f0f0' : 'white', // highlight when selected
+                        //                 borderRadius: '4px',
+                        //                 //margin: '5px 0',
+                        //                 transition: 'background-color 0.3s',
+                        //             }}
+                        //         >
+                        //             <div
+                        //                 style={{
+                        //                     width: '12px', // Width of the square
+                        //                     height: '12px', // Height of the square
+                        //                     // backgroundColor: getTagColor(currentForum, tag), // Tag color
+                        //                     marginRight: '10px',
+                        //                     borderRadius: '4px',
+                        //                 }}
+                        //             />
+                        //             <Typography
+                        //                 sx={{
+                        //                     fontWeight: 'bold',
+                        //                     margin: '0px',
+                        //                     textAlign: 'left',
+                        //                 }}
+                        //             >
+                        //                 {tag}
+                        //             </Typography>
+                        //         </div>
+                        //     ))}
+                        // </div>
+                        // <DisplayTagSelector tags={tags} selectedTag={selectedTag} handleTagClick={handleTagClick()}/>
                     }
                 </Grid>
                 <Grid item xs={12} className="post-list-grid">
@@ -319,20 +376,29 @@ function ForumDetails() {
                             <Add />
                         </IconButton>
                     </Box>
-                    <Box display="flex" justifyContent="flex-end">
-                        <IconButton onClick={() => handleIconClick('likes', selectedForumId)} color={getIconButtonColor('likes')}>
-                            <ThumbUpIcon />
-                        </IconButton>
-                        <IconButton onClick={() => handleIconClick('saved', selectedForumId)} color={getIconButtonColor('saved')}>
-                            <StarIcon />
-                        </IconButton>
-                        <IconButton onClick={() => handleIconClick('replies', selectedForumId)} color={getIconButtonColor('replies')}>
-                            <ForumIcon />
-                        </IconButton>
-                        <IconButton onClick={() => handleIconClick('recent', selectedForumId)} color={getIconButtonColor('recent')}>
-                            <AccessTimeIcon />
-                        </IconButton>
-                    </Box>
+                    <Grid container justifyContent="space-between">
+                        <Grid item xs={6} display="flex" justifyContent="flex-start">
+                            <IconButton onClick={() => handleJoinLeaveClick()} sx={{ borderRadius: '8px' }}>
+                                {joined ? 
+                                (<><Typography variant='body1' sx={{ fontWeight: 'bold' }}>Leave Forum</Typography> <Bookmark /></>
+                                ) : (<><Typography variant='body1' sx={{ fontWeight: 'bold' }}>Join Forum</Typography> <BookmarkBorder /></>)}
+                            </IconButton>
+                        </Grid>
+                        <Grid item xs={6} display="flex" justifyContent="flex-end">
+                            <IconButton onClick={() => handleIconClick('likes', selectedForumId)} color={getIconButtonColor('likes')}>
+                                <ThumbUpIcon />
+                            </IconButton>
+                            <IconButton onClick={() => handleIconClick('saved', selectedForumId)} color={getIconButtonColor('saved')}>
+                                <StarIcon />
+                            </IconButton>
+                            <IconButton onClick={() => handleIconClick('replies', selectedForumId)} color={getIconButtonColor('replies')}>
+                                <ForumIcon />
+                            </IconButton>
+                            <IconButton onClick={() => handleIconClick('recent', selectedForumId)} color={getIconButtonColor('recent')}>
+                                <AccessTimeIcon />
+                            </IconButton>
+                        </Grid>
+                    </Grid>
                     <Box sx={{ height: '2px', backgroundColor: "#daaa00" }} />
                     {(currentForum === null || currentForum === undefined || currentForum.posts === null || currentForum.posts.length === 0) ? (
                         <Typography>no posts yet...</Typography>
@@ -369,8 +435,20 @@ function ForumDetails() {
                                 </CardActionArea>
                             </Card>
                         )))}
-
+                    <Dialog open={open} onClose={handleClose}>
+                        <DialogTitle>Leave Forum</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                Are you sure you want to leave this forum?
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleClose}>Cancel</Button>
+                            <Button onClick={handleConfirmLeave}>Leave</Button>
+                        </DialogActions>
+                    </Dialog>
                 </Grid>
+                
                 <Grid item xs={12} className="post-display-grid">
                     {(drafting) ?
                         <DisplayDraft user={user} forum={currentForum} handleDraft={handleDraftSubmitted} /> :
@@ -387,6 +465,48 @@ function ForumDetails() {
     );
 }
 export default ForumDetails;
+
+function DisplayTagSelector({ tags, selectedTag, handleTagClick }) {
+    return (
+        <div>
+            {tags.map((tag, index) => (
+                <div
+                    key={index}
+                    onClick={() => handleTagClick(tag)}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        padding: '10px',
+                        backgroundColor: selectedTag === tag ? '#f0f0f0' : 'white', // highlight when selected
+                        borderRadius: '4px',
+                        //margin: '5px 0',
+                        transition: 'background-color 0.3s',
+                    }}
+                >
+                    <div
+                        style={{
+                            width: '12px', // Width of the square
+                            height: '12px', // Height of the square
+                            // backgroundColor: getTagColor(currentForum, tag), // Tag color
+                            marginRight: '10px',
+                            borderRadius: '4px',
+                        }}
+                    />
+                    <Typography
+                        sx={{
+                            fontWeight: 'bold',
+                            margin: '0px',
+                            textAlign: 'left',
+                        }}
+                    >
+                        {tag}
+                    </Typography>
+                </div>
+            ))}
+        </div>
+    )
+}
 
 function DisplayDraft({ user, forum, handleDraft }) {
     const forumId = forum._id;

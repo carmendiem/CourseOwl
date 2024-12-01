@@ -1,10 +1,12 @@
 import express from "express";
-import {getForumInfo, getUserNameVerification, createPost, getForumSearch, getPost, createComment, upvotePost, removeUpvote, getPostById, bookmarkPost, getSortedPosts, reportPost} from "../controllers/forum.js";
+import {getUserForums, getForumInfo, getUserNameVerification, joinOrLeaveForum, createPost, getForumSearch, getPost, createComment, upvotePost, removeUpvote, getPostById, bookmarkPost, getSortedPosts, reportPost} from "../controllers/forum.js";
 
 const router = express.Router();
 
+router.get("/getUserForum", getUserForums);
 router.get("/getForum", getForumInfo);
 router.get("/getUserNameVerification", getUserNameVerification);
+router.get("/joinLeaveForum", joinOrLeaveForum);
 router.post("/createPost", createPost);
 router.post("/createComment", createComment);
 router.get("/getForumSearch", getForumSearch);
