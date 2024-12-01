@@ -20,7 +20,7 @@ export function ForumCard({ user, forum , joined, onChange}) {
         const forumId = forum._id;
     
         try {
-            await axios.get(`${config.API_BASE_URL}/forum/joinLeaveForum?userId=${userId}&forumId=${forumId}`);
+            await axios.post(`${config.API_BASE_URL}/forum/joinLeaveForum?userId=${userId}&forumId=${forumId}`);
             joined = !joined;
             onChange(!onChange);
         } catch (error) {

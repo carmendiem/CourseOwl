@@ -3,7 +3,7 @@ import { ForumSwiperComponent } from "./ForumSearch/ForumSwiper";
 import { Typography } from '@mui/material';
 
 
-export function UserForums({user, userForums}) {
+export function UserForums({user, userForums, onChange}) {
     return (
         <>
         <Typography variant="h2" component="body" style={{color: '#daaa00'}}>Your Forums</Typography>
@@ -16,7 +16,7 @@ export function UserForums({user, userForums}) {
                 <>
                     <ForumSwiperComponent
                         slides={userForums.map((forum) => (
-                            <ForumCard key={forum._id} user={user} forum={forum} joined={user.savedForums.includes(forum._id)}> </ForumCard>
+                            <ForumCard key={forum._id} user={user} forum={forum} joined={user.savedForums.includes(forum._id)} onChange={onChange}> </ForumCard>
                         ))}>
                     </ForumSwiperComponent>
                 </>

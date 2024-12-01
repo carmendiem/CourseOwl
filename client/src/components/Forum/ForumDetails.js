@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid2';
-import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField } from '@mui/material';
+import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField, Icon, Popover } from '@mui/material';
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { IconButton } from '@mui/material';
@@ -13,6 +13,7 @@ import ForumIcon from '@mui/icons-material/Forum';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ReportIcon from '@mui/icons-material/Report';
 import { Bookmark, BookmarkBorder } from '@mui/icons-material';
+import { MoreHoriz } from '@mui/icons-material';
 import config from '../../config';
 import axios from "axios";
 import Dialog from '@mui/material/Dialog';
@@ -133,6 +134,36 @@ function ForumDetails() {
         setCurrentPost(post);
         setCurrentPostAuthor([...currentPostAuthor, author]);
         setCurrentPostAuthorVer([...currentPostAuthorVer, ver]);
+    };
+
+    const handleEditedPost = (res, action, authorName, commentIdx) => {
+        if (action === "post deleted") {
+            setCurrentForum(res);
+            setCurrentPost(null);
+            setCurrentPostAuthor([]);
+            setCurrentPostAuthorVer([]);
+            return;
+        }
+        setCurrentPost(res);
+        if (action === "post edited") {
+            // no change to ver, maybe change to author if anon switch
+            const names = currentPostAuthor;
+            names[0] = authorName;
+            setCurrentPostAuthor(names);
+        } else if (action === "comment edited") {
+            // no change to ver, maybe change to author if anon switch
+            const names = currentPostAuthor;
+            names[commentIdx + 1] = authorName;
+            setCurrentPostAuthor(names);
+        } else if (action === "comment deleted") { 
+            // remove author and ver of deleted comment
+            const names = currentPostAuthor;
+            const verified = currentPostAuthorVer;
+            names.splice(commentIdx + 1, 1);
+            verified.splice(commentIdx + 1, 1);
+            setCurrentPostAuthor(names);
+            setCurrentPostAuthorVer(verified);
+        }
     };
 
     const getUser = async () => {
@@ -284,8 +315,8 @@ function ForumDetails() {
                             names.push("Anon");
                         }
                         else {
-                            const name = await getUserNameVerification(currentPost.comments[i].author);
-                            names.push(name);
+                            const response = await getUserNameVerification(currentPost.comments[i].author);
+                            names.push(response.name);
                         }
                     }
                 }
@@ -323,47 +354,6 @@ function ForumDetails() {
                             </>
                         ))
                     )}
-                    {/* sort by category */}
-                    {
-                        // <div>
-                        //     {tags.map((tag, index) => (
-                        //         <div
-                        //             key={index}
-                        //             onClick={() => handleTagClick(tag)}
-                        //             style={{
-                        //                 display: 'flex',
-                        //                 alignItems: 'center',
-                        //                 cursor: 'pointer',
-                        //                 padding: '10px',
-                        //                 backgroundColor: selectedTag === tag ? '#f0f0f0' : 'white', // highlight when selected
-                        //                 borderRadius: '4px',
-                        //                 //margin: '5px 0',
-                        //                 transition: 'background-color 0.3s',
-                        //             }}
-                        //         >
-                        //             <div
-                        //                 style={{
-                        //                     width: '12px', // Width of the square
-                        //                     height: '12px', // Height of the square
-                        //                     // backgroundColor: getTagColor(currentForum, tag), // Tag color
-                        //                     marginRight: '10px',
-                        //                     borderRadius: '4px',
-                        //                 }}
-                        //             />
-                        //             <Typography
-                        //                 sx={{
-                        //                     fontWeight: 'bold',
-                        //                     margin: '0px',
-                        //                     textAlign: 'left',
-                        //                 }}
-                        //             >
-                        //                 {tag}
-                        //             </Typography>
-                        //         </div>
-                        //     ))}
-                        // </div>
-                        // <DisplayTagSelector tags={tags} selectedTag={selectedTag} handleTagClick={handleTagClick()}/>
-                    }
                 </Grid>
                 <Grid item xs={12} className="post-list-grid">
                     {/* Forum Posts */}
@@ -457,7 +447,12 @@ function ForumDetails() {
                                 <Typography>Select a Post to Read</Typography>
                                 <Typography>{"<================"}</Typography>
                             </Box>) :
-                            <DisplayPostandReply user={user} forum={currentForum} post={currentPost} postAuthors={currentPostAuthor} postVer={currentPostAuthorVer} handlePost={handleCurrentPost} setUser={setUser} updatedPost={updatedPost} setUpdatedPost={setUpdatedPost} />
+                            <DisplayPostandReply user={user} forum={currentForum} post={currentPost} 
+                                postAuthors={currentPostAuthor} postVer={currentPostAuthorVer} 
+                                handlePost={handleCurrentPost} 
+                                setUser={setUser} updatedPost={updatedPost} setUpdatedPost={setUpdatedPost} 
+                                handleEditedPost={handleEditedPost}
+                            />
                         )}
                 </Grid>
             </Grid>
@@ -631,7 +626,302 @@ function DisplayDraft({ user, forum, handleDraft }) {
     );
 }
 
-function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePost, setUser, updatedPost, setUpdatedPost }) {
+function DisplayEditDelete({ user, forum, post, handleEdit, commentIdx}) {
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [openEditDelete, setOpenEditDelete] = useState(false);
+    const handleEditDelOpen = (event) => {
+        setOpenEditDelete(true);
+        setAnchorEl(event.currentTarget)
+    }
+    const handleEditDelClose = () => {
+        setOpenEditDelete(false);
+        setAnchorEl(null);
+    }
+    // for Edit/Delete Dialogs for Posts
+    const [title, setTitle] = useState(post.title);
+    const [body, setBody] = useState(post.body);
+    const [category, setCategory] = useState(post.tag);
+    const [anon, setAnon] = useState(post.anon);
+
+    const [openEdit, setOpenEdit] = useState(false);
+    const handleEditOpen = () => {
+        setOpenEdit(true);
+    }
+    const handleEditClose = () => {
+        setOpenEdit(false);
+        // handleEditDel("post edited");
+    }
+
+    const [openDel, setOpenDel] = useState(false);
+    const handleDelOpen = () => {
+        setOpenDel(true);
+    }
+    const handleDelClose = () => {
+        setOpenDel(false);
+        handleEditDelClose();
+    }
+    const handleDeletingPost = async () => {
+        try {
+            const resultForum = await axios.post(`${config.API_BASE_URL}/forum/deletePost?postId=${post._id}&forumId=${forum._id}`);
+            handleEdit(resultForum.data, "post deleted", "", 0);
+            handleDelClose();
+        } catch (error) {
+            console.log("error deleting post: ", error);
+        }
+    }
+
+    // for Edit/Delete Dialogs for Comments
+    const [openEditC, setOpenEditC] = useState(false);
+    const handleEditCOpen = () => {
+        setOpenEditC(true);
+    }
+    const handleEditCClose = () => {
+        setOpenEditC(false);
+        // handleEditDel("comment edited");
+    }
+    const [commentBody, setCommentBody] = useState(post.body);
+    const [commentAnon, setCommentAnon] = useState(post.anon);
+    useEffect(() => {
+        if (commentIdx != -1) {
+            setCommentBody(post.comments[commentIdx].body);
+            setCommentAnon(post.comments[commentIdx].anon);
+        }
+    }, [commentIdx]);
+
+    const [openDelC, setOpenDelC] = useState(false);
+    const handleDelCOpen = () => {
+        setOpenDelC(true);
+    }
+    const handleDelCClose = () => {
+        setOpenDelC(false);
+        handleEditDelClose();
+    }
+
+    const handleDeletingComment = async () => {
+        try {
+            const resultPost = await axios.post(`${config.API_BASE_URL}/forum/deleteComment?postId=${post._id}&commentIdx=${commentIdx}&forumId=${forum._id}`);
+            handleEdit(resultPost.data, "comment deleted", "", commentIdx);
+            handleDelCClose();
+        } catch (error) {
+            console.log("error deleting comment: ", error);
+        }
+    }
+
+    return (
+        <>
+            {/* Edit Post Dialog */}
+            <Dialog
+                open={openEdit}
+                onClose={handleEditClose}
+                PaperProps={{
+                    component: 'form',
+                    onSubmit: (event) => {
+                        event.preventDefault();
+                        handleEditClose();
+                    },
+                }}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>Edit Post</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus required fullWidth
+                        margin="dense"
+                        id="name"
+                        name="report"
+                        label="Title"
+                        type="edit"
+                        variant="standard"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                    />
+                    <TextField
+                        autoFocus required fullWidth
+                        margin="dense"
+                        id="name"
+                        name="report"
+                        label="Body"
+                        type="edit"
+                        variant="standard"
+                        value={body}
+                        onChange={(e) => setBody(e.target.value)}
+                    />
+                    {(forum.tags === null || forum.tags === undefined) ? (
+                        null
+                    ) : (
+                        <RadioGroup
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            row
+                        >
+                            {forum.tags.map((tag, index) => (
+                                <FormControlLabel
+                                    key={index}
+                                    value={tag}
+                                    control={<Radio color="primary" />}
+                                    label={tag}
+                                />
+                            ))}
+                        </RadioGroup>
+                    )}
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={anon}
+                                onChange={(e) => setAnon(e.target.checked)}
+                                name="anon"
+                                color="primary"
+                            />
+                        }
+                        label="Post Anonmyously"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleEditClose}>Cancel</Button>
+                    <Button type="submit">Edit</Button>
+                </DialogActions>
+            </Dialog>
+            {/* Delete Post Dialog */}
+            <Dialog
+                open={openDel}
+                onClose={handleDelClose}
+            >
+                <DialogTitle>Delete Post</DialogTitle>
+                <DialogContentText sx={{px: '10px'}}>Deleted posts cannot be recovered.</DialogContentText>
+                <DialogActions>
+                    <Button onClick={handleDelClose}>Cancel</Button>
+                    <Button sx={{color:"red"}} onClick={handleDeletingPost}>Delete</Button>
+                </DialogActions>
+            </Dialog>
+            {/* Edit Comment Dialog */}
+            <Dialog
+                open={openEditC}
+                onClose={handleEditCClose}
+                PaperProps={{
+                    component: 'form',
+                    onSubmit: (event) => {
+                        event.preventDefault();
+                        handleEditCClose();
+                    },
+                }}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>Edit Comment</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus required fullWidth multiline
+                        margin="dense"
+                        id="name"
+                        name="report"
+                        label="Body"
+                        type="edit"
+                        variant="standard"
+                        value={commentBody}
+                        onChange={(e) => setCommentBody(e.target.value)}
+                    />
+                </DialogContent>
+                <FormControlLabel sx={{ marginLeft: "auto" }}
+                    control={
+                        <Checkbox
+                            checked={commentAnon}
+                            onChange={(e) => setCommentAnon(e.target.checked)}
+                            name="anon"
+                            color="primary"
+                        />
+                    }
+                    label="Post Anonmyously"
+                />
+                <DialogActions>
+                    <Button onClick={handleEditCClose}>Cancel</Button>
+                    <Button type="submit">Edit</Button>
+                </DialogActions>
+            </Dialog>
+            {/* Delete Comment Dialog */}
+            <Dialog
+                open={openDelC}
+                onClose={handleDelCClose}
+            >
+                <DialogTitle>Delete Comment</DialogTitle>
+                <DialogContentText sx={{px: '10px'}}>Deleted comments cannot be recovered.</DialogContentText>
+                <DialogActions>
+                    <Button onClick={handleDelCClose}>Cancel</Button>
+                    <Button sx={{color:"red"}} onClick={handleDeletingComment}>Delete</Button>
+                </DialogActions>
+            </Dialog>
+            {/* Edit/Delete Popover */}
+            {commentIdx === -1 ? (
+                <Popover 
+                    open={openEditDelete}
+                    anchorEl={anchorEl}
+                    onClose={handleEditDelClose}
+                    anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
+                    }}
+                >
+                    <DialogActions>
+                        <Grid display="flex" flexDirection="column">
+                            <Button 
+                                sx={{ textAlign: 'left', justifyContent: 'flex-start' }}
+                                onClick={handleEditOpen}
+                            >
+                                Edit Post
+                            </Button>
+                            <Button 
+                                sx={{ textAlign: 'left', justifyContent: 'flex-start', color: "red"}}type="submit"
+                                onClick={handleDelOpen}
+                            >
+                                Delete Post
+                            </Button>
+                        </Grid>
+                    </DialogActions>
+                </Popover>
+            ) : (
+                // {setCommentBody(post.comments[commentIdx].body)},
+                <Popover 
+                    open={openEditDelete}
+                    anchorEl={anchorEl}
+                    onClose={handleEditDelClose}
+                    anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
+                    }}
+                >
+                    <DialogActions>
+                        <Grid display="flex" flexDirection="column">
+                            <Button 
+                                sx={{ textAlign: 'left', justifyContent: 'flex-start' }}
+                                onClick={handleEditCOpen}
+                            >
+                                Edit Comment
+                            </Button>
+                            <Button 
+                                sx={{ textAlign: 'left', justifyContent: 'flex-start', color: "red"}}type="submit"
+                                onClick={handleDelCOpen}
+                            >
+                                Delete Comment
+                            </Button>
+                        </Grid>
+                    </DialogActions>
+                </Popover>
+            )}
+            <IconButton onClick={handleEditDelOpen}> <MoreHoriz /> </IconButton>
+        </>
+    );
+
+}
+
+function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePost, setUser, updatedPost, setUpdatedPost, handleEditedPost}) {
     const [body, setBody] = useState("");
     const [anon, setAnon] = useState(false);
     const [bodyError, setBodyError] = useState("");
@@ -757,6 +1047,20 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
         }
     }
 
+    // const handleEditDel = async ({action, post}) => {
+    //     if (action === "post edited") {
+    //         console.log("post edited"); 
+
+    //     } else if (action === "post deleted") {
+    //         console.log("post deleted"); //change post displayed
+    //     } else if (action === "comment edited") {
+    //         console.log("comment edited");
+    //     } else if (action === "comment deleted") {
+    //         console.log("comment deleted");
+    //         setUpdatedPost(post);
+    //     }
+    // }
+
     return (
         (post === null || post === undefined || postAuthors.length === 0) ? (
             <Box className="post-display">
@@ -805,7 +1109,11 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
                             </DialogActions>
                         </Dialog>
                     <Grid className='post-post-grid'>
-                        <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
+                        <Grid container display="flex" justifyContent="space-between">
+                            <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
+                            {post.author === user.id ? <DisplayEditDelete user={user} forum={forum} post={post} handleEdit={handleEditedPost} commentIdx={-1}/>
+                            : null}
+                        </Grid>
                         <Box className='post-card-tag-author'>
 
                             <Typography className='post-card-author'>
@@ -850,12 +1158,16 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
                         <Grid className='post-comment-grid'>
                             {post.comments.map((comment, index) => (
                                 <Box key={index} sx={{padding: "5px"}}>
-                                        <Typography className='post-comment-author'>
-                                            {postAuthors[index+1]} 
-                                            {postVer[index+1] ? (
-                                                <Verified sx={{ color: '#9baf4d', fontSize: '1rem', marginLeft: '3px', position: 'relative', top: '2px'}} />
-                                            ) : null} 
-                                        </Typography>
+                                        <Grid container display="flex" justifyContent="space-between">
+                                            <Typography className='post-comment-author'>
+                                                {postAuthors[index+1]} 
+                                                {postVer[index+1] ? (
+                                                    <Verified sx={{ color: '#9baf4d', fontSize: '1rem', marginLeft: '3px', position: 'relative', top: '2px'}} />
+                                                ) : null} 
+                                            </Typography>
+                                            {comment.author === user.id ? <DisplayEditDelete user={user} forum={forum} post={post} handleEdit={handleEditedPost} commentIdx={index}/>
+                                            : null}
+                                        </Grid>
                                     <Typography variant='body1' className='post-comment-body'>{comment.body}</Typography>
                                 </Box>
                             ))}

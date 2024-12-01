@@ -96,6 +96,21 @@ export const createPost = async (req, res) => {
     }
 }
 
+export const deletePost = async (req, res) => {
+    try {
+        const { postId, forumId } = req.query;
+        const forum = await Forum.findOneAndUpdate({ _id: forumId }, { $pull: { posts: { _id: postId } } }, { new: true });
+        if (forum != null) {
+            return res.json(forum);
+        } else {
+            return res.status(404).json({ status: 'forum not found' });
+        }
+    } catch (error) {
+        console.log("Error in deletePost:", error);
+        res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
 export const createComment = async (req, res) => {
     try {
         const { body, anon, userId, forumId, postId } = req.query;
@@ -113,6 +128,26 @@ export const createComment = async (req, res) => {
         return res.json(forum);
     } catch (error) {
         console.log("Error in createComment:", error);
+        res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
+export const deleteComment = async (req, res) => {
+    try {
+        const { commentIdx, postId, forumId } = req.query;
+        const forum = await Forum.findById(forumId);
+        if (!forum) {
+            return res.status(404).json({ status: 'forum not found' });
+        }
+        const post = forum.posts.id(postId);
+        if (!post) {
+            return res.status(404).json({ status: 'post not found' });
+        }
+        post.comments.splice(commentIdx, 1);
+        await forum.save();
+        return res.json(post);
+    } catch (error) {
+        console.log("Error in deleteComment:", error);
         res.status(400).json({ status: 'Error fetching forum' });
     }
 }

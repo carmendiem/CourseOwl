@@ -54,7 +54,7 @@ function Forums() {
         <div>
             <ThemeProvider theme={forumTheme}>
                 <ForumSearch user={user} userForums={userForums} detectChange={handleForumChange}/>
-                <UserForums user={user} userForums={userForums} change={changes}/>
+                <UserForums user={user} userForums={userForums} onChange={handleForumChange}/>
             </ThemeProvider>
         </div>
     );
