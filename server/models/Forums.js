@@ -35,6 +35,10 @@ const forumSchema = new Schema({
         anon: {
             type: Boolean
         },
+        edited: {
+            type: Boolean,
+            default: false
+        },
         comments: [{
             author: {
                 type: ObjectId
@@ -44,6 +48,10 @@ const forumSchema = new Schema({
             },
             anon: {
                 type: Boolean
+            },
+            edited: {
+                type: Boolean,
+                default: false
             },
         }],
         upvotes: {

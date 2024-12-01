@@ -1126,7 +1126,10 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
                         </Dialog>
                     <Grid className='post-post-grid'>
                         <Grid container display="flex" justifyContent="space-between" alignItems="center">
-                            <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
+                            <Grid display="flex" alignItems="center">
+                                <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
+                                {post.edited ? <Typography variant='caption'  sx={{color: 'gray', px: '10px'}}>edited</Typography> : null}
+                            </Grid>
                             {(post.author === user.id || post.author === user._id)  ? <DisplayEditDelete user={user} forum={forum} post={post} handleEdit={handleEditedPost} commentIdx={-1}/>
                             : null}
                         </Grid>
@@ -1175,12 +1178,15 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
                             {post.comments.map((comment, index) => (
                                 <Box key={index} sx={{padding: "5px"}}>
                                         <Grid container display="flex" justifyContent="space-between" alignItems="center">
-                                            <Typography className='post-comment-author'>
-                                                {postAuthors[index+1]} 
-                                                {postVer[index+1] ? (
-                                                    <Verified sx={{ color: '#9baf4d', fontSize: '1rem', marginLeft: '3px', position: 'relative', top: '2px'}} />
-                                                ) : null} 
-                                            </Typography>
+                                            <Grid>
+                                                <Typography className='post-comment-author'>
+                                                    {postAuthors[index+1]} 
+                                                    {postVer[index+1] ? (
+                                                        <Verified sx={{ color: '#9baf4d', fontSize: '1rem', marginLeft: '3px', position: 'relative', top: '2px'}} />
+                                                    ) : null} 
+                                                    {comment.edited ? <Typography variant='caption' sx={{color: 'gray', px: '10px'}}>edited</Typography> : null}
+                                                </Typography>
+                                            </Grid>
                                             {(comment.author === user.id || comment.author === user._id) ? <DisplayEditDelete user={user} forum={forum} post={post} handleEdit={handleEditedPost} commentIdx={index}/>
                                             : null}
                                         </Grid>

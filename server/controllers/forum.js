@@ -112,6 +112,7 @@ export const editPost = async (req, res) => {
         post.body = body;
         post.anon = anon;
         post.tag = chosenTag;
+        post.edited = true;
         await forum.save();
         return res.json(post);
     } catch (error) {
@@ -177,6 +178,7 @@ export const editComment = async (req, res) => {
         const comment = post.comments[commentIdx];
         comment.body = body;
         comment.anon = anon;
+        comment.edited = true;
         post.comments.set(commentIdx, comment);
         await forum.save();
         return res.json(post);
