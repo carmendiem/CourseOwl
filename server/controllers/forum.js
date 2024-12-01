@@ -96,14 +96,45 @@ export const createPost = async (req, res) => {
     }
 }
 
+export const editPost = async (req, res) => {
+    try {
+        const { title, body, anon, chosenTag, forumId, postId } = req.query;
+        const forum = await Forum.findOne({ _id: forumId });
+        if (!forum) {
+            return res.status(404).json({ status: 'forum not found' });
+        }
+        const post = forum.posts.id(postId);
+        if (!post) {
+            return res.status(404).json({ status: 'post not found' });
+        }
+        console.log("tag:", chosenTag);
+        post.title = title;
+        post.body = body;
+        post.anon = anon;
+        post.tag = chosenTag;
+        await forum.save();
+        return res.json(post);
+    } catch (error) {
+        console.log("Error in editPost:", error);
+        res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
 export const deletePost = async (req, res) => {
     try {
         const { postId, forumId } = req.query;
         const forum = await Forum.findOneAndUpdate({ _id: forumId }, { $pull: { posts: { _id: postId } } }, { new: true });
-        if (forum != null) {
-            return res.json(forum);
-        } else {
+        
+        
+        if (!forum) {
             return res.status(404).json({ status: 'forum not found' });
+        } else {
+            const users = await User.find({ savedPosts: postId });
+            for (const user of users) {
+                user.savedPosts.pull(postId);
+                await user.save();
+            }
+            return res.json(forum);
         }
     } catch (error) {
         console.log("Error in deletePost:", error);
@@ -128,6 +159,29 @@ export const createComment = async (req, res) => {
         return res.json(forum);
     } catch (error) {
         console.log("Error in createComment:", error);
+        res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
+export const editComment = async (req, res) => {
+    try {
+        const { body, anon, forumId, postId, commentIdx } = req.query;
+        const forum = await Forum.findById(forumId);
+        if (!forum) {
+            return res.status(404).json({ status: 'forum not found' });
+        }
+        const post = forum.posts.id(postId);
+        if (!post) {
+            return res.status(404).json({ status: 'post not found' });
+        }
+        const comment = post.comments[commentIdx];
+        comment.body = body;
+        comment.anon = anon;
+        post.comments.set(commentIdx, comment);
+        await forum.save();
+        return res.json(post);
+    } catch (error) {
+        console.log("Error in editComment:", error);
         res.status(400).json({ status: 'Error fetching forum' });
     }
 }

@@ -142,6 +142,9 @@ function ForumDetails() {
             setCurrentPost(null);
             setCurrentPostAuthor([]);
             setCurrentPostAuthorVer([]);
+            if (selectedIcon === "saved") {
+                searchedPosts.splice(searchedPosts.findIndex(post => post._id === commentIdx), 1);
+            }
             return;
         }
         setCurrentPost(res);
@@ -151,7 +154,7 @@ function ForumDetails() {
             names[0] = authorName;
             setCurrentPostAuthor(names);
         } else if (action === "comment edited") {
-            // no change to ver, maybe change to author if anon switch
+            // no change to ver, maybe change to author
             const names = currentPostAuthor;
             names[commentIdx + 1] = authorName;
             setCurrentPostAuthor(names);
@@ -649,7 +652,21 @@ function DisplayEditDelete({ user, forum, post, handleEdit, commentIdx}) {
     }
     const handleEditClose = () => {
         setOpenEdit(false);
-        // handleEditDel("post edited");
+    }
+
+    const handleEditingPost = async () => {
+        try {
+            const resultPost = await axios.post(`${config.API_BASE_URL}/forum/editPost?postId=${post._id}&forumId=${forum._id}&title=${title}&body=${body}&chosenTag=${category}&anon=${anon}`);
+            if (anon) {
+                handleEdit(resultPost.data, "post edited", "Anon", -1);
+            } else {
+                handleEdit(resultPost.data, "post edited", user.name, -1);
+            }
+            handleEditClose();
+            handleEditDelClose();
+        } catch (error) {
+            console.log("error editing post: ", error);
+        }
     }
 
     const [openDel, setOpenDel] = useState(false);
@@ -663,7 +680,7 @@ function DisplayEditDelete({ user, forum, post, handleEdit, commentIdx}) {
     const handleDeletingPost = async () => {
         try {
             const resultForum = await axios.post(`${config.API_BASE_URL}/forum/deletePost?postId=${post._id}&forumId=${forum._id}`);
-            handleEdit(resultForum.data, "post deleted", "", 0);
+            handleEdit(resultForum.data, "post deleted", "", post._id);
             handleDelClose();
         } catch (error) {
             console.log("error deleting post: ", error);
@@ -688,6 +705,20 @@ function DisplayEditDelete({ user, forum, post, handleEdit, commentIdx}) {
         }
     }, [commentIdx]);
 
+    const handleEditingComment = async () => {
+        try {
+            const resultPost = await axios.post(`${config.API_BASE_URL}/forum/editComment?postId=${post._id}&commentIdx=${commentIdx}&forumId=${forum._id}&body=${commentBody}&anon=${commentAnon}`);
+            if (anon) {
+                handleEdit(resultPost.data, "comment edited", "Anon", commentIdx);
+            } else {
+                handleEdit(resultPost.data, "comment edited", user.name, commentIdx);
+            }
+            handleEditCClose();
+        } catch (error) {
+            console.log("error editing comment: ", error);
+        }
+    }
+
     const [openDelC, setOpenDelC] = useState(false);
     const handleDelCOpen = () => {
         setOpenDelC(true);
@@ -699,7 +730,7 @@ function DisplayEditDelete({ user, forum, post, handleEdit, commentIdx}) {
 
     const handleDeletingComment = async () => {
         try {
-            const resultPost = await axios.post(`${config.API_BASE_URL}/forum/deleteComment?postId=${post._id}&commentIdx=${commentIdx}&forumId=${forum._id}`);
+            const resultPost = await axios.post(`${config.API_BASE_URL}/forum/deleteComment?postId=${post._id}&forumId=${forum._id}&title=${title}&body=${body}&chosenTag=${category}&anon=${anon}`);
             handleEdit(resultPost.data, "comment deleted", "", commentIdx);
             handleDelCClose();
         } catch (error) {
@@ -779,7 +810,7 @@ function DisplayEditDelete({ user, forum, post, handleEdit, commentIdx}) {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleEditClose}>Cancel</Button>
-                    <Button type="submit">Edit</Button>
+                    <Button onClick={handleEditingPost}>Edit</Button>
                 </DialogActions>
             </Dialog>
             {/* Delete Post Dialog */}
@@ -835,7 +866,7 @@ function DisplayEditDelete({ user, forum, post, handleEdit, commentIdx}) {
                 />
                 <DialogActions>
                     <Button onClick={handleEditCClose}>Cancel</Button>
-                    <Button type="submit">Edit</Button>
+                    <Button onClick={handleEditingComment}>Edit</Button>
                 </DialogActions>
             </Dialog>
             {/* Delete Comment Dialog */}
@@ -883,7 +914,6 @@ function DisplayEditDelete({ user, forum, post, handleEdit, commentIdx}) {
                     </DialogActions>
                 </Popover>
             ) : (
-                // {setCommentBody(post.comments[commentIdx].body)},
                 <Popover 
                     open={openEditDelete}
                     anchorEl={anchorEl}
@@ -1045,21 +1075,7 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
         } catch (error) {
             console.error('Error saving post:', error);
         }
-    }
-
-    // const handleEditDel = async ({action, post}) => {
-    //     if (action === "post edited") {
-    //         console.log("post edited"); 
-
-    //     } else if (action === "post deleted") {
-    //         console.log("post deleted"); //change post displayed
-    //     } else if (action === "comment edited") {
-    //         console.log("comment edited");
-    //     } else if (action === "comment deleted") {
-    //         console.log("comment deleted");
-    //         setUpdatedPost(post);
-    //     }
-    // }
+    };
 
     return (
         (post === null || post === undefined || postAuthors.length === 0) ? (
@@ -1109,9 +1125,9 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
                             </DialogActions>
                         </Dialog>
                     <Grid className='post-post-grid'>
-                        <Grid container display="flex" justifyContent="space-between">
+                        <Grid container display="flex" justifyContent="space-between" alignItems="center">
                             <Typography className='post-card-title' variant='h3'>{post.title}</Typography>
-                            {post.author === user.id ? <DisplayEditDelete user={user} forum={forum} post={post} handleEdit={handleEditedPost} commentIdx={-1}/>
+                            {(post.author === user.id || post.author === user._id)  ? <DisplayEditDelete user={user} forum={forum} post={post} handleEdit={handleEditedPost} commentIdx={-1}/>
                             : null}
                         </Grid>
                         <Box className='post-card-tag-author'>
@@ -1158,14 +1174,14 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
                         <Grid className='post-comment-grid'>
                             {post.comments.map((comment, index) => (
                                 <Box key={index} sx={{padding: "5px"}}>
-                                        <Grid container display="flex" justifyContent="space-between">
+                                        <Grid container display="flex" justifyContent="space-between" alignItems="center">
                                             <Typography className='post-comment-author'>
                                                 {postAuthors[index+1]} 
                                                 {postVer[index+1] ? (
                                                     <Verified sx={{ color: '#9baf4d', fontSize: '1rem', marginLeft: '3px', position: 'relative', top: '2px'}} />
                                                 ) : null} 
                                             </Typography>
-                                            {comment.author === user.id ? <DisplayEditDelete user={user} forum={forum} post={post} handleEdit={handleEditedPost} commentIdx={index}/>
+                                            {(comment.author === user.id || comment.author === user._id) ? <DisplayEditDelete user={user} forum={forum} post={post} handleEdit={handleEditedPost} commentIdx={index}/>
                                             : null}
                                         </Grid>
                                     <Typography variant='body1' className='post-comment-body'>{comment.body}</Typography>
