@@ -17,6 +17,7 @@ export function TableView({user, change}) {
     const [userCourses, setUserCourses] = useState([]);
     const [courseObjs, setCourseObjs] = useState([]);
     const [searchAlert, setSearchAlert] = useState("");
+    const [enrollmentStatus, setEnrollmentStatus] = useState(null);
 
     const getCourses = async () => {
         const userId = user.id;
@@ -45,6 +46,16 @@ export function TableView({user, change}) {
         setCourseObjs(courseData);
     };
 
+    const getUserEnrollmentStatus = async () => {
+      try {
+          const res = await axios.get(`${config.API_BASE_URL}/user/verifyFull`, { withCredentials: true });
+          const userData = res.data.user;
+          setEnrollmentStatus(userData.enrollment_status || "full_time"); // Default to 'full_time'
+      } catch (error) {
+          console.log("Error fetching user enrollment status:", error);
+      }
+  };
+
     const fetchCoursesAndInfo = async () => {
       setSearchAlert("Loading courses..")
       const courses = await getCourses();
@@ -54,13 +65,14 @@ export function TableView({user, change}) {
     } 
 
     useEffect(() => {
-        fetchCoursesAndInfo();
-    }, [])
+      fetchCoursesAndInfo();
+      getUserEnrollmentStatus();
+  }, []);
 
-    useEffect(() => {
+  useEffect(() => {
       fetchCoursesAndInfo();
-      fetchCoursesAndInfo();
-  }, [change])
+      getUserEnrollmentStatus();
+  }, [change]);
 
     const [openDeleteConfPopup, setOpenDeleteConfPopup] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState(null);
@@ -86,6 +98,8 @@ export function TableView({user, change}) {
     }
 }
 
+const totalCreditHours = courseObjs.reduce((total, course) => total + (course.credit_hours || 0), 0);
+
     return (
       <>
         <TableContainer component={Paper}>
@@ -93,52 +107,75 @@ export function TableView({user, change}) {
         <p>{searchAlert}</p> 
       ) : (
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Course name</TableCell>
-              <TableCell>Availability</TableCell>
-              <TableCell align="right">Time</TableCell>
-              <TableCell align="right">Location</TableCell>
-              <TableCell align="right">Professor</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {courseObjs.map((course) => (
-              <TableRow
-                key={course.courseId}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-              >
-                <TableCell component="th" scope="row">
-                  {course.course_name}
-                </TableCell>
-                <TableCell align="right">{course.availSeats || 'N/A'}</TableCell>
-                <TableCell align="right">{course.Time || 'N/A'}</TableCell>
-                <TableCell align="right">{course.Where || 'N/A'}</TableCell>
-                <TableCell align="right">
-                  {course.Instructors.map((instructor, index) => (
-                      <span key={index}>
-                          {instructor.name === "TBA" ? (
-                              "TBA"
-                          ) : (
-                              <>
-                                  <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
-                                  {index < course.Instructors.length - 1 ? ', ' : ''}
-                              </>
-                          )}
-                      </span>
-                  ))}
-                  </TableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => handleDeleteConfirmationPopup(course)}>
-                    <Delete />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+        <TableHead>
+  <TableRow>
+    <TableCell>Course name</TableCell>
+    <TableCell>Capacity</TableCell> {/* New column */}
+    <TableCell>Remaining Seats</TableCell> {/* Updated column */}
+    <TableCell align="right">Time</TableCell>
+    <TableCell align="right">Location</TableCell>
+    <TableCell align="right">Professor</TableCell>
+    <TableCell align="right">Actions</TableCell> {/* For Delete button */}
+  </TableRow>
+</TableHead>
+
+<TableBody>
+  {courseObjs.map((course) => (
+    <TableRow
+      key={course.courseId}
+      sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+    >
+      <TableCell component="th" scope="row">
+        {course.course_name}
+      </TableCell>
+      <TableCell>
+        {course.capacity === 0 ? "Capacity Unavailable" : course.capacity}
+      </TableCell> {/* Handle 0 capacity */}
+      <TableCell>
+        {course.capacity === 0 ? "N/A" : course.availSeats}
+      </TableCell> {/* Handle N/A for remaining seats */}
+      <TableCell align="right">{course.Time || 'N/A'}</TableCell>
+      <TableCell align="right">{course.Where || 'N/A'}</TableCell>
+      <TableCell align="right">
+        {course.Instructors.map((instructor, index) => (
+          <span key={index}>
+            {instructor.name === "TBA" ? (
+              "TBA"
+            ) : (
+              <>
+                <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
+                {index < course.Instructors.length - 1 ? ', ' : ''}
+              </>
+            )}
+          </span>
+        ))}
+      </TableCell>
+      <TableCell align="right">
+        <IconButton onClick={() => handleDeleteConfirmationPopup(course)}>
+          <Delete />
+        </IconButton>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
+
         </Table>
       )}
       </TableContainer>
+      {/* Total Credit Hours Section */}
+  <div style={{ marginTop: '1rem', textAlign: 'right', fontSize: '1.2rem', fontWeight: 'bold' }}>
+    Total Credit Hours:{" "}
+    {courseObjs.length > 0
+      ? courseObjs.reduce((total, course) => total + (course.credit_hours || 0), 0)
+      : "N/A"}
+  </div>
+  {/* Warning Message */}
+  {enrollmentStatus === "full_time" && totalCreditHours < 12 && (
+                <div style={{ marginTop: '1rem', textAlign: 'right', fontSize: '1rem', color: 'red', fontWeight: 'bold' }}>
+                    Warning: As a full-time student, you need at least 12 credit hours to meet the requirement. Please add more courses.
+                </div>
+            )}
       <Dialog open={openDeleteConfPopup} onClose={handleDeleteConfPopupClose}>
           {selectedCourse ? (
           <>

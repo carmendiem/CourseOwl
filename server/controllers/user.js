@@ -39,7 +39,7 @@ export const loginUser = async (req, res) => {
         if (user) {
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (passwordMatch) {
-                req.session.user = { id: user._id, name: user.name, email: user.email, courses: user.courses, isVerified: user.isVerified, upvotedReviews: user.upvotedReviews, year_in_school: user.year_in_school, major: user.major};
+                req.session.user = { id: user._id, name: user.name, email: user.email, courses: user.courses, isVerified: user.isVerified, upvotedReviews: user.upvotedReviews, year_in_school: user.year_in_school, major: user.major, enrollment_status: user.enrollment_status};
                 res.json("Success");
             } else {
                 res.status(401).json("Password doesn't match");
@@ -96,6 +96,7 @@ export const getFreshUserInfo = async (req, res) => {
             major: user.major,
             year_in_school: user.year_in_school,
             notifPreference: user.notifPreference,
+            enrollment_status: user.enrollment_status,
             upvotedPosts: user.upvotedPosts,
             savedPosts: user.savedPosts,
             wishlist: user.wishlist
@@ -123,7 +124,7 @@ const sendAccountUpdateEmail = async (user, updatedFields) => {
 
 // Handle updating user details (year in school, major)
 export const updateUserDetails = async (req, res) => {
-    const { year_in_school, major, name, email, notifPreference } = req.body;
+    const { year_in_school, major, name, email, notifPreference, enrollment_status } = req.body;
 
     // Check if the user is authenticated
     if (!req.session.user) {
@@ -162,6 +163,12 @@ export const updateUserDetails = async (req, res) => {
             user.major = major;
             updatedFields.push("Major");
         }
+
+        if (enrollment_status && enrollment_status != user.enrollment_status) {
+            user.enrollment_status = enrollment_status;
+            updatedFields.push("Enrollment Status");
+        }
+
         user.notifPreference = notifPreference || user.notifPreference;
 
         // Save updated user details
@@ -175,6 +182,7 @@ export const updateUserDetails = async (req, res) => {
             year_in_school: updatedUser.year_in_school,
             major: updatedUser.major,
             isVerified: updatedUser.isVerified,
+            enrollment_status: updatedUser.enrollment_status,
             notifPreference: updatedUser.notifPreference
         };
 
