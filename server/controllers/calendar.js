@@ -44,6 +44,23 @@ export const getUserCourses = async (req, res) => {
     }
 }
 
+export const getUserWishlist = async (req, res) => {
+    try {
+        const {userId} = req.query;
+        // console.log("userid: ",userId)
+        const user = await UserModel.findById(userId);
+        const courses = user.wishlist;
+        if (courses != null) {
+            return res.json(courses);
+        } else {
+            return res.status(404).json({ status: 'User not found' });
+        }
+    } catch (error) {
+        console.log("Error in getUserWishlist:", error);
+        res.status(400).json({ status: 'Error fetching wishlist' });
+    }
+}
+
 export const getCourseInfo = async (req, res) => {
     try {
         const {courseId} = req.query;
@@ -68,6 +85,34 @@ export const removeUserCourse = async (req, res) => {
         const user = await UserModel.findOneAndUpdate(
             { email: email },
             { $pull: { courses: courseId } },
+            { new: true }
+        );
+        if (!user) {
+            return res.status(404).json({ status: 'User not found' });
+        }
+
+        // Delete all "Time Conflict" alerts involving the removed course
+        await AlertModel.deleteMany({
+            userId: user._id,
+            courseId: courseId,
+            type: "Time Conflict"
+        });
+
+        return res.json({ status: 'Course removed and relevant alerts deleted' });
+    } catch (error) {
+        console.log("Error in removeUserCourse:", error);
+        res.status(500).json({ status: 'Error removing course and updating alerts' });
+    }
+};
+
+export const removeUserWishlist = async (req, res) => {
+    try {
+        const { email, courseId } = req.body;
+
+        // Remove the course from the user's list
+        const user = await UserModel.findOneAndUpdate(
+            { email: email },
+            { $pull: { wishlist: courseId } },
             { new: true }
         );
         if (!user) {
@@ -146,61 +191,50 @@ const sendAlertEmail = async (user, alert) => {
     });
 };
 
-// Function to scrape course availability
 const getCourseAvailability = async (courseUrl) => {
     const driver = new Builder().forBrowser("chrome").setChromeOptions(options).build();
     let remainingSeats = null;
 
     try {
-        // Step 1: Navigate to the course availability page
         await driver.get(courseUrl);
 
-        // Step 2: Wait for the seating table to load
-        await driver.wait(until.elementLocated(By.css("table[summary='This layout table is used to present the seating numbers.']")), 20000);
+        console.log("Navigated to:", courseUrl);
 
-        // Step 3: Retry mechanism to handle "too many requests" error
-        let attempts = 0;
-        const maxAttempts = 3; // Limit retries to prevent infinite loop
-        while (attempts < maxAttempts) {
-            const pageSource = await driver.getPageSource();
+        // Increase timeout and ensure table visibility
+        // await driver.wait(
+        //     until.elementLocated(By.css("table[summary='This layout table is used to present the seating numbers.']")), 
+        //     30000
+        // );
+        await driver.wait(
+            until.elementIsVisible(driver.findElement(By.css("table[summary='This layout table is used to present the seating numbers.']"))), 
+            30000
+        );
 
-            if (!pageSource.includes("received too many requests")) {
-                // Parse the page with JSDOM
-                const dom = new JSDOM(pageSource);
-                const document = dom.window.document;
+        console.log("Table located");
 
-                // Step 4: Locate the table with seating information
-                const table = document.querySelector("table[summary='This layout table is used to present the seating numbers.']");
-                if (table) {
-                    const rows = table.querySelectorAll("tr");
-                    if (rows.length > 1) {
-                        const cells = rows[1].querySelectorAll("td");
-                        if (cells.length === 3) {
-                            remainingSeats = parseInt(cells[2].textContent.trim(), 10); // Get remaining seats
-                            break; // Exit the loop if we successfully get remaining seats
-                        }
-                    }
+        const pageSource = await driver.getPageSource();
+
+        const dom = new JSDOM(pageSource);
+        const document = dom.window.document;
+
+        const table = document.querySelector("table[summary='This layout table is used to present the seating numbers.']");
+        if (table) {
+            const rows = table.querySelectorAll("tr");
+            if (rows.length > 1) {
+                const cells = rows[1].querySelectorAll("td");
+                if (cells.length === 3) {
+                    remainingSeats = parseInt(cells[2].textContent.trim(), 10);
+                    console.log(`Remaining seats: ${remainingSeats}`);
                 }
-            } else {
-                console.log("Received 'too many requests' message, retrying...");
-                await driver.sleep(10000); // Wait 10 seconds before retrying
-                attempts += 1;
             }
         }
-
-        if (remainingSeats === null) {
-            console.error("Failed to retrieve remaining seats due to 'too many requests' or missing data.");
-        }
-
     } catch (error) {
         console.error("Error in getCourseAvailability:", error);
     } finally {
-        // Ensure the driver is closed
         await driver.quit();
     }
     return remainingSeats;
 };
-
 
 // Main addUserCourse function
 export const addUserCourse = async (req, res) => {
@@ -224,12 +258,28 @@ export const addUserCourse = async (req, res) => {
             return res.status(404).json({ status: "Course not found" });
         }
 
-        // Check and save availability using avail_url from the course document
-        const remainingSeats = await getCourseAvailability(course.avail_url);  // Using avail_url from the course document
-        course.availSeats = remainingSeats || 0;
-        await course.save();
+        // // Check and save availability using avail_url from the course document
+        // const remainingSeats = await getCourseAvailability(course.avail_url);  // Using avail_url from the course document
+        // course.availSeats = remainingSeats || 0;
+        // await course.save();
 
-        if (remainingSeats === 0) {
+        // if (remainingSeats === 0) {
+        //     return res.json({
+        //         status: "Course is full. Would you like to receive an alert when it becomes available?",
+        //         courseFull: true,
+        //         courseId: courseId
+        //     });
+        // }
+
+        // Check if availability already exists
+        if (course.availSeats == null || typeof course.availSeats === 'undefined') {
+            // Check and save availability using avail_url from the course document
+            const remainingSeats = await getCourseAvailability(course.avail_url); // Using avail_url from the course document
+            course.availSeats = remainingSeats || 0;
+            await course.save();
+        }
+
+        if (course.availSeats === 0) {
             return res.json({
                 status: "Course is full. Would you like to receive an alert when it becomes available?",
                 courseFull: true,

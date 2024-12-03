@@ -87,7 +87,6 @@ export const getFreshUserInfo = async (req, res) => {
             return res.status(404).json("User not found");
         }
  
- 
         req.session.user = {
             id: user._id,
             name: user.name,
@@ -98,9 +97,9 @@ export const getFreshUserInfo = async (req, res) => {
             year_in_school: user.year_in_school,
             notifPreference: user.notifPreference,
             upvotedPosts: user.upvotedPosts,
-            savedPosts: user.savedPosts
+            savedPosts: user.savedPosts,
+            wishlist: user.wishlist
         };
- 
  
         res.json({ user: req.session.user });
     } catch (error) {

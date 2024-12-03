@@ -6,6 +6,7 @@ import { SearchBar } from "../components/SearchBar.js"
 import { CalendarView } from "../components/ScheduleCal";
 import config from '../config';
 import { TableView } from "../components/TableView.js"
+import { WishlistView } from "../components/WishlistView.js";
 
 function Home() {
     const location = useLocation();
@@ -68,12 +69,14 @@ function Home() {
                 >
                     <Tab label="Calendar View" />
                     <Tab label="Table View" />
+                    <Tab label="Wishlist" />
                 </Tabs>
 
                 {/* Render the selected component based on the selected tab */}
                 <Box sx={{ padding: 1}}>
                     {selectedTab === 0 && <CalendarView user={user} change={changes}/>}
                     {selectedTab === 1 && <TableView user={user} change={changes}/>}
+                    {selectedTab === 2 && <WishlistView user={user} change={changes}/>}
                 </Box>
             </Box>
         </>
