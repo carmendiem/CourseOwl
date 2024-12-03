@@ -14,6 +14,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import ForumIcon from '@mui/icons-material/Forum';
 import ClassIcon from '@mui/icons-material/Class';
 import HomeIcon from '@mui/icons-material/Home';
+import StoreIcon from '@mui/icons-material/Store';
 import Logout from './Logout';
 import logo from '../assets/navlogo.png';
 
@@ -94,6 +95,12 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                                     <ClassIcon />
                                 </IconButton>
                                 <Typography sx={textStyle(location.pathname.startsWith('/courses') || location.pathname.startsWith('/course/'))}>Courses</Typography>
+                            </ListItem>
+                            <ListItem button component={Link} to="/marketplace" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <IconButton sx={iconStyle(location.pathname === '/marketplace')}>
+                                    <StoreIcon />
+                                </IconButton>
+                                <Typography sx={textStyle(location.pathname === '/marketplace')}>Marketplace</Typography>
                             </ListItem>
 
                             {/* New Account Button */}
