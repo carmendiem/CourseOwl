@@ -25,6 +25,12 @@ const notificationOptions = [
 ];
 const years = ['Freshman', 'Sophomore', 'Junior', 'Senior'];
 
+const enrollmentOptions = [
+    { value: 'part_time', label: 'Part-Time' },
+    { value: 'full_time', label: 'Full-Time' },
+];
+
+
 const AccountDetails = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -43,6 +49,8 @@ const AccountDetails = () => {
     const [verificationSent, setVerificationSent] = useState(false);
     const [emailError, setEmailError] = useState(null);
     const [showWarning, setShowWarning] = useState(false);
+    const [editEnrollment, setEditEnrollment] = useState(false);
+    const [newEnrollment, setNewEnrollment] = useState('');
     const [confirmationMessage, setConfirmationMessage] = useState(''); // New state for confirmation message
 
 
@@ -57,6 +65,7 @@ const AccountDetails = () => {
                 setNewYear(userData.year_in_school || '');
                 setNewMajor(userData.major || '');
                 setNotifPreference(userData.notifPreference || 'in-app');  // Default to 'in-app'
+                setNewEnrollment(userData.enrollment_status || 'full_time'); // Default to 'full_time'
                 setIsVerified(userData.isVerified || false);
                 setLoading(false);
             } catch (error) {
@@ -94,6 +103,22 @@ const AccountDetails = () => {
             }
         } catch (error) {
             setError('Failed to update name.');
+        }
+    };
+
+    const handleSaveEnrollment = async () => {
+        try {
+            const res = await axios.put(`${config.API_BASE_URL}/user/update`, { enrollment_status: newEnrollment }, { withCredentials: true });
+            if (res.status === 200) {
+                setUser(res.data.user);
+                setEditEnrollment(false);
+                setConfirmationMessage('Your enrollment status has been updated.');
+                setTimeout(() => {
+                    setConfirmationMessage('');
+                }, 3000);
+            }
+        } catch (error) {
+            setError('Failed to update enrollment status.');
         }
     };
 
@@ -295,6 +320,49 @@ const AccountDetails = () => {
                                 </>
                             ) : (
                                 <IconButton onClick={() => setEditMajor(true)}><EditIcon /></IconButton>
+                            )}
+                        </Grid>
+                    </Grid>
+
+                    <Divider sx={{ my: 2 }} />
+
+                    {/* Enrollment Status Section */}
+                    <Grid container alignItems="center" sx={{ mb: 2 }}>
+                        <Grid item xs={1}>
+                            <WorkIcon />
+                        </Grid>
+                        <Grid item xs={5}>
+                            <Typography>Enrollment Status</Typography>
+                        </Grid>
+                        <Grid item xs={5}>
+                            {editEnrollment ? (
+                                <TextField 
+                                    select 
+                                    value={newEnrollment} 
+                                    onChange={(e) => setNewEnrollment(e.target.value)} 
+                                    size="small" 
+                                    fullWidth
+                                >
+                                    {enrollmentOptions.map((option) => (
+                                        <MenuItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </MenuItem>
+                                    ))}
+                                </TextField>
+                            ) : (
+                                <Typography>
+                                    {enrollmentOptions.find(option => option.value === user?.enrollment_status)?.label || 'Not Provided'}
+                                </Typography>
+                            )}
+                        </Grid>
+                        <Grid item xs={1}>
+                            {editEnrollment ? (
+                                <>
+                                    <IconButton onClick={handleSaveEnrollment}><SaveIcon /></IconButton>
+                                    <IconButton onClick={() => setEditEnrollment(false)}><CancelIcon /></IconButton>
+                                </>
+                            ) : (
+                                <IconButton onClick={() => setEditEnrollment(true)}><EditIcon /></IconButton>
                             )}
                         </Grid>
                     </Grid>
