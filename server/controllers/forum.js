@@ -73,6 +73,7 @@ export const joinOrLeaveForum = async (req, res) => {
         }
         await user.save();
         res.json(user);
+        console.log("User saved forums:", user);
 
     } catch (error) {
         console.error('Error joining forum:', error);

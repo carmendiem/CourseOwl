@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid2';
-import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField, Icon, Popover } from '@mui/material';
+import { Card, CardContent, Typography, Box, Button, CardActionArea, TextField, Popover } from '@mui/material';
 import { Radio, RadioGroup, Checkbox, FormControlLabel } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { IconButton } from '@mui/material';
@@ -244,13 +244,14 @@ function ForumDetails() {
         setOpen(false);
     }
 
-    const joinLeaveForum = async (event) => {
+    const joinLeaveForum = async () => {
         console.log("Join/Leave forum clicked");
         const userId = user.id;
         const forumId = selectedForumId;
         try {
-            const res = await axios.get(`${config.API_BASE_URL}/forum/joinLeaveForum?userId=${userId}&forumId=${forumId}`);
+            const res = await axios.post(`${config.API_BASE_URL}/forum/joinLeaveForum?userId=${userId}&forumId=${forumId}`);
             user.savedForums = res.data.savedForums;
+            console.log("User saved forums: ", user.savedForums);
             joined = !joined;
         } catch (error) {
             console.log("Error joining/leaving forum: ", error);

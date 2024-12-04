@@ -17,6 +17,9 @@ import ResetPassword from "../pages/ResetPassword";
 import ForumDetails from "../components/Forum/ForumDetails";
 import AlertsPage from "../pages/AlertsPage";
 
+import Marketplace from "../pages/Marketplace";
+import MarketplaceItemDetails from "../components/MarketplaceItemDetails";
+import CreateListing from "../components/CreateListing";
 
 export function Rout({ setIsLoggedIn, isLoggedIn }) {
     return (
@@ -65,6 +68,31 @@ export function Rout({ setIsLoggedIn, isLoggedIn }) {
                 element={
                     <ProtectedRoute isLoggedIn={isLoggedIn}>
                         <Courses />
+                    </ProtectedRoute>
+                } 
+            />
+
+            <Route 
+                path="/marketplace" 
+                element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn}>
+                        <Marketplace />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
+                path="/marketplace/create" 
+                element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn}>
+                        <CreateListing />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
+                path="/marketplace/item/:id" 
+                element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn}>
+                        <MarketplaceItemDetails />
                     </ProtectedRoute>
                 } 
             />

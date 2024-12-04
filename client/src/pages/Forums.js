@@ -54,6 +54,7 @@ function Forums() {
         <div>
             <ThemeProvider theme={forumTheme}>
                 <ForumSearch user={user} userForums={userForums} detectChange={handleForumChange}/>
+                <div style={{height: "50px"}}></div>
                 <UserForums user={user} userForums={userForums} onChange={handleForumChange}/>
             </ThemeProvider>
         </div>

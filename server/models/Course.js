@@ -45,6 +45,9 @@ const courseSchema = new Schema({
     availSeats: {
         type: Number, default: null
     },
+    capacity: {
+        type: Number, default: null
+    },
 }, { collection: 'course_info3' });
 
 const Course = mongoose.models.Course || mongoose.model('Course', courseSchema);
