@@ -12,6 +12,7 @@ import config from '../config';
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 
 // colors
 const gold = "#daaa00";
@@ -58,6 +59,111 @@ export function CalendarView({user, change}) {
     const [calWidth, setCalWidth] = useState(0);
     const [courseObjs, setCourseObjs] = useState([]);
 
+    const [warningPositions, setWarningPositions] = useState([]);
+
+    const [warningPopupOpen, setWarningPopupOpen] = useState(false);
+
+// Function to toggle the warning popup
+const handleWarningClick = () => {
+    setWarningPopupOpen(true);
+};
+const handleWarningPopupClose = () => {
+    setWarningPopupOpen(false);
+};
+
+    // Helper function to convert time to minutes
+    const timeToMinutes = (time) => {
+        const [hours, minutes] = time.split(':').map((t) => parseInt(t, 10));
+        const isPM = time.toLowerCase().includes('pm');
+        const adjustedHours = hours === 12 ? (isPM ? 12 : 0) : hours + (isPM ? 12 : 0);
+        return adjustedHours * 60 + minutes;
+    };
+    
+
+    // Check for overlapping courses within 15 minutes
+    const checkWarnings = () => {
+        const warnings = [];
+        const dayCourseMap = {};
+    
+        // Map courses by days
+        courseObjs.forEach((course) => {
+            const days = course.Days?.split('') || [];
+            const [startTimeStr, endTimeStr] = course.Time
+                ? course.Time.split(' - ').map((t) => t.trim())
+                : [null, null];
+            const startTime = startTimeStr ? timeToMinutes(startTimeStr) : null;
+            const endTime = endTimeStr ? timeToMinutes(endTimeStr) : null;
+    
+            days.forEach((day) => {
+                if (!dayCourseMap[day]) dayCourseMap[day] = [];
+                if (startTime !== null && endTime !== null) {
+                    dayCourseMap[day].push({ startTime, endTime, course });
+                }
+            });
+        });
+    
+        // Detect warnings
+        Object.keys(dayCourseMap).forEach((day) => {
+            const courses = dayCourseMap[day].sort((a, b) => a.startTime - b.startTime);
+    
+            for (let i = 0; i < courses.length - 1; i++) {
+                const gap = courses[i + 1].startTime - courses[i].endTime;
+    
+                if (gap >= 0 && gap <= 11) { // Warning for courses within 10 minutes
+                    console.log(
+                        `Warning: ${courses[i].course.course_name} and ${courses[i + 1].course.course_name} on ${day} are too close.`
+                    );
+                    warnings.push({
+                        day,
+                        position: courses[i + 1].startTime,
+                        message: `Courses "${courses[i].course.course_name}" and "${courses[i + 1].course.course_name}" are too close.`,
+                    });
+                }
+            }
+        });
+    
+        setWarningPositions(warnings);
+    };
+    
+
+    useEffect(() => {
+        if (courseObjs.length > 0) {
+            checkWarnings();
+            makeCourses();
+        }
+    }, [courseObjs]);
+
+    const renderWarnings = () => {
+        return warningPositions.map((warning, index) => {
+            const dayIndex = DayCode.get(warning.day);
+            const leftPc = `${dayIndex * colWidth}%`;
+    
+            // Calculate `topPx` using time in minutes
+            const hours = Math.floor(warning.position / 60);
+            const minutes = warning.position % 60;
+            const topPx = `${getTimePos(`${hours}:${minutes.toString().padStart(2, '0')}`)}px`;
+    
+            return (
+                <div
+                    key={`warning-${index}`}
+                    style={{
+                        position: 'absolute',
+                        top: topPx,
+                        left: leftPc,
+                        zIndex: 10,
+                        color: 'red',
+                        fontSize: '2.4rem', // can adjust size of the warning sign
+                        cursor: 'pointer',
+                    }}
+                    onClick={handleWarningClick}
+                >
+                    <WarningAmberIcon />
+                </div>
+            );
+        });
+    };
+    
+    
     var calGrid = [];
     for (let i = 0; i < timesOfDay.length; i++) {
         calGrid.push(
@@ -329,19 +435,28 @@ export function CalendarView({user, change}) {
             // Fetch the course capacity and remaining seats
             const response = await axios.get(`${config.API_BASE_URL}/calendar/info?courseId=${course._id}`);
             const courseInfo = response.data;
+            
+            // Calculate expected weekly time commitment
+            const expectedTimeCommitment = course.credit_hours ? `${course.credit_hours * 3} hours` : "N/A";
     
             setSelectedCourse({
                 ...course,
                 capacity: courseInfo.capacity > 0 ? courseInfo.capacity : "Capacity Unavailable", // Handle capacity
                 remainingSeats: courseInfo.capacity > 0 ? courseInfo.availSeats : "N/A", // Handle remaining seats
+                expectedTimeCommitment: expectedTimeCommitment, // Add the calculated time commitment
             });
             setOpen(true);
         } catch (error) {
             console.log("Error fetching course info:", error);
-            setSelectedCourse(course); // Fallback to existing course data
+            const fallbackTimeCommitment = course.credit_hours ? `${course.credit_hours * 3} hours` : "N/A";
+            setSelectedCourse({ 
+                ...course, 
+                expectedTimeCommitment: fallbackTimeCommitment // Fallback for time commitment
+            });
             setOpen(true);
         }
     };
+    
 
 
     const handleClose = () => {
@@ -385,34 +500,68 @@ export function CalendarView({user, change}) {
                     ))}
                     {calGrid}
                     {courseDisp}
+                    {renderWarnings()}
                 </Grid>
+
+                {/* Warning Popup */}
+    <Dialog
+        open={warningPopupOpen}
+        onClose={handleWarningPopupClose}
+    >
+        <DialogTitle>Warning</DialogTitle>
+        <DialogContent>
+            <Typography>
+                Courses are scheduled within 10 minutes of each other. Ensure you have enough time to travel between locations.
+            </Typography>
+        </DialogContent>
+        <DialogActions>
+            <Button onClick={handleWarningPopupClose} color="primary">
+                OK
+            </Button>
+        </DialogActions>
+    </Dialog>
+
             </div>
     
             {/* Actions Section Below the Calendar */}
-            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <div style={{ textAlign: 'center', marginTop: '10px' }}>
                 {/* Download Button */}
                 <Button
-                    variant="contained"
-                    color="primary"
-                    style={{ margin: "10px" }}
-                    onClick={downloadPDF}
-                >
-                    Download PDF
-                </Button>
+                variant="contained"
+                color="primary"
+                style={{ margin: "10px" }}
+                onClick={downloadPDF}
+                disabled={courseObjs.length === 0} // Disable if no courses
+            >
+                Download Schedule as PDF
+            </Button>
     
-                {/* Total Credit Hours Section */}
-                <Typography
-                    style={{
-                        marginTop: '10px',
-                        fontSize: '1.2rem',
-                        fontWeight: 'bold',
-                    }}
-                >
-                    Total Credit Hours:{" "}
-                    {courseObjs.length > 0
-                        ? courseObjs.reduce((total, course) => total + (course.credit_hours || 0), 0)
-                        : "N/A"}
-                </Typography>
+                {/* Total Credit Hours and Weekly Time Commitment */}
+            <Typography
+                style={{
+                    marginTop: '10px',
+                    fontSize: '1.1rem'
+                }}
+            >
+                Total Credit Hours:{" "}
+                {courseObjs.length > 0
+                    ? `${courseObjs.reduce((total, course) => total + (course.credit_hours || 0), 0)} | Expected Weekly Time Commitment: ${courseObjs.reduce((total, course) => total + (course.credit_hours || 0), 0) * 3} hours`
+                    : "N/A"}
+            </Typography>
+                {/* Warning for Full-Time Students */}
+            {user?.enrollment_status === "full_time" &&
+                courseObjs.reduce((total, course) => total + (course.credit_hours || 0), 0) < 12 && (
+                    <Typography
+                        style={{
+                            color: 'red',
+                            marginTop: '10px',
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold',
+                        }}
+                    >
+                        Warning: You are enrolled as a full-time student but have less than 12 credit hours. Please add more courses to meet the minimum requirement.
+                    </Typography>
+                )}
             </div>
     
             <Dialog open={open} onClose={handleClose}>
@@ -445,6 +594,10 @@ export function CalendarView({user, change}) {
                             <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 16, mb: 1, textAlign: "left" }}>
                                 <strong>Capacity:</strong> {selectedCourse.capacity} | <strong>Remaining Seats:</strong> {selectedCourse.remainingSeats}
                             </Typography>
+                            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 16, mb: 1, textAlign: "left" }}>
+    Expected Weekly Time Commitment: {selectedCourse.expectedTimeCommitment}
+</Typography>
+
                         </DialogContent>
     
                         <IconButton onClick={handleDeleteConfirmationPopup} color="secondary"
