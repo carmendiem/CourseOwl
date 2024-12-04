@@ -458,7 +458,7 @@ export const reportPost = async (req, res) => {
 
         await transporter.sendMail({
             from: emailSender,
-            to: "carmendiem2003@gmail.com",
+            to: "courseowlapp@gmail.com",
             subject: "User Report Alert",
             text: message,
         });
