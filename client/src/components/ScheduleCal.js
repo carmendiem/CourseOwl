@@ -10,6 +10,8 @@ import { Delete } from '@mui/icons-material';
 import { CalCourseCard } from "./CalCourseCard";
 import config from '../config';
 import axios from "axios";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // colors
 const gold = "#daaa00";
@@ -122,6 +124,73 @@ export function CalendarView({user, change}) {
             await getCourseInfo(courses);
         }
     }
+
+    // const downloadPDF = async () => {
+    //     const pdf = new jsPDF("landscape", "px", "a4");
+    
+    //     // Add Title
+    //     pdf.setFontSize(18);
+    //     pdf.text("Course Calendar", 20, 30);
+    
+    //     let yOffset = 50; // Initial vertical offset
+    
+    //     // Add course details
+    //     courseObjs.forEach((course) => {
+    //       pdf.setFontSize(12);
+    //       pdf.text(`Course Name: ${course.course_name}`, 20, yOffset);
+    //       pdf.text(`Professor: ${course.Instructors.map((i) => i.name).join(", ") || "TBA"}`, 20, yOffset + 15);
+    //       pdf.text(`Time: ${course.Time || "TBA"} | Days: ${course.Days || "TBA"}`, 20, yOffset + 30);
+    //       pdf.text(`Location: ${course.Where || "TBA"}`, 20, yOffset + 45);
+    //       pdf.text(`Credits: ${course.credit_hours || "N/A"}`, 20, yOffset + 60);
+    //       pdf.text(`Capacity: ${course.capacity || "N/A"} | Remaining Seats: ${course.availSeats || "N/A"}`, 20, yOffset + 75);
+    
+    //       yOffset += 100; // Space between courses
+    
+    //       if (yOffset > pdf.internal.pageSize.height - 50) {
+    //         pdf.addPage();
+    //         yOffset = 50; // Reset yOffset for new page
+    //       }
+    //     });
+    
+    //     // Save PDF
+    //     pdf.save("CalendarDetails.pdf");
+    //   };
+
+    const downloadPDF = async () => {
+        const pdf = new jsPDF("landscape", "px", "a4");
+    
+        // Capture Calendar as an Image
+        const calendarElement = document.getElementById("calendar");
+        const canvas = await html2canvas(calendarElement);
+        const imgData = canvas.toDataURL("image/png");
+    
+        // Add Calendar to the First Page
+        pdf.addImage(imgData, "PNG", 20, 20, pdf.internal.pageSize.width - 40, 300);
+    
+        // Add Detailed Course Info to New Pages
+        pdf.addPage();
+        let yOffset = 20;
+    
+        courseObjs.forEach((course) => {
+          pdf.setFontSize(12);
+          pdf.text(`Course Name: ${course.course_name}`, 20, yOffset);
+          pdf.text(`Professor: ${course.Instructors.map((i) => i.name).join(", ") || "TBA"}`, 20, yOffset + 15);
+          pdf.text(`Time: ${course.Time || "TBA"} | Days: ${course.Days || "TBA"}`, 20, yOffset + 30);
+          pdf.text(`Location: ${course.Where || "TBA"}`, 20, yOffset + 45);
+          pdf.text(`Credits: ${course.credit_hours || "N/A"}`, 20, yOffset + 60);
+          pdf.text(`Capacity: ${course.capacity || "N/A"} | Remaining Seats: ${course.availSeats || "N/A"}`, 20, yOffset + 75);
+    
+          yOffset += 100;
+    
+          if (yOffset > pdf.internal.pageSize.height) {
+            pdf.addPage();
+            yOffset = 20;
+          }
+        });
+    
+        // Save PDF
+        pdf.save("CalendarDetails.pdf");
+      };
 
     const deleteCourse = async (courseId) => {
         const email = user.email;
@@ -255,10 +324,25 @@ export function CalendarView({user, change}) {
     const [openDeleteConfPopup, setOpenDeleteConfPopup] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState(null);
 
-    const handleCardClick = (course) => {
-        setSelectedCourse(course);
-        setOpen(true);
+    const handleCardClick = async (course) => {
+        try {
+            // Fetch the course capacity and remaining seats
+            const response = await axios.get(`${config.API_BASE_URL}/calendar/info?courseId=${course._id}`);
+            const courseInfo = response.data;
+    
+            setSelectedCourse({
+                ...course,
+                capacity: courseInfo.capacity > 0 ? courseInfo.capacity : "Capacity Unavailable", // Handle capacity
+                remainingSeats: courseInfo.capacity > 0 ? courseInfo.availSeats : "N/A", // Handle remaining seats
+            });
+            setOpen(true);
+        } catch (error) {
+            console.log("Error fetching course info:", error);
+            setSelectedCourse(course); // Fallback to existing course data
+            setOpen(true);
+        }
     };
+
 
     const handleClose = () => {
         setOpen(false);
@@ -282,85 +366,113 @@ export function CalendarView({user, change}) {
     };
 
     return (
-        <div > 
-            <Grid container 
-                sx={{ 
-                    width: `${calWidth-160}px`,
-                    position: "absolute", 
-                    borderRadius: 5, overflow: "hidden",
-                    outline: `3px solid ${gold}`,
-                }} 
-            >
-                {daysOfWeek.map((day) => (
-                    <Grid size={2}>
-                        <Item>{day}</Item>
-                    </Grid>
-                )) }
-                {calGrid}
-                {courseDisp}
-            </Grid>
+        <div>
+            {/* Calendar Container */}
+            <div style={{ marginBottom: "60px" }}>
+                <Grid container id="calendar"
+                    sx={{
+                        width: `${calWidth - 160}px`,
+                        position: "relative",
+                        borderRadius: 5,
+                        overflow: "hidden",
+                        outline: `3px solid ${gold}`,
+                    }}
+                >
+                    {daysOfWeek.map((day) => (
+                        <Grid size={2} key={`day-${day}`}>
+                            <Item>{day}</Item>
+                        </Grid>
+                    ))}
+                    {calGrid}
+                    {courseDisp}
+                </Grid>
+            </div>
+    
+            {/* Actions Section Below the Calendar */}
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                {/* Download Button */}
+                <Button
+                    variant="contained"
+                    color="primary"
+                    style={{ margin: "10px" }}
+                    onClick={downloadPDF}
+                >
+                    Download PDF
+                </Button>
+    
+                {/* Total Credit Hours Section */}
+                <Typography
+                    style={{
+                        marginTop: '10px',
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold',
+                    }}
+                >
+                    Total Credit Hours:{" "}
+                    {courseObjs.length > 0
+                        ? courseObjs.reduce((total, course) => total + (course.credit_hours || 0), 0)
+                        : "N/A"}
+                </Typography>
+            </div>
+    
             <Dialog open={open} onClose={handleClose}>
                 {selectedCourse ? (
                     <>
-                    {/* <DialogTitle>{`${selectedCourse.course_name || 'not found'}`}</DialogTitle> */}
-                    {/* <IconButton onClick={handleClose}
-                        sx={{
-                            position: 'absolute',
-                            right: 8,
-                            top: 8,
-                            color: (theme) => theme.palette.grey[500],
-                        }}
-                    >
-                        <Close />
-                    </IconButton>     */}
-                    <DialogContent>   
-                        {/* {console.log("selectedCourse: ", selectedCourse)} */}
-                        <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 20, mb: 1, textAlign:"left" }}>
-                            <Link to={`/course/${selectedCourse.course_code}`}>{selectedCourse.course_name}</Link>
-                        </Typography>
-                        <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign: "left" }}>
-                            {selectedCourse.credit_hours} Credits | {selectedCourse.Instructors.map((instructor, index) => (
-                                <span key={index}>
-                                    {instructor.name === "TBA" ? (
-                                        "TBA"
-                                    ) : (
-                                        <>
-                                            <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
-                                            {index < selectedCourse.Instructors.length - 1 ? ', ' : ''}
-                                        </>
-                                    )}
-                                </span>
-                            ))}
-                        </Typography>
-                        <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 16, mb: 1, textAlign:"left" }}>
-                            {selectedCourse['Schedule Type']} | {selectedCourse.Days} | {selectedCourse.Time}
-                        </Typography>
-                        <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 16, mb: 1, textAlign:"left" }}>
-                            {selectedCourse.Where}
-                        </Typography>
-                    </DialogContent>
-                    <IconButton onClick={handleDeleteConfirmationPopup} color="secondary"
-                        sx={{paddingBottom: 2, paddingLeft: 2, paddingRight: 2, fontSize: '0.9rem',}}
-                    >
+                        <DialogContent>
+                            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 20, mb: 1, textAlign: "left" }}>
+                                <Link to={`/course/${selectedCourse.course_code}`}>{selectedCourse.course_name}</Link>
+                            </Typography>
+                            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign: "left" }}>
+                                {selectedCourse.credit_hours} Credits | {selectedCourse.Instructors.map((instructor, index) => (
+                                    <span key={index}>
+                                        {instructor.name === "TBA" ? (
+                                            "TBA"
+                                        ) : (
+                                            <>
+                                                <Link to={`/professor/${instructor.alias}`}>{instructor.name}</Link>
+                                                {index < selectedCourse.Instructors.length - 1 ? ', ' : ''}
+                                            </>
+                                        )}
+                                    </span>
+                                ))}
+                            </Typography>
+                            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 16, mb: 1, textAlign: "left" }}>
+                                {selectedCourse['Schedule Type']} | {selectedCourse.Days} | {selectedCourse.Time}
+                            </Typography>
+                            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 16, mb: 1, textAlign: "left" }}>
+                                Location: {selectedCourse.Where}
+                            </Typography>
+                            <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 16, mb: 1, textAlign: "left" }}>
+                                <strong>Capacity:</strong> {selectedCourse.capacity} | <strong>Remaining Seats:</strong> {selectedCourse.remainingSeats}
+                            </Typography>
+                        </DialogContent>
+    
+                        <IconButton onClick={handleDeleteConfirmationPopup} color="secondary"
+                            sx={{ paddingBottom: 2, paddingLeft: 2, paddingRight: 2, fontSize: '0.9rem' }}
+                        >
                             Remove Course
                             <Delete />
                         </IconButton>
                     </>
                 ) : null}
             </Dialog>
+    
             <Dialog open={openDeleteConfPopup} onClose={handleDeleteConfPopupClose}>
                 {selectedCourse ? (
-                <>
-                    <DialogTitle>{`Confirm Removal of ${selectedCourse.course_name || 'not found'}`}</DialogTitle>
-                    <DialogActions>
-                        <Button onClick={() => handleDelete(selectedCourse)} color="secondary">Remove</Button>
-                        <Button onClick={handleDeleteConfPopupClose}>Cancel</Button>
-                    </DialogActions>
-                </>
+                    <>
+                        <DialogTitle>{`Confirm Removal of ${selectedCourse.course_name || 'not found'}`}</DialogTitle>
+                        <DialogActions>
+                            <Button onClick={() => handleDelete(selectedCourse)} color="secondary">Remove</Button>
+                            <Button onClick={handleDeleteConfPopupClose}>Cancel</Button>
+                        </DialogActions>
+                    </>
                 ) : null}
             </Dialog>
         </div>
     );
+    
+    
+    
 
 }
 

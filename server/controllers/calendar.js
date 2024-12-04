@@ -201,6 +201,49 @@ const getCourseAvailability = async (courseUrl) => {
     return remainingSeats;
 };
 
+const getCourseCapacity = async (courseUrl) => {
+    const driver = new Builder().forBrowser("chrome").setChromeOptions(options).build();
+    let capacity = null;
+
+    try {
+        // Step 1: Navigate to the course availability page
+        await driver.get(courseUrl);
+
+        // Step 2: Wait for the seating table to load
+        await driver.wait(until.elementLocated(By.css("table[summary='This layout table is used to present the seating numbers.']")), 20000);
+
+        // Step 3: Parse the page with JSDOM
+        const pageSource = await driver.getPageSource();
+        const dom = new JSDOM(pageSource);
+        const document = dom.window.document;
+
+        // Step 4: Locate the table with seating information
+        const table = document.querySelector("table[summary='This layout table is used to present the seating numbers.']");
+        if (table) {
+            const rows = table.querySelectorAll("tr");
+            if (rows.length > 1) {
+                const cells = rows[1].querySelectorAll("td");
+                if (cells.length === 3) {
+                    capacity = parseInt(cells[1].textContent.trim(), 10); // Get capacity
+                    console.log("heree lala");
+                    console.log(capacity);
+                }
+            }
+        }
+
+        if (capacity === null) {
+            console.error("Failed to retrieve course data due to missing data.");
+        }
+
+    } catch (error) {
+        console.error("Error in getCourseCapacity:", error);
+    } finally {
+        await driver.quit();
+    }
+
+    return { capacity };
+};
+
 
 // Main addUserCourse function
 export const addUserCourse = async (req, res) => {
@@ -227,6 +270,8 @@ export const addUserCourse = async (req, res) => {
         // Check and save availability using avail_url from the course document
         const remainingSeats = await getCourseAvailability(course.avail_url);  // Using avail_url from the course document
         course.availSeats = remainingSeats || 0;
+        const { capacity } = await getCourseCapacity(course.avail_url);
+        course.capacity = capacity || 0;
         await course.save();
 
         if (remainingSeats === 0) {

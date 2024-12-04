@@ -26,6 +26,9 @@ const userSchema = new mongoose.Schema({
     major: {
         type: String,
     },
+    enrollment_status: {
+        type: String,
+    },
     isVerified: {
         type: Boolean,
         default: false
