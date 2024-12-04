@@ -115,23 +115,21 @@ export function WishlistView({ user, change }) {
                                     <TableCell component="th" scope="row">
                                         {course.course_name}
                                     </TableCell>
-                                    <TableCell align="right">
-                                        {course.availSeats !== undefined && course.availSeats !== null ? (
-                                            <>
-                                                {course.availSeats > 0 ? (
-                                                    <span style={{ color: 'green', fontWeight: 'bold' }}>
-                                                        {`Open for Enrollment (${course.availSeats} seats available)`}
-                                                    </span>
-                                                ) : (
-                                                    <span style={{ color: 'red', fontWeight: 'bold' }}>
-                                                        {`Full (0 seats available)`}
-                                                    </span>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <span style={{ color: 'gray', fontWeight: 'bold' }}>N/A</span>
-                                        )}
-                                    </TableCell>
+                                    <TableCell align="left">
+                                    {course.availSeats !== undefined && course.availSeats !== null ? (
+                                        <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                                            <span style={{ color: course.availSeats > 0 ? 'green' : 'red' }}>
+                                                {course.availSeats > 0 ? 'Open for Enrollment' : 'Full'}
+                                            </span>
+                                            <br />
+                                            <span style={{ color: 'gray' }}>
+                                                ({course.availSeats} seats available)
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span style={{ color: 'gray', fontWeight: 'bold' }}>N/A</span>
+                                    )}
+                                </TableCell>
                                     <TableCell align="right">{course.Time || 'N/A'}</TableCell>
                                     <TableCell align="right">{course.Where || 'N/A'}</TableCell>
                                     <TableCell align="right">

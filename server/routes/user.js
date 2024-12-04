@@ -21,7 +21,4 @@ router.post('/sendTestEmail', sendTestEmail);
 // Route to reset the password using the token
 router.post('/reset-password/:token', resetPassword);
 
-//wishlist
-
-
 export default router;
