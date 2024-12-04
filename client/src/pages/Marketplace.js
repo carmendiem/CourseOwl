@@ -30,6 +30,8 @@ const Marketplace = () => {
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState([]);
     const purchaseModes = ['Shipping', 'In-person'];
     const paymentMethods = ['Cash', 'Card', 'Venmo', 'Zelle'];
+    const [userId, setUserId] = useState(null);
+    const [loading, setLoading] = useState(!userId);
 
     useEffect(() => {
         const fetchItems = async () => {
@@ -42,7 +44,24 @@ const Marketplace = () => {
             }
         };
         fetchItems();
-    }, []);
+        if (!userId) {
+            axios.get(`${config.API_BASE_URL}/user/`, { withCredentials: true })
+                .then(response => {
+                    if (response.data.user) {
+                        setUserId(response.data.user.id);
+                    } else {
+                        navigate("/login");
+                    }
+                })
+                .catch(() => navigate("/login"))
+                .finally(() => setLoading(false));
+        } else {
+            setLoading(false);
+        }
+    }, [navigate, userId]);
+    if (loading) {
+        return <center><h1>Loading...</h1></center>;
+    }
 
     const handleSearch = (e) => {
         const query = e.target.value.toLowerCase();
@@ -53,7 +72,6 @@ const Marketplace = () => {
     const applyFilters = (query, minPrice, maxPrice, purchaseModes, paymentMethods) => {
         let filtered = items;
 
-        // Apply search query
         if (query) {
             filtered = filtered.filter(
                 (item) =>
@@ -62,7 +80,6 @@ const Marketplace = () => {
             );
         }
 
-        // Apply price range filter
         if (minPrice !== '' || maxPrice !== '') {
             filtered = filtered.filter(
                 (item) =>
@@ -71,14 +88,12 @@ const Marketplace = () => {
             );
         }
 
-        // Apply purchase mode filter
         if (purchaseModes.length > 0) {
             filtered = filtered.filter((item) =>
                 item.purchaseMode.some((mode) => purchaseModes.includes(mode))
             );
         }
 
-        // Apply payment method filter
         if (paymentMethods.length > 0) {
             filtered = filtered.filter((item) =>
                 item.paymentMethods.some((method) => paymentMethods.includes(method))
@@ -107,11 +122,8 @@ const Marketplace = () => {
         setFilteredItems(items);
     };
 
-    // const handleViewDetails = (id) => {
-    //     navigate(`/marketplace/item/${id}`);
-    // };
     const handleViewDetails = (item) => {
-        navigate(`/marketplace/item/${item._id}`, { state: { item } });
+        navigate(`/marketplace/item/${item._id}`, { state: { item, userId} });
     };
     
     const handleCreateListing = () => {
@@ -218,15 +230,15 @@ const Marketplace = () => {
                         }}
                     >
                         <InputLabel
-                            shrink={selectedPurchaseModes.length > 0 || false} // Shrink only when there's a value
+                            shrink={selectedPurchaseModes.length > 0 || false} 
                             sx={{
                                 color: 'rgba(0, 0, 0, 0.6)',
-                                background: '#eeeeee', // Matches the background of the form
-                                px: 1, // Padding around the text
+                                background: '#eeeeee', 
+                                px: 1, 
                                 transform: selectedPurchaseModes.length
-                                    ? 'translate(14px, -7px) scale(.75)' // Move above if filled
-                                    : 'translate(14px, 16px) scale(1)', // Default inside box
-                                transition: 'all 0.2s ease-out', // Smooth transition
+                                    ? 'translate(14px, -7px) scale(.75)'
+                                    : 'translate(14px, 16px) scale(1)', 
+                                transition: 'all 0.2s ease-out', 
                             }}
                         >
                             Purchase Modes
@@ -239,8 +251,8 @@ const Marketplace = () => {
                             MenuProps={{
                                 PaperProps: {
                                     sx: {
-                                        bgcolor: '#f4f4f9', // Dropdown background color
-                                        color: '#2E3B55', // Dropdown text color
+                                        bgcolor: '#f4f4f9', 
+                                        color: '#2E3B55', 
                                     },
                                 },
                             }}
@@ -262,15 +274,15 @@ const Marketplace = () => {
                         }}
                     >
                         <InputLabel
-                            shrink={selectedPaymentMethods.length > 0 || false} // Shrink only when there's a value
+                            shrink={selectedPaymentMethods.length > 0 || false} 
                             sx={{
                                 color: 'rgba(0, 0, 0, 0.6)',
-                                background: '#eeeeee', // Matches the background of the form
-                                px: 1, // Padding around the text
+                                background: '#eeeeee',
+                                px: 1, 
                                 transform: selectedPaymentMethods.length
-                                    ? 'translate(14px, -7px) scale(.75)' // Move above if filled
-                                    : 'translate(14px, 16px) scale(1)', // Default inside box
-                                transition: 'all 0.2s ease-out', // Smooth transition
+                                    ? 'translate(14px, -7px) scale(.75)' 
+                                    : 'translate(14px, 16px) scale(1)', 
+                                transition: 'all 0.2s ease-out', 
                             }}
                         >
                             Payment Methods
@@ -283,8 +295,8 @@ const Marketplace = () => {
                             MenuProps={{
                                 PaperProps: {
                                     sx: {
-                                        bgcolor: '#f4f4f9', // Dropdown background color
-                                        color: '#2E3B55', // Dropdown text color
+                                        bgcolor: '#f4f4f9', 
+                                        color: '#2E3B55', 
                                     },
                                 },
                             }}
@@ -302,11 +314,11 @@ const Marketplace = () => {
                     <Button
                         variant="outlined"
                         sx={{
-                            color: 'rgba(0, 0, 0, 0.6)', // Text color
-                            borderColor: 'rgba(0, 0, 0, 0.6)', // Border color
+                            color: 'rgba(0, 0, 0, 0.6)', 
+                            borderColor: 'rgba(0, 0, 0, 0.6)', 
                             '&:hover': {
-                                borderColor: 'rgba(0, 0, 0, 0.6)', // Hover border color
-                                backgroundColor: 'rgba(0, 0, 0, 0.04)', // Optional: hover background color
+                                borderColor: 'rgba(0, 0, 0, 0.6)',
+                                backgroundColor: 'rgba(0, 0, 0, 0.04)', 
                             },
                         }}
                         onClick={handleClearFilters}

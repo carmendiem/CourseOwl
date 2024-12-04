@@ -11,15 +11,18 @@ import {
 } from '@mui/material';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import axios from 'axios';
+import config from '../config';
 
 const MarketplaceItemDetails = () => {
     const { state } = useLocation();
     const navigate = useNavigate();
 
     const item = state?.item;
+    const currentUserID = state?.userId;
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
+    
     if (!item) {
         return (
             <Typography
@@ -55,6 +58,17 @@ const MarketplaceItemDetails = () => {
         setIsModalOpen(false);
     };
 
+    const handleDeleteListing = async () => {
+        try {
+            await axios.delete(`${config.API_BASE_URL}/api/marketplace/${item._id}`);
+            navigate(-1); 
+        } catch (error) {
+            console.error('Error deleting the listing:', error);
+        }
+    };
+    
+    const isOwner = currentUserID === item.sellerId;
+
     return (
         <Box
             sx={{
@@ -66,17 +80,47 @@ const MarketplaceItemDetails = () => {
                 boxShadow: 3,
             }}
         >
-            <Typography
-                variant="h4"
+            <Box
                 sx={{
-                    fontWeight: 'bold',
-                    color: '#2E3B55',
-                    textAlign: 'center',
-                    mb: 2,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 3,
+                    position: 'relative',
                 }}
             >
-                {item.title}
-            </Typography>
+                <Typography
+                    variant="h4"
+                    sx={{
+                        fontWeight: 'bold',
+                        color: '#2E3B55',
+                        textAlign: 'center',
+                        flexGrow: 1, 
+                    }}
+                >
+                    {item.title}
+                </Typography>
+
+                {isOwner && (
+                    <Button
+                        onClick={handleDeleteListing}
+                        sx={{
+                            backgroundColor: '#d32f2f',
+                            color: '#fff',
+                            '&:hover': {
+                                backgroundColor: '#b71c1c',
+                            },
+                            fontWeight: 'bold',
+                            padding: '6px 12px',
+                            borderRadius: '4px',
+                            position: 'absolute', 
+                            right: 0, 
+                        }}
+                    >
+                        Delete
+                    </Button>
+                )}
+            </Box>
 
             <Box
                 sx={{
@@ -85,7 +129,6 @@ const MarketplaceItemDetails = () => {
                     mb: 3,
                 }}
             >
-                {/* Image Carousel */}
                 <Box
                     sx={{
                         position: 'relative',
@@ -161,7 +204,6 @@ const MarketplaceItemDetails = () => {
                     )}
                 </Box>
 
-                {/* Item Details */}
                 <Box
                     sx={{
                         width: '50%',
@@ -199,7 +241,6 @@ const MarketplaceItemDetails = () => {
                 </Box>
             </Box>
 
-            {/* Modal for Full Image View */}
             <Modal open={isModalOpen} onClose={handleCloseModal}>
                 <Box
                     sx={{
@@ -243,14 +284,12 @@ const MarketplaceItemDetails = () => {
                 </Box>
             </Modal>
 
-            {/* Seller and Additional Information */}
             <Box
                 sx={{
                     display: 'flex',
                     gap: 3,
                 }}
             >
-                {/* Seller Information */}
                 <Card
                     sx={{
                         flex: 1,
@@ -301,7 +340,6 @@ const MarketplaceItemDetails = () => {
                     </CardContent>
                 </Card>
 
-                {/* Additional Information */}
                 <Card
                     sx={{
                         flex: 1,
@@ -364,7 +402,7 @@ const MarketplaceItemDetails = () => {
                     marginLeft: 'auto',
                     marginRight: 'auto',
                 }}
-                onClick={() => navigate(-1)} // Go back to the previous page
+                onClick={() => navigate(-1)} 
             >
                 Back to Marketplace
             </Button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { TextField, Button, Typography, Box, Select, MenuItem, FormControl, InputLabel, Checkbox, ListItemText, Card, CardContent, Divider } from '@mui/material';
 import axios from 'axios';
 import config from '../config';
@@ -8,23 +8,47 @@ import { useNavigate } from 'react-router-dom';
 
 const CreateListing = () => {
     const navigate = useNavigate();
-    const [selectedImage, setSelectedImage] = useState(null); // Add this state
+    const [selectedImage, setSelectedImage] = useState(null); 
     const [errors, setErrors] = useState({});
-
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(!user);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         price: '',
+        sellerId: '',
         sellerName: '',
         sellerEmail: '',
         sellerContact: '',
-        purchaseMode: [], // Multi-selection for mode of purchase
-        paymentMethods: [], // Multi-selection for payment methods
+        purchaseMode: [], 
+        paymentMethods: [], 
         images: [],
     });
 
-    const purchaseModes = ['Shipping', 'In-person']; // Mode of purchase options
-    const paymentOptions = ['Cash', 'Card', 'Venmo', 'Zelle']; // Payment method options
+    const purchaseModes = ['Shipping', 'In-person'];
+    const paymentOptions = ['Cash', 'Card', 'Venmo', 'Zelle']; 
+    useEffect(() => {
+        if (!user) {
+            axios.get(`${config.API_BASE_URL}/user/`, { withCredentials: true })
+                .then(response => {
+                    if (response.data.user) {
+                        setUser(response.data.user);
+                        setFormData((prevFormData) => ({ ...prevFormData, sellerId: response.data.user.id }));
+                    } else {
+                        navigate("/login");
+                    }
+                })
+                .catch(() => navigate("/login"))
+                .finally(() => setLoading(false));
+        } else {
+            setLoading(false);
+        }
+    }, [user, navigate]);
+
+    if (loading) {
+        return <center><h1>Loading...</h1></center>;
+    }
+    
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -53,7 +77,7 @@ const CreateListing = () => {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.readAsDataURL(file);
-                    reader.onload = () => resolve(reader.result); // Base64 encoded string
+                    reader.onload = () => resolve(reader.result);
                     reader.onerror = (error) => reject(error);
                 });
             })
@@ -70,7 +94,7 @@ const CreateListing = () => {
         const fieldErrors = validateFields();
         if (Object.keys(fieldErrors).length > 0) {
             setErrors(fieldErrors);
-            return; // Prevent submission
+            return;
         }
         try {
             console.log(formData)
@@ -96,41 +120,35 @@ const CreateListing = () => {
                             gap: 2, 
                         }}
                     >
-                    {/* Title */}
                     <TextField
                         label="Title"
                         name="title"
                         value={formData.title}
                         onChange={handleChange}
                         fullWidth
-                        error={!!errors.title} // Highlight field in red if error exists
-                        helperText={errors.title} // Display error message
+                        error={!!errors.title} 
+                        helperText={errors.title} 
                         sx={{
                             mb: 3,
-                            '& .MuiInputLabel-root': { color: '#2E3B55' }, // Label color
+                            '& .MuiInputLabel-root': { color: '#2E3B55' }, 
                             '& .MuiOutlinedInput-root': {
                                 '& fieldset': {
-                                    borderColor: '#2E3B55', // Border color
+                                    borderColor: '#2E3B55', 
                                 },
                                 '&:hover fieldset': {
-                                    borderColor: '#2E3B55', // Hover border color
+                                    borderColor: '#2E3B55',
                                 },
                                 '&.Mui-focused fieldset': {
-                                    borderColor: '#2E3B55', // Focused border color
+                                    borderColor: '#2E3B55',
                                 },
                             },
                         }}
                     />
-                     {/* Price */}
                      <TextField
                         label="Price"
                         name="price"
                         type="number"
                         value={formData.price}
-                        // onChange={(e) => {
-                        //     const value = e.target.value; // Directly use the value entered
-                        //     setFormData({ ...formData, price: value }); // Store the value in the state
-                        // }}
                         onChange={handleChange}
                         InputProps={{
                             startAdornment: <InputAdornment position="start">$</InputAdornment>,
@@ -150,7 +168,7 @@ const CreateListing = () => {
                         }}
                     />
                     </Box>
-                    {/* Description */}
+
                     <TextField
                         label="Description"
                         name="description"
@@ -171,8 +189,6 @@ const CreateListing = () => {
                     />
 
                    
-
-                    {/* Seller Name */}
                     <TextField
                         label="Seller Name"
                         name="sellerName"
@@ -194,10 +210,10 @@ const CreateListing = () => {
                     <Box
                         sx={{
                             display: 'flex',
-                            gap: 2, // Adjust the space between the two fields
+                            gap: 2, 
                         }}
                     >
-                    {/* Seller Email */}
+
                     <TextField
                         label="Seller Email"
                         name="sellerEmail"
@@ -216,7 +232,7 @@ const CreateListing = () => {
                             },
                         }}
                     />
-                    {/* Seller Contact */}
+
                     <TextField
                         label="Seller Contact No."
                         name="sellerContact"
@@ -238,27 +254,26 @@ const CreateListing = () => {
                     />
                     </Box>
 
-                    {/* Mode of Purchase and Payment Methods */}
                     <Box
                         sx={{
                             display: 'flex',
-                            gap: 2, // Adjust the space between the two fields
+                            gap: 2, 
                             mb: 3,
                         }}
                     >
-                        {/* Mode of Purchase */}
+
                         <FormControl
                             fullWidth
                             sx={{
                                 '& .MuiOutlinedInput-root': {
                                     '& fieldset': {
-                                        borderColor: '#2E3B55', // Default border color
+                                        borderColor: '#2E3B55', 
                                     },
                                     '&:hover fieldset': {
-                                        borderColor: '#2E3B55', // Hover state border color
+                                        borderColor: '#2E3B55',
                                     },
                                     '&.Mui-focused fieldset': {
-                                        borderColor: '#2E3B55', // Focused state border color
+                                        borderColor: '#2E3B55', 
                                     },
                                 },
                                 '& .MuiInputLabel-root': { color: '#2E3B55' },
@@ -266,15 +281,15 @@ const CreateListing = () => {
                         >
                             <InputLabel
                                 id="purchase-mode-label"
-                                shrink={formData.purchaseMode.length > 0 || false} // Shrink only when there's a value
+                                shrink={formData.purchaseMode.length > 0 || false} 
                                 sx={{
                                     color: '#2E3B55',
-                                    background: '#f4f4f9', // Matches the background of the form
-                                    px: 1, // Padding around the text
+                                    background: '#f4f4f9', 
+                                    px: 1, 
                                     transform: formData.purchaseMode.length
-                                        ? 'translate(14px, -7px) scale(.75)' // Move above if filled
-                                        : 'translate(14px, 16px) scale(1)', // Default inside box
-                                    transition: 'all 0.2s ease-out', // Smooth transition
+                                        ? 'translate(14px, -7px) scale(.75)' 
+                                        : 'translate(14px, 16px) scale(1)', 
+                                    transition: 'all 0.2s ease-out', 
                                 }}
                             >
                                 Mode of Purchase
@@ -287,13 +302,13 @@ const CreateListing = () => {
                                 renderValue={(selected) => selected.join(', ')}
                                 sx={{
                                     '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#2E3B55', // Default border color
+                                        borderColor: '#2E3B55', 
                                     },
                                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#2E3B55', // Hover state border color
+                                        borderColor: '#2E3B55', 
                                     },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#2E3B55', // Focused state border color
+                                        borderColor: '#2E3B55',
                                     },
                                 }}
                             >
@@ -306,22 +321,18 @@ const CreateListing = () => {
                             </Select>
                         </FormControl>
 
-
-
-
-                        {/* Payment Methods */}
                         <FormControl
                             fullWidth
                             sx={{
                                 '& .MuiOutlinedInput-root': {
                                     '& fieldset': {
-                                        borderColor: '#2E3B55', // Default border color
+                                        borderColor: '#2E3B55',
                                     },
                                     '&:hover fieldset': {
-                                        borderColor: '#2E3B55', // Hover state border color
+                                        borderColor: '#2E3B55', 
                                     },
                                     '&.Mui-focused fieldset': {
-                                        borderColor: '#2E3B55', // Focused state border color
+                                        borderColor: '#2E3B55', 
                                     },
                                 },
                                 '& .MuiInputLabel-root': { color: '#2E3B55' },
@@ -329,15 +340,15 @@ const CreateListing = () => {
                         >
                             <InputLabel
                                 id="payment-methods-label"
-                                shrink={formData.paymentMethods.length > 0 || false} // Shrink only when there's a value
+                                shrink={formData.paymentMethods.length > 0 || false}
                                 sx={{
                                     color: '#2E3B55',
-                                    background: '#f4f4f9', // Matches the background of the form
-                                    px: 1, // Padding around the text
+                                    background: '#f4f4f9', 
+                                    px: 1,
                                     transform: formData.paymentMethods.length
-                                        ? 'translate(14px, -7px) scale(.75)' // Move above if filled
-                                        : 'translate(14px, 16px) scale(1)', // Default inside box
-                                    transition: 'all 0.2s ease-out', // Smooth transition
+                                        ? 'translate(14px, -7px) scale(.75)' 
+                                        : 'translate(14px, 16px) scale(1)', 
+                                    transition: 'all 0.2s ease-out', 
                                 }}
                             >
                                 Payment Methods
@@ -351,20 +362,20 @@ const CreateListing = () => {
                                 MenuProps={{
                                     PaperProps: {
                                         sx: {
-                                            bgcolor: '#f4f4f9', // Dropdown background color
-                                            color: '#2E3B55', // Dropdown text color
+                                            bgcolor: '#f4f4f9', 
+                                            color: '#2E3B55', 
                                         },
                                     },
                                 }}
                                 sx={{
                                     '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#2E3B55', // Default border color
+                                        borderColor: '#2E3B55', 
                                     },
                                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#2E3B55', // Hover state border color
+                                        borderColor: '#2E3B55', 
                                     },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#2E3B55', // Focused state border color
+                                        borderColor: '#2E3B55',
                                     },
                                 }}
                             >
@@ -379,31 +390,11 @@ const CreateListing = () => {
 
                     </Box>
 
-
-
-                    {/* Image Upload */}
                     <Box sx={{ mb: 3 }}>
                     <Button variant="contained" component="label">
                         Upload Images
                         <input type="file" multiple hidden onChange={handleImageUpload} />
                     </Button>
-
-                        {/* <Button variant="contained" component="label">
-                            Upload Images
-                            <input
-                                type="file"
-                                multiple
-                                hidden
-                                onChange={(e) => {
-                                    const files = Array.from(e.target.files); // Convert FileList to Array
-                                    const imageUrls = files.map((file) => URL.createObjectURL(file));
-                                    setFormData((prevFormData) => ({
-                                        ...prevFormData,
-                                        images: [...prevFormData.images, ...imageUrls], // Append new images to existing ones
-                                    }));
-                                }}
-                            />
-                        </Button> */}
 
                         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 2 }}>
                             {formData.images.map((image, index) => (
@@ -413,9 +404,9 @@ const CreateListing = () => {
                                         position: 'relative',
                                         width: '100px',
                                         height: '100px',
-                                        cursor: 'pointer', // Indicates clickability
+                                        cursor: 'pointer', 
                                     }}
-                                    onClick={() => setSelectedImage(image)} // Open modal on click
+                                    onClick={() => setSelectedImage(image)}
                                 >
                                     <img
                                         src={image}
@@ -448,10 +439,10 @@ const CreateListing = () => {
                                             },
                                         }}
                                         onClick={(e) => {
-                                            e.stopPropagation(); // Prevent triggering modal on delete
+                                            e.stopPropagation(); 
                                             setFormData((prevFormData) => ({
                                                 ...prevFormData,
-                                                images: prevFormData.images.filter((_, i) => i !== index), // Remove image by index
+                                                images: prevFormData.images.filter((_, i) => i !== index), 
                                             }));
                                         }}
                                     >
@@ -462,16 +453,16 @@ const CreateListing = () => {
                         </Box>
 
                         <Dialog
-                            open={!!selectedImage} // Open when an image is selected
-                            onClose={() => setSelectedImage(null)} // Close the dialog
-                            maxWidth="lg" // Set dialog size
+                            open={!!selectedImage} 
+                            onClose={() => setSelectedImage(null)} 
+                            maxWidth="lg"
                         >
                             <DialogContent
                                 sx={{
                                     display: 'flex',
                                     justifyContent: 'center',
                                     alignItems: 'center',
-                                    backgroundColor: '#000', // Dark background for better visibility
+                                    backgroundColor: '#000', 
                                     padding: 2,
                                 }}
                             >
@@ -481,7 +472,7 @@ const CreateListing = () => {
                                     style={{
                                         maxWidth: '100%',
                                         maxHeight: '80vh',
-                                        objectFit: 'contain', // Maintain aspect ratio
+                                        objectFit: 'contain',
                                         borderRadius: '8px',
                                     }}
                                 />
@@ -489,8 +480,6 @@ const CreateListing = () => {
                         </Dialog>
                     </Box>
 
-
-                    {/* Submit Button */}
                     <Button
                         variant="contained"
                         color="primary"

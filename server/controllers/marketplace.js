@@ -1,26 +1,15 @@
 // controllers/marketplace.js
 import MarketplaceItem from '../models/MarketplaceItem.js';
 
-// export const createListing = async (req, res) => {
-//     try {
-//         const item = new MarketplaceItem(req.body);
-//         console.log(item);
-//         await item.save();
-//         res.status(201).json(item);
-//     } catch (error) {
-//         res.status(400).json({ error: error.message });
-//     }
-// };
 export const createListing = async (req, res) => {
     try {
         const { images, ...rest } = req.body;
 
-        // Validate and process images
         const processedImages = images.map((image) => {
             if (!image.startsWith('data:image/')) {
                 throw new Error('Invalid image format');
             }
-            return image; // Already Base64 encoded
+            return image;
         });
 
         const item = new MarketplaceItem({ ...rest, images: processedImages });

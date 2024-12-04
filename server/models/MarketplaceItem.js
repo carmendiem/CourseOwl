@@ -12,7 +12,12 @@ const marketplaceItemSchema = new Schema({
     sellerContact:{type: Number},
     images: [String], 
     purchaseMode: [String],
-    paymentMethods: [String], 
+    paymentMethods: [String],
+    sellerId: {
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User',
+        required:true
+    },
 }, { timestamps: true,
     collection: 'marketplaceItems',
  });
