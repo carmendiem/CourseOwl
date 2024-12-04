@@ -92,6 +92,11 @@ export function CourseCard({ user, course, onChange }) {
                         <Typography gutterBottom sx={{ color: 'text.primary', fontSize: 14, mb: 1, textAlign: "left" }}>
                             {course.Where}
                         </Typography>
+                        <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14, mt: 1, textAlign: "left" }}>
+    Expected Weekly Time Commitment: {course.credit_hours > 0 ? `${course.credit_hours * 3} hours` : "N/A"}
+</Typography>
+
+
                     </CardContent>
                 </CardActionArea>
             </Card>
