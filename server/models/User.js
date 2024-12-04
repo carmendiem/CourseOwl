@@ -60,6 +60,7 @@ const userSchema = new mongoose.Schema({
         default: "in_app",
     },
     avail_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
 });
 
 const User = mongoose.model('User', userSchema);
