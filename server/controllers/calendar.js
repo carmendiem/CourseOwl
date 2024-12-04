@@ -336,7 +336,7 @@ export const addUserCourse = async (req, res) => {
 
         const responseMessage = conflictDetected
             ? { status: "Course added with time conflicts", timeConflict: true, conflictCourses }
-            : { status: "Course added", availSeats: remainingSeats };
+            : { status: "Course added", availSeats: course.availSeats };
 
         res.json(responseMessage);
     } catch (error) {
