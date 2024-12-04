@@ -11,11 +11,13 @@ import professorRoutes from './routes/professor.js';
 import forumRoutes from './routes/forum.js';
 import alertRoutes from './routes/alert.js';
 import courseRoutes from './routes/courseRoutes.js';
+import marketplaceRoutes from './routes/marketplace.js';
 import { exec } from "child_process";
 
 const PORT = process.env.PORT || 3001;
 const app = express();
-
+app.use(express.json({ limit: '10mb' })); 
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Middleware
 app.use(cors({
     origin: 'http://localhost:3000',
@@ -41,6 +43,7 @@ app.use("/professor", professorRoutes);
 app.use("/forum", forumRoutes);
 app.use("/api/alerts", alertRoutes); // Added alerts route
 app.use('/course', courseRoutes);
+app.use("/api/marketplace", marketplaceRoutes);
 
 // Function to run course_availability.py
 // const runCourseAvailabilityScript = () => {
