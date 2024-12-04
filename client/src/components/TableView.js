@@ -163,19 +163,36 @@ const totalCreditHours = courseObjs.reduce((total, course) => total + (course.cr
         </Table>
       )}
       </TableContainer>
-      {/* Total Credit Hours Section */}
-  <div style={{ marginTop: '1rem', textAlign: 'right', fontSize: '1.2rem', fontWeight: 'bold' }}>
-    Total Credit Hours:{" "}
-    {courseObjs.length > 0
-      ? courseObjs.reduce((total, course) => total + (course.credit_hours || 0), 0)
-      : "N/A"}
-  </div>
-  {/* Warning Message */}
-  {enrollmentStatus === "full_time" && totalCreditHours < 12 && (
-                <div style={{ marginTop: '1rem', textAlign: 'right', fontSize: '1rem', color: 'red', fontWeight: 'bold' }}>
-                    Warning: As a full-time student, you need at least 12 credit hours to meet the requirement. Please add more courses.
-                </div>
-            )}
+      {/* Total Credit Hours and Time Commitment Section */}
+    {courseObjs.length > 0 && (
+      <div
+        style={{
+          marginTop: "3rem",
+          textAlign: "center",
+          fontSize: "1rem",
+        }}
+      >
+        Total Credit Hours: {totalCreditHours} | Expected Weekly Time Commitment:{" "}
+        {totalCreditHours * 3} hours
+      </div>
+    )}
+
+    {/* Warning Message */}
+    {enrollmentStatus === "full_time" && totalCreditHours < 12 && (
+      <div
+        style={{
+          marginTop: "1rem",
+          textAlign: "center",
+          fontSize: "0.9rem",
+          color: "red",
+          fontWeight: "bold",
+        }}
+      >
+        Warning: You are enrolled as a full-time student but have less than 12
+        credit hours. Please add more courses to meet the minimum requirement.
+      </div>
+    )}
+
       <Dialog open={openDeleteConfPopup} onClose={handleDeleteConfPopupClose}>
           {selectedCourse ? (
           <>
