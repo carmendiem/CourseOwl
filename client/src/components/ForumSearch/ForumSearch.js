@@ -18,7 +18,7 @@ async function fetchForums(searchTerm) {
     }
 }
 
-export function ForumSearch() {
+export function ForumSearch({user, detectChange}) {
     const [forumResults, setForumResults] = useState([])
     const [searchTerm, setSearchTerm] = useState("");
     const [searchAlert, setSearchAlert] = useState("");
@@ -75,7 +75,7 @@ export function ForumSearch() {
                     <ForumSwiperComponent
                         slides={forumResults.map((forum) =>
                         (
-                            <ForumCard key={forum._id} forum={forum}> </ForumCard>
+                            <ForumCard key={forum._id} user={user} forum={forum} joined={user.savedForums.includes(forum._id)} onChange={detectChange}> </ForumCard>
                         )
                         )}>
                     </ForumSwiperComponent>

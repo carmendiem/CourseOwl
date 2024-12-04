@@ -7,6 +7,23 @@ import nodemailer from 'nodemailer';
 mongoose.set('strictQuery', false);
 connectMongo();
 
+export const getUserForums = async (req, res) => {
+    try{
+        const {userId} = req.query;
+        const user = await User.findById(userId)
+        if (!user.savedForums) {
+            user.savedForums = [];
+            return res.status(404).json({status: 'Forums not found'});
+        }
+        else {
+            return res.json(user.savedForums);
+        }
+    } catch (error) {
+        console.log("Error in getUserForums:", error);
+        res.status(400).json({ status: 'Error fetching forums' });
+    }
+}
+
 export const getForumInfo = async (req, res) => {
     try {
         const { forumId } = req.query;
@@ -22,18 +39,45 @@ export const getForumInfo = async (req, res) => {
     }
 }
 
-export const getUserName = async (req, res) => {
+export const getUserNameVerification = async (req, res) => {
     try {
         const { userId } = req.query;
         const user = await User.findById(userId);
         if (user != null) {
-            return res.json(user.name);
+            const nameAndVer = {name: user.name, verStatus: user.isVerified}
+            return res.json(nameAndVer);
         } else {
             return res.status(404).json({ status: 'user not found' });
         }
     } catch (error) {
-        console.log("Error in getUserName:", error);
+        console.log("Error in getUserNameVerification:", error);
         res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
+export const joinOrLeaveForum = async (req, res) => {
+    try {
+        const { userId, forumId } = req.query;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (!user.savedForums) {
+            user.savedForums = [];
+        }
+        if (!user.savedForums.includes(forumId)) {
+            user.savedForums.push(forumId); //join forum
+        } else {
+            // leave forum
+            user.savedForums = user.savedForums.filter(id => id.toString() !== forumId);
+        }
+        await user.save();
+        res.json(user);
+        console.log("User saved forums:", user);
+
+    } catch (error) {
+        console.error('Error joining forum:', error);
+        res.status(500).json({ message: 'Error joining forum' });
     }
 }
 
@@ -49,6 +93,53 @@ export const createPost = async (req, res) => {
         }
     } catch (error) {
         console.log("Error in createPost:", error);
+        res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
+export const editPost = async (req, res) => {
+    try {
+        const { title, body, anon, chosenTag, forumId, postId } = req.query;
+        const forum = await Forum.findOne({ _id: forumId });
+        if (!forum) {
+            return res.status(404).json({ status: 'forum not found' });
+        }
+        const post = forum.posts.id(postId);
+        if (!post) {
+            return res.status(404).json({ status: 'post not found' });
+        }
+        console.log("tag:", chosenTag);
+        post.title = title;
+        post.body = body;
+        post.anon = anon;
+        post.tag = chosenTag;
+        post.edited = true;
+        await forum.save();
+        return res.json(post);
+    } catch (error) {
+        console.log("Error in editPost:", error);
+        res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
+export const deletePost = async (req, res) => {
+    try {
+        const { postId, forumId } = req.query;
+        const forum = await Forum.findOneAndUpdate({ _id: forumId }, { $pull: { posts: { _id: postId } } }, { new: true });
+        
+        
+        if (!forum) {
+            return res.status(404).json({ status: 'forum not found' });
+        } else {
+            const users = await User.find({ savedPosts: postId });
+            for (const user of users) {
+                user.savedPosts.pull(postId);
+                await user.save();
+            }
+            return res.json(forum);
+        }
+    } catch (error) {
+        console.log("Error in deletePost:", error);
         res.status(400).json({ status: 'Error fetching forum' });
     }
 }
@@ -70,6 +161,50 @@ export const createComment = async (req, res) => {
         return res.json(forum);
     } catch (error) {
         console.log("Error in createComment:", error);
+        res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
+export const editComment = async (req, res) => {
+    try {
+        const { body, anon, forumId, postId, commentIdx } = req.query;
+        const forum = await Forum.findById(forumId);
+        if (!forum) {
+            return res.status(404).json({ status: 'forum not found' });
+        }
+        const post = forum.posts.id(postId);
+        if (!post) {
+            return res.status(404).json({ status: 'post not found' });
+        }
+        const comment = post.comments[commentIdx];
+        comment.body = body;
+        comment.anon = anon;
+        comment.edited = true;
+        post.comments.set(commentIdx, comment);
+        await forum.save();
+        return res.json(post);
+    } catch (error) {
+        console.log("Error in editComment:", error);
+        res.status(400).json({ status: 'Error fetching forum' });
+    }
+}
+
+export const deleteComment = async (req, res) => {
+    try {
+        const { commentIdx, postId, forumId } = req.query;
+        const forum = await Forum.findById(forumId);
+        if (!forum) {
+            return res.status(404).json({ status: 'forum not found' });
+        }
+        const post = forum.posts.id(postId);
+        if (!post) {
+            return res.status(404).json({ status: 'post not found' });
+        }
+        post.comments.splice(commentIdx, 1);
+        await forum.save();
+        return res.json(post);
+    } catch (error) {
+        console.log("Error in deleteComment:", error);
         res.status(400).json({ status: 'Error fetching forum' });
     }
 }
