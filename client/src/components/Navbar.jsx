@@ -90,12 +90,13 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
                                 <Typography sx={textStyle(location.pathname === '/forums')}>Forums</Typography>
                             </ListItem>
 
-                            <ListItem button component={Link} to="/courses" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            {/* <ListItem button component={Link} to="/courses" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <IconButton sx={iconStyle(location.pathname.startsWith('/courses') || location.pathname.startsWith('/course/'))}>
                                     <ClassIcon />
                                 </IconButton>
                                 <Typography sx={textStyle(location.pathname.startsWith('/courses') || location.pathname.startsWith('/course/'))}>Courses</Typography>
-                            </ListItem>
+                            </ListItem> */}
+
                             <ListItem button component={Link} to="/marketplace" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <IconButton sx={iconStyle(location.pathname === '/marketplace')}>
                                     <StoreIcon />

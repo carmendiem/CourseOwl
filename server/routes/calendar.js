@@ -1,5 +1,5 @@
 import express from "express";
-import {getUserCourses, getCourseInfo, removeUserCourse, addUserCourse, optInForAvailabilityAlert, getUserWishlist, removeUserWishlist, addUserCourseWishlist} from "../controllers/calendar.js";
+import {getUserCourses, getCourseInfo, removeUserCourse, addUserCourse, optInForAvailabilityAlert, getUserWishlist, removeUserWishlist, addUserCourseWishlist, checkWishlist} from "../controllers/calendar.js";
 
 const router = express.Router();
 
@@ -13,6 +13,6 @@ router.post("/optInForAvailabilityAlert", optInForAvailabilityAlert)
 router.get("/userW", getUserWishlist);
 router.post("/deleteCourseW", removeUserWishlist);
 router.post("/addCourseW", addUserCourseWishlist);
-
+router.post('/checkWishlist', checkWishlist);
 
 export default router;

@@ -416,3 +416,26 @@ export const addUserCourseWishlist = async (req, res) => {
         res.status(500).json({ status: "Error adding course" });
     }
 };
+
+// Method to check if a course is already in the user's wishlist
+export const checkWishlist = async (req, res) => {
+    try {
+        const { email, courseId } = req.body;
+
+        // Find the user by their email
+        const user = await UserModel.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ status: "User not found" });
+        }
+
+        // Check if the course exists in the user's wishlist
+        if (user.wishlist.includes(courseId)) {
+            return res.json({ status: "Course is in wishlist" });
+        } else {
+            return res.json({ status: "Course is not in wishlist" });
+        }
+    } catch (error) {
+        console.error("Error in checkWishlist:", error);
+        res.status(500).json({ status: "Error checking wishlist" });
+    }
+};
