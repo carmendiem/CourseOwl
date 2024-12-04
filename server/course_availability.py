@@ -24,7 +24,7 @@ alerts_collection = db['alerts']  # Assuming alerts are stored in a collection n
 smtp_server = "smtp.gmail.com"
 smtp_port = 587
 email_sender = "courseowlapp@gmail.com"
-email_password = "uxqv ebab htkf vswi"
+email_password = "nhgl juyg pacg jjpq"
 
 # Selenium setup for Chrome
 options = webdriver.ChromeOptions()

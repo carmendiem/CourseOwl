@@ -201,7 +201,7 @@ export const updateUserDetails = async (req, res) => {
 const smtpServer = "smtp.gmail.com";
 const smtpPort = 587;
 const emailSender = "courseowlapp@gmail.com";
-const emailPassword = "uxqv ebab htkf vswi"
+const emailPassword = "nhgl juyg pacg jjpq"
 
 const transporter = nodemailer.createTransport({
     host: smtpServer,
