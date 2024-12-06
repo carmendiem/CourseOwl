@@ -549,8 +549,8 @@ function DisplayDraft({ user, forum, handleDraft }) {
             setBodyError("Body cannot be empty");
             return;
         }
-        const userId = user.id;
-        if (userId === null) {
+        var userId = user.id;
+        if (userId === null || userId === undefined) {
             userId = user._id;
         }
         const post = { title, body, anon, chosenTag, userId, forumId };
