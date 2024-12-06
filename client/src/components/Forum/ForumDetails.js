@@ -1019,13 +1019,10 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
             setBodyError("Comment cannot be empty");
             return;
         }
-        console.log("user when post: ", user);
         var userId = user.id;
-        console.log("user id1: ", userId);
         if (userId === null || userId === undefined) {
             userId = user._id;
         }
-        console.log("user id2: ", userId);
         const postId = post._id;
         const forumId = forum._id;
         const comment = { body, anon, userId, forumId, postId };
