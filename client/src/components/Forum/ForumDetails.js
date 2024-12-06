@@ -1014,16 +1014,18 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
             console.error("User is not loaded yet");
             return;
         }
+        console.log("user: ", user);
         if (!body) {
             setBodyError("Comment cannot be empty");
             return;
         }
-        const userId = user.id;
-        // console.log("user id1: ", userId);
-        if (userId === null) {
+        console.log("user when post: ", user);
+        var userId = user.id;
+        console.log("user id1: ", userId);
+        if (userId === null || userId === undefined) {
             userId = user._id;
         }
-        // console.log("user id2: ", userId);
+        console.log("user id2: ", userId);
         const postId = post._id;
         const forumId = forum._id;
         const comment = { body, anon, userId, forumId, postId };
@@ -1080,6 +1082,7 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
             };
             const res = await axios.post(`${config.API_BASE_URL}/forum/bookmarkPost`, bookmarkData);
             const data = await res.data;
+            console.log(data)
             setSavedPosts(data.savedPosts)
             setUser(data)
         } catch (error) {
