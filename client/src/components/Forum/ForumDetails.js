@@ -303,7 +303,9 @@ function ForumDetails() {
             const names = [];
             const verified = [];
             if(currentPost != null){
+                console.log(currentPost.author)
                 const response = await getUserNameVerification(currentPost.author);
+                console.log("response: ", response);
                 verified.push(response.verStatus);
                 if (currentPost.anon != null && currentPost.anon) {
                     names.push("Anon");
@@ -535,7 +537,7 @@ function DisplayDraft({ user, forum, handleDraft }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!user) {
+        if (!user || user === undefined) {
             console.error("User is not loaded yet");
             return;
         }
@@ -547,10 +549,12 @@ function DisplayDraft({ user, forum, handleDraft }) {
             setBodyError("Body cannot be empty");
             return;
         }
-        const userId = user.id;
+        var userId = user.id;
+        if (userId === null || userId === undefined) {
+            userId = user._id;
+        }
         const post = { title, body, anon, chosenTag, userId, forumId };
         await postPost(post);
-
     };
 
     if (!forum) {
@@ -1006,15 +1010,19 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
 
     const handleReply = async (e) => {
         e.preventDefault();
-        if (!user) {
+        if (!user || user === undefined) {
             console.error("User is not loaded yet");
             return;
         }
+        console.log("user: ", user);
         if (!body) {
             setBodyError("Comment cannot be empty");
             return;
         }
-        const userId = user.id;
+        var userId = user.id;
+        if (userId === null || userId === undefined) {
+            userId = user._id;
+        }
         const postId = post._id;
         const forumId = forum._id;
         const comment = { body, anon, userId, forumId, postId };
@@ -1071,6 +1079,7 @@ function DisplayPostandReply({ user, forum, post, postAuthors, postVer, handlePo
             };
             const res = await axios.post(`${config.API_BASE_URL}/forum/bookmarkPost`, bookmarkData);
             const data = await res.data;
+            console.log(data)
             setSavedPosts(data.savedPosts)
             setUser(data)
         } catch (error) {
